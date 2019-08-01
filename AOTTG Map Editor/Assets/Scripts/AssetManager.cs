@@ -29,7 +29,7 @@ public class AssetManager : MonoBehaviour
     }
 
     //Instantiate a GameObject wtih the given name from the RCAssets AssetBundle
-    public GameObject instantiateRCAsset(string objectName, Vector3 scale, Vector3 position, Quaternion angle)
+    public GameObject instantiateRCAsset(string objectName, string material, float tileX, float tileY, Vector3 scale, Vector3 position, Quaternion angle)
     {
         //Instantiate the object with the given position and angle
         GameObject newObject = (GameObject) Instantiate((GameObject) RCAssets.Load(objectName), position, angle);
@@ -37,6 +37,14 @@ public class AssetManager : MonoBehaviour
         //Transform the object
         Vector3 currentScale = newObject.transform.localScale;
         newObject.transform.localScale = new Vector3(currentScale.x * scale.x, currentScale.y * scale.y, currentScale.z * scale.z);
+
+        //Apply a material to the object
+        foreach(Renderer renderer in newObject.GetComponentsInChildren<Renderer>())
+        {
+            Material newMaterial = (Material)RCAssets.Load(material);
+            renderer.material = newMaterial;
+            renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * tileX, renderer.material.mainTextureScale.y * tileY);
+        }
 
         return newObject;
     }
