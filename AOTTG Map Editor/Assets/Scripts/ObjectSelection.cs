@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Raycast : MonoBehaviour
+public class ObjectSelection : MonoBehaviour
 {
     //A reference to the main object so the EditorManager is accessable
     public GameObject mainObject;
@@ -14,22 +14,31 @@ public class Raycast : MonoBehaviour
         editorManager = mainObject.GetComponent<EditorManager>();
     }
 
-    //Check if the user clicked on an object
-    void Update ()
+    //
+    void Update()
     {
-        //If left click is pressed, check if an object was clicked
+        checkSelect();
+    }
+
+    //Check if an object was clicked
+    private void checkSelect()
+    {
         if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-            //If an object was hit, either select or deselect it based on if it is currently selected
+            //If an object was clicked on, either select or deselect it based on if it is currently selected
             if (Physics.Raycast(ray, out hit, 1000.0f))
             {
                 if (!editorManager.isSelected(hit.transform.gameObject))
+                {
                     editorManager.selectObject(hit.transform.gameObject);
+                }
                 else
+                {
                     editorManager.deselectObject(hit.transform.gameObject);
+                }
             }
 
         }
