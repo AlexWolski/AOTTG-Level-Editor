@@ -1,10 +1,12 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class Test : MonoBehaviour {
+public class Test : MonoBehaviour
+{
     public AssetManager assetManager;
 
-	void Start () {
+	void Start ()
+    {
         StartCoroutine(TestInstantiate());
     }
 
@@ -14,7 +16,8 @@ public class Test : MonoBehaviour {
         assetManager.instantiateRCAsset("cuboid", "ice1", 1f, 1f, new Vector3(1, 1, 1), new Vector3(0, 0, 0), Quaternion.Euler(0, 0, 0));
     }
 	
-	void Update () {
+	void Update ()
+    {
 	
 	}
 }

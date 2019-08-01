@@ -6,10 +6,12 @@ public class EditorManager : MonoBehaviour
 {
     //Determines if the user is in fly more or edit mode. Default mode is fly
     public string editMode;
+    //A list containing the objects currently selected
+    private List<GameObject> selectedObjects = new List<GameObject>();
 
+    //If the x key is pressed, toggle between edit and fly mode
     void Update()
     {
-        //If the x key is pressed, toggle between edit and fly mode
         if (Input.GetKeyDown(KeyCode.X))
         {
             if(editMode == "fly")
@@ -23,5 +25,25 @@ public class EditorManager : MonoBehaviour
                 Screen.lockCursor = true;
             }
         }
+    }
+
+    //Add an object to the list of selected objects
+    public void selectObject(GameObject objectToAdd)
+    {
+        Debug.Log("Object Selected!");
+        selectedObjects.Add(objectToAdd);
+    }
+
+    //Remove an object to the list of selected objects
+    public void deselectObject(GameObject objectToRemove)
+    {
+        Debug.Log("Object Deselected!");
+        selectedObjects.Remove(objectToRemove);
+    }
+
+    //Returns true if the object is already in the list of selected objects
+    public bool isSelected(GameObject objectToCheck)
+    {
+        return selectedObjects.Contains(objectToCheck);
     }
 }

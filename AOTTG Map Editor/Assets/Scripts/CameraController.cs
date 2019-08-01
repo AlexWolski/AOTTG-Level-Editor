@@ -15,15 +15,15 @@ public class CameraController : MonoBehaviour
     //The speed the camera rotates at
     public float rotateSpeed;
 
+    //Get the EditorManager from the main object
     void Start()
     {
-        //Get the EditorManager from the main object
         editorManager = mainObject.GetComponent<EditorManager>();
     }
 
+    //If the editor is fly mode, translate and rotate the camera
     void Update()
     {
-        //If the editor is fly mode, translate and rotate the camera
         if(editorManager.editMode == "fly")
         {
             translateCamera();
