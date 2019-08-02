@@ -21,7 +21,7 @@ public class CameraController : MonoBehaviour
         editorManager = mainObject.GetComponent<EditorManager>();
     }
 
-    //If the editor is fly mode, translate and rotate the camera
+    //If the editor is in fly mode, translate and rotate the camera
     void Update()
     {
         if(editorManager.editMode == "fly")
