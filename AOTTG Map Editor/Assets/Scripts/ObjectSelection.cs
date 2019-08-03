@@ -1,18 +1,20 @@
 ﻿using UnityEngine;
-using System.Collections;
+using System.Collections.Generic;
 
 public class ObjectSelection : MonoBehaviour
 {
-    //A reference to the main object so the EditorManager is accessable
+    //A reference to the main object
     public GameObject mainObject;
-    //A reference to the editorManager
-    private EditorManager editorManager;
     //The shader that adds an outline to an object
     public Shader outlineShader;
     //The defailt shader
     public Shader defaultShader;
+    //A reference to the editorManager
+    private EditorManager editorManager;
+    //A list containing the objects currently selected
+    private List<GameObject> selectedObjects = new List<GameObject>();
 
-    //Get the EditorManager from the main object
+    //Get references from other scripts
     void Start()
     {
         editorManager = mainObject.GetComponent<EditorManager>();
@@ -21,8 +23,14 @@ public class ObjectSelection : MonoBehaviour
     //If the editor is in edit mode, check for selections
     void Update()
     {
-        if (editorManager.editMode == "edit")
+        if (editorManager.currentMode == "edit")
             checkSelect();
+    }
+
+    //Return a reference to the seleceted objects
+    public List<GameObject> getSelectedObjects()
+    {
+        return selectedObjects;
     }
 
     //Select of deselect objects clicked on
@@ -44,39 +52,61 @@ public class ObjectSelection : MonoBehaviour
                 while (hitObject.transform.parent != null)
                     hitObject = hitObject.transform.parent.gameObject;
 
-                //Either select or deselect the object depending on if it is currently selected
-                if (!editorManager.isSelected(hitObject))
+                //If left control is not held, deselect all objects and select the clicked object
+                if (!Input.GetKey(KeyCode.LeftControl))
                 {
-                    applyOutline(hitObject);
-                    editorManager.selectObject(hitObject);
+                    //Remove the outline on all selected objects
+                    foreach (GameObject selectedObject in selectedObjects)
+                        removeOutline(selectedObject);
+
+                    //Deselect all objects by deleting the selected objects list
+                    selectedObjects = new List<GameObject>();
+
+                    //Select the object that was clicked on
+                    selectObject(hitObject);
                 }
+                //If left control is held, select or deselect the object based on if its currently selected
                 else
                 {
-                    removeOutline(hitObject);
-                    editorManager.deselectObject(hitObject);
+                    if (!selectedObjects.Contains(hitObject))
+                        selectObject(hitObject);
+                    else
+                        deselectObject(hitObject);
                 }
             }
 
         }
     }
 
+    //Add an object to the list of selected objects
+    public void selectObject(GameObject objectToAdd)
+    {
+        selectedObjects.Add(objectToAdd);
+        applyOutline(objectToAdd);
+    }
+
+    //Remove an object to the list of selected objects
+    public void deselectObject(GameObject objectToRemove)
+    {
+        selectedObjects.Remove(objectToRemove);
+        removeOutline(objectToRemove);
+    }
+
     //Add a green outline around a GameObject
     private void applyOutline(GameObject objectToOutline)
     {
-        //Iterate through all of the children in the GameObject
+        //Iterate through all of the children in the GameObject and apply a green outline
         foreach (MeshRenderer renderer in objectToOutline.GetComponentsInChildren<MeshRenderer>())
         {
-            //Apply the outline shader and color it green
             renderer.material.shader = outlineShader;
             renderer.sharedMaterial.SetColor("_OutlineColor", Color.green);
         }
     }
 
-    private void removeOutline(GameObject objectToRemove)
+    //Remove the green outline shader
+    private void removeOutline(GameObject objectToRemoveOutline)
     {
-        foreach (MeshRenderer renderer in objectToRemove.GetComponentsInChildren<MeshRenderer>())
-        {
+        foreach (MeshRenderer renderer in objectToRemoveOutline.GetComponentsInChildren<MeshRenderer>())
             renderer.material.shader = defaultShader;
-        }
     }
 }

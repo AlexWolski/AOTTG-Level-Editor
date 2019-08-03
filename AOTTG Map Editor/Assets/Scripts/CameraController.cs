@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
-    //A reference to the main object so the EditorManager is accessable
+    //A reference to the main object
     public GameObject mainObject;
     //A reference to the editorManager
     private EditorManager editorManager;
@@ -24,7 +24,7 @@ public class CameraController : MonoBehaviour
     //If the editor is in fly mode, translate and rotate the camera
     void Update()
     {
-        if(editorManager.editMode == "fly")
+        if(editorManager.currentMode == "fly")
         {
             translateCamera();
             rotateCamera();

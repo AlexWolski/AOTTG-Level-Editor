@@ -1,9 +1,9 @@
 ﻿using UnityEngine;
-using System;
 using System.Collections;
 
 public class AssetManager : MonoBehaviour
 {
+    //The unity3d file that contains the assets from RC mod
     private AssetBundle RCAssets;
 
     void Start()
