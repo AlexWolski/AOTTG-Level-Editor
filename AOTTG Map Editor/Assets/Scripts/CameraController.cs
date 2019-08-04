@@ -5,15 +5,20 @@ using UnityEngine;
 public class CameraController : MonoBehaviour
 {
     //A reference to the main object
-    public GameObject mainObject;
+    [SerializeField]
+    private  GameObject mainObject;
     //A reference to the editorManager
     private EditorManager editorManager;
     //The three speeds the camera can move at
-    public float fastSpeed;
-    public float normalSpeed;
-    public float slowSpeed;
+    [SerializeField]
+    private float fastSpeed;
+    [SerializeField]
+    private float normalSpeed;
+    [SerializeField]
+    private float slowSpeed;
     //The speed the camera rotates at
-    public float rotateSpeed;
+    [SerializeField]
+    private float rotateSpeed;
 
     //Get the EditorManager from the main object
     void Start()

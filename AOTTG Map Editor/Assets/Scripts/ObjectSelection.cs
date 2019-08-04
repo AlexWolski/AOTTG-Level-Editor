@@ -4,22 +4,31 @@ using System.Collections.Generic;
 public class ObjectSelection : MonoBehaviour
 {
     //A reference to the main object
-    public GameObject mainObject;
+    [SerializeField]
+    private GameObject mainObject;
     //The shader that adds an outline to an object
-    public Shader outlineShader;
+    [SerializeField]
+    private Shader outlineShader;
     //The defailt shader
-    public Shader defaultShader;
+    [SerializeField]
+    private  Shader defaultShader;
     //A reference to the editorManager
     private EditorManager editorManager;
     //A list containing the objects that can be selected
     private List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
     private List<GameObject> selectedObjects = new List<GameObject>();
+    //A list containing the names of the GameObjects that shouldn't be outlined
+    private List<string> noOutline = new List<string>();
 
     //Get references from other scripts
     void Start()
     {
         editorManager = mainObject.GetComponent<EditorManager>();
+
+        //Add the walls of the arenas to the noOutline list
+        noOutline.Add("Cube_Cube_Things_Floor.png");
+        noOutline.Add("Plane_Plane_Floor");
     }
 
     //If the editor is in edit mode, check for selections
@@ -85,6 +94,7 @@ public class ObjectSelection : MonoBehaviour
         }
     }
 
+    //Return the parent of the given object. If there is no parent, return the given object
     private GameObject getParent(GameObject childObject)
     {
         GameObject parentObject = childObject;
@@ -147,8 +157,12 @@ public class ObjectSelection : MonoBehaviour
         //Iterate through all of the children in the GameObject and apply a green outline
         foreach (MeshRenderer renderer in objectToAddOutline.GetComponentsInChildren<MeshRenderer>())
         {
-            renderer.material.shader = outlineShader;
-            renderer.sharedMaterial.SetColor("_OutlineColor", Color.green);
+            //Only add the outline if the object isn't in the noOutline list
+            if (!noOutline.Contains(renderer.gameObject.name))
+            {
+                renderer.material.shader = outlineShader;
+                renderer.sharedMaterial.SetColor("_OutlineColor", Color.green);
+            }
         }
     }
 

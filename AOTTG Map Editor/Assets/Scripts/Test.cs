@@ -3,7 +3,8 @@ using System.Collections;
 
 public class Test : MonoBehaviour
 {
-    public AssetManager assetManager;
+    [SerializeField]
+    private  AssetManager assetManager;
 
 	void Start ()
     {

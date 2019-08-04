@@ -3,12 +3,13 @@ using System.Collections;
 
 public class AssetManager : MonoBehaviour
 {
-    //The unity3d file that contains the assets from RC mod
-    private AssetBundle RCAssets;
     //A reference to the main object
-    public GameObject mainObject;
+    [SerializeField]
+    private  GameObject mainObject;
     //A reference to object selection script
     private ObjectSelection objectSelection;
+    //The unity3d file that contains the assets from RC mod
+    private AssetBundle RCAssets;
 
     //Load the assets and set references from other scripts
     void Start()
