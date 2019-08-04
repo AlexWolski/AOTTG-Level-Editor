@@ -5,10 +5,16 @@ public class AssetManager : MonoBehaviour
 {
     //The unity3d file that contains the assets from RC mod
     private AssetBundle RCAssets;
+    //A reference to the main object
+    public GameObject mainObject;
+    //A reference to object selection script
+    private ObjectSelection objectSelection;
 
+    //Load the assets and set references from other scripts
     void Start()
     {
         base.StartCoroutine(LoadRCAssets());
+        objectSelection = mainObject.GetComponent<ObjectSelection>();
     }
 
     //Load the RC mod assets from RCAssets.unity3d
@@ -45,6 +51,9 @@ public class AssetManager : MonoBehaviour
             renderer.material = newMaterial;
             renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * tileX, renderer.material.mainTextureScale.y * tileY);
         }
+
+        //Make the new object selectable
+        objectSelection.addSelectable(newObject);
 
         return newObject;
     }

@@ -11,6 +11,8 @@ public class ObjectSelection : MonoBehaviour
     public Shader defaultShader;
     //A reference to the editorManager
     private EditorManager editorManager;
+    //A list containing the objects that can be selected
+    private List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
     private List<GameObject> selectedObjects = new List<GameObject>();
 
@@ -33,70 +35,117 @@ public class ObjectSelection : MonoBehaviour
         return selectedObjects;
     }
 
-    //Select of deselect objects clicked on
+    //Test if any objects were clicked
     private void checkSelect()
     {
-        //Check if the mouse was clicked
+        //If the mouse was clicked, check if any objects were selected
         if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
-            //Test if any objects were clicked on
+            //If an object was clicked, select it
             if (Physics.Raycast(ray, out hit, 1000.0f))
             {
-                //The object that was clicked on
-                GameObject hitObject = hit.transform.gameObject;
+                //Select the parent of the object
+                GameObject parentObject = getParent(hit.transform.gameObject);
 
-                //Select the parent object instead of a child
-                while (hitObject.transform.parent != null)
-                    hitObject = hitObject.transform.parent.gameObject;
-
-                //If left control is not held, deselect all objects and select the clicked object
-                if (!Input.GetKey(KeyCode.LeftControl))
+                //Only select the object if it is selectable
+                if (selectableObjects.Contains(parentObject))
                 {
-                    //Remove the outline on all selected objects
-                    foreach (GameObject selectedObject in selectedObjects)
-                        removeOutline(selectedObject);
+                    //If left control is not held, deselect all objects and select the clicked object
+                    if (!Input.GetKey(KeyCode.LeftControl))
+                    {
+                        deselectAll();
 
-                    //Deselect all objects by deleting the selected objects list
-                    selectedObjects = new List<GameObject>();
-
-                    //Select the object that was clicked on
-                    selectObject(hitObject);
-                }
-                //If left control is held, select or deselect the object based on if its currently selected
-                else
-                {
-                    if (!selectedObjects.Contains(hitObject))
-                        selectObject(hitObject);
+                        //Select the object that was clicked on
+                        selectObject(parentObject);
+                    }
+                    //If left control is held, select or deselect the object based on if its currently selected
                     else
-                        deselectObject(hitObject);
+                    {
+                        if (!selectedObjects.Contains(parentObject))
+                        {
+                            selectObject(parentObject);
+                        }
+                        else
+                            deselectObject(parentObject);
+                    }
                 }
             }
+        }
 
+        //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
+        else if(Input.GetKeyDown(KeyCode.A))
+        {
+            if (selectedObjects.Count > 0)
+                deselectAll();
+            else
+                selectAll();
         }
     }
 
-    //Add an object to the list of selected objects
-    public void selectObject(GameObject objectToAdd)
+    private GameObject getParent(GameObject childObject)
     {
-        selectedObjects.Add(objectToAdd);
-        applyOutline(objectToAdd);
+        GameObject parentObject = childObject;
+
+        while (parentObject.transform.parent != null)
+            parentObject = childObject.transform.parent.gameObject;
+
+        return parentObject;
     }
 
-    //Remove an object to the list of selected objects
-    public void deselectObject(GameObject objectToRemove)
+    //Add an object to the list of selectable objects
+    public void addSelectable(GameObject objectToAdd)
     {
-        selectedObjects.Remove(objectToRemove);
-        removeOutline(objectToRemove);
+        selectableObjects.Add(getParent(objectToAdd));
+    }
+
+    public void selectObject(GameObject objectToSelect)
+    {
+        //Get the parent of the object
+        GameObject parentObject = getParent(objectToSelect);
+
+        //Select the object
+        selectedObjects.Add(parentObject);
+        addOutline(parentObject);
+    }
+
+    public void selectAll()
+    {
+        //Select all objects by copying the selectedObjects list
+        selectedObjects = new List<GameObject>(selectableObjects);
+
+        //Add the outline to all of the objects
+        foreach (GameObject selectedObject in selectedObjects)
+            addOutline(selectedObject);
+    }
+
+    public void deselectObject(GameObject objectToDeselect)
+    {
+        //Get the parent of the object
+        GameObject parentObject = getParent(objectToDeselect);
+
+        //Deselect the object
+        selectedObjects.Remove(parentObject);
+        removeOutline(parentObject);
+    }
+
+    public void deselectAll()
+    {
+        //Remove the outline on all selected objects
+        foreach (GameObject selectedObject in selectedObjects)
+            removeOutline(selectedObject);
+
+        //Deselect all objects by deleting the selected objects list
+        selectedObjects = new List<GameObject>();
     }
 
     //Add a green outline around a GameObject
-    private void applyOutline(GameObject objectToOutline)
+    private void addOutline(GameObject objectToAddOutline)
     {
         //Iterate through all of the children in the GameObject and apply a green outline
-        foreach (MeshRenderer renderer in objectToOutline.GetComponentsInChildren<MeshRenderer>())
+        foreach (MeshRenderer renderer in objectToAddOutline.GetComponentsInChildren<MeshRenderer>())
         {
             renderer.material.shader = outlineShader;
             renderer.sharedMaterial.SetColor("_OutlineColor", Color.green);
