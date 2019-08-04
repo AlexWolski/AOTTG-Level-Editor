@@ -6,6 +6,9 @@ public class AssetManager : MonoBehaviour
     //A reference to the main object
     [SerializeField]
     private  GameObject mainObject;
+    //A reference to the empty level object to add objects to
+    [SerializeField]
+    private GameObject levelRoot;
     //A reference to object selection script
     private ObjectSelection objectSelection;
     //The unity3d file that contains the assets from RC mod
@@ -53,6 +56,8 @@ public class AssetManager : MonoBehaviour
             renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * tileX, renderer.material.mainTextureScale.y * tileY);
         }
 
+        //Make the new object a child of the level root.
+        newObject.transform.parent = levelRoot.transform;
         //Make the new object selectable
         objectSelection.addSelectable(newObject);
 

@@ -97,10 +97,19 @@ public class ObjectSelection : MonoBehaviour
     //Return the parent of the given object. If there is no parent, return the given object
     private GameObject getParent(GameObject childObject)
     {
+        //The parent object that gets returned
         GameObject parentObject = childObject;
+        //The tag of the parent object
+        string parentTag = childObject.transform.parent.gameObject.tag;
 
-        while (parentObject.transform.parent != null)
-            parentObject = childObject.transform.parent.gameObject;
+        //Keep going up the hierarchy until the parent is a level or group
+        while (parentTag != "Level" && parentTag != "Group")
+        {
+            //Move up the hierarchy
+            parentObject = parentObject.transform.parent.gameObject;
+            //Update the parent tag
+            parentTag = parentObject.transform.parent.gameObject.tag;
+        }
 
         return parentObject;
     }
