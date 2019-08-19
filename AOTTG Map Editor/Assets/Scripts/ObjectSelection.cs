@@ -34,7 +34,7 @@ public class ObjectSelection : MonoBehaviour
     //If the editor is in edit mode, check for selections
     void Update()
     {
-        if (editorManager.currentMode == "edit")
+        if (editorManager.currentMode == EditorMode.Edit)
             checkSelect();
     }
 

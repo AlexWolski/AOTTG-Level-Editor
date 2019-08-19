@@ -5,21 +5,21 @@ using UnityEngine;
 public class EditorManager : MonoBehaviour
 {
     //Determines if the user is in fly more or edit mode. Default mode is edit
-    public string currentMode;
+    public EditorMode currentMode;
 
     //If the x key is pressed, toggle between edit and fly mode
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.X))
         {
-            if(currentMode == "fly")
+            if(currentMode == EditorMode.Fly)
             {
-                currentMode = "edit";
+                currentMode = EditorMode.Edit;
                 Screen.lockCursor = false;
             }
-            else if(currentMode == "edit")
+            else if(currentMode == EditorMode.Edit)
             {
-                currentMode = "fly";
+                currentMode = EditorMode.Fly;
                 Screen.lockCursor = true;
             }
         }

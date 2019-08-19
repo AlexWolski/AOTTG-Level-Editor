@@ -46,9 +46,9 @@ Shader "Custom/HandleUnlitFresnel" {
             VertexOutput vert (VertexInput v) {
                 VertexOutput o = (VertexOutput)0;
                 o.vertexColor = v.vertexColor;
-                o.normalDir = UnityObjectToWorldNormal(v.normal);
-                o.posWorld = mul(unity_ObjectToWorld, v.vertex);
-                o.pos = UnityObjectToClipPos(v.vertex );
+                //o.normalDir = UnityObjectToWorldNormal(v.normal);
+                //o.posWorld = mul(unity_ObjectToWorld, v.vertex);
+                //o.pos = UnityObjectToClipPos(v.vertex );
                 return o;
             }
             float4 frag(VertexOutput i) : COLOR {

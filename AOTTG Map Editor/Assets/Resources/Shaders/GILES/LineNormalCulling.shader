@@ -48,9 +48,9 @@ Shader "Custom/Cull Lines by Normal"
 			{
 				v2f o;
 
-				o.pos = UnityObjectToClipPos(v.vertex);
-				o.world = mul(unity_ObjectToWorld, v.vertex);
-				o.normal = UnityObjectToWorldNormal(v.normal);
+				//o.pos = UnityObjectToClipPos(v.vertex);
+				//o.world = mul(unity_ObjectToWorld, v.vertex);
+				//o.normal = UnityObjectToWorldNormal(v.normal);
 				o.color = v.color;
 
 				return o;

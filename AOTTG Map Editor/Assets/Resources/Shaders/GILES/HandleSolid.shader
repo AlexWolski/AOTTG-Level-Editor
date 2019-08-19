@@ -46,7 +46,7 @@ Shader "Custom/HandleUnlitTransparent" {
             VertexOutput vert (VertexInput v) {
                 VertexOutput o = (VertexOutput)0;
                 o.vertexColor = v.vertexColor;
-                o.pos = UnityObjectToClipPos(v.vertex);
+                //o.pos = UnityObjectToClipPos(v.vertex);
                 return o;
             }
             fixed4 frag(VertexOutput i) : COLOR {
