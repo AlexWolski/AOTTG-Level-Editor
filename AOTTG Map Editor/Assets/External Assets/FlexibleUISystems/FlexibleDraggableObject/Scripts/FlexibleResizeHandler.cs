@@ -75,12 +75,10 @@ public class FlexibleResizeHandler : MonoBehaviour
         if (horizontalEdge != null)
         {
             if (horizontalEdge == RectTransform.Edge.Right)
-                Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 
-                    Screen.width - Target.position.x - Target.pivot.x * Target.rect.width, 
+                Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
                     Mathf.Clamp(Target.rect.width - ped.delta.x, MinimumDimmensions.x, MaximumDimmensions.x));
-            else 
-                Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 
-                    Target.position.x - Target.pivot.x * Target.rect.width, 
+            else
+                Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0, 
                     Mathf.Clamp(Target.rect.width + ped.delta.x, MinimumDimmensions.x, MaximumDimmensions.x));
         }
         if (verticalEdge != null)
