@@ -30,6 +30,7 @@ public class FlexibleResizeHandler : MonoBehaviour
     private static Texture2D ewResizeImage;
     private static Vector2 cursorHotSpot;
     private static bool resizeBoxPressed;
+    private static bool resizeBoxHover;
     
 	void Start ()
 	{
@@ -50,12 +51,15 @@ public class FlexibleResizeHandler : MonoBehaviour
     void OnMouseEnter(BaseEventData data)
     {
         Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
+        resizeBoxHover = true;
     }
 
     void OnMouseExit(BaseEventData data)
     {
         if(!resizeBoxPressed)
             Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+
+        resizeBoxHover = false;
     }
 
     void OnMouseDown(BaseEventData data)
@@ -134,6 +138,7 @@ public class FlexibleResizeHandler : MonoBehaviour
 
     void OnEndDrag(BaseEventData data)
     {
-        Cursor.SetCursor(null, cursorHotSpot, CursorMode.Auto);
+        if(!resizeBoxHover)
+            Cursor.SetCursor(null, cursorHotSpot, CursorMode.Auto);
     }
 }
