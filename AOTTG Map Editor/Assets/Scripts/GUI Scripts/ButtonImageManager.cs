@@ -26,7 +26,7 @@ public class ButtonImageManager : MonoBehaviour
     //Determine if the left mouse button is currently pressed or not
     private static bool mouseDown;
     //The button script that is currently pressed down
-    private static UpdateButtonImage pressedButton;
+    private static ButtonImageManager pressedButton;
     //The object that listens for event updates
     private EventTrigger eventTrigger;
 
