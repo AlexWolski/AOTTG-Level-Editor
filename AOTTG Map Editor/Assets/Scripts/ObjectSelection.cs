@@ -102,8 +102,8 @@ public class ObjectSelection : MonoBehaviour
         //The tag of the parent object
         string parentTag = childObject.transform.parent.gameObject.tag;
 
-        //Keep going up the hierarchy until the parent is a level or group
-        while (parentTag != "Level" && parentTag != "Group")
+        //Keep going up the hierarchy until the parent is a map or group
+        while (parentTag != "Map" && parentTag != "Group")
         {
             //Move up the hierarchy
             parentObject = parentObject.transform.parent.gameObject;

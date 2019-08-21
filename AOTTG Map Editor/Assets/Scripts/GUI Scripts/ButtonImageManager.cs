@@ -28,7 +28,7 @@ public class ButtonImageManager : MonoBehaviour
     //The button script that is currently pressed down
     private static ButtonImageManager pressedButton;
     //The object that listens for event updates
-    private EventTrigger eventTrigger;
+    private static EventTrigger eventTrigger;
 
     //Initialize data members and set up triggers
     void Start()

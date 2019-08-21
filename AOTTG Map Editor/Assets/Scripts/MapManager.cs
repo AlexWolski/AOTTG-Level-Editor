@@ -2,11 +2,11 @@
 using System.Collections;
 using System;
 
-public class LevelManager : MonoBehaviour
+public class MapManager : MonoBehaviour
 {
-    //A reference to the empty level to add objects to
+    //A reference to the empty map to add objects to
     [SerializeField]
-    private GameObject levelRoot;
+    private GameObject mapRoot;
     //A reference to object selection script
     private ObjectSelection objectSelection;
 
@@ -16,22 +16,21 @@ public class LevelManager : MonoBehaviour
         objectSelection = gameObject.GetComponent<ObjectSelection>();
     }
 
-    //Parse the given level script and load the level
-    public void loadLevel(string levelScript)
+    //Parse the given map script and load the map
+    public void loadMap(string mapScript)
     {
-        //Seperate the level by new lines into object scripts
-        string[] parsedLevel = levelScript.Split('\n');
+        //Seperate the map by new lines into object scripts
+        string[] parsedMap = mapScript.Split('\n');
 
-        //Add each object to the level
-        foreach (string objectScript in parsedLevel)
-            addObjectToLevel(parseObject(objectScript));
+        //Create each object and add it to the map
+        foreach (string objectScript in parsedMap)
+            addObjectToMap(parseObject(objectScript));
     }
 
     //Parse the given object script and instantiate the object
     private GameObject parseObject(string objectScript)
     {
-        //
-        objectType type;
+        ObjectData objectData = new ObjectData();
 
         //Seperate the object script by comma
         string[] parsedObject = objectScript.Split(',');
@@ -44,18 +43,24 @@ public class LevelManager : MonoBehaviour
         {
             //If the first element matches a type, set it as the type of the object
             if (parsedObject[0].StartsWith(objectType))
-                type = (objectType)Enum.Parse(typeof(objectType), objectType);
+                objectData.type = (objectType)Enum.Parse(typeof(objectType), objectType);
         }
 
         //
-        return AssetManager.instantiateRCAsset("cuboid", "earth1", new Vector3(1f, 1f, 1f), new Color(0, 1, 0), new Vector2(0.5f, 0.5f), new Vector3(-10, 0, 0), Quaternion.Euler(0, 0, 0));
+        return AssetManager.instantiateRcObject("cuboid", new Vector3(-10, 0, 0), Quaternion.Euler(0, 0, 0));
     }
 
-    private void addObjectToLevel(GameObject objectToAdd)
+    private void addObjectToMap(GameObject objectToAdd)
     {
-        //Make the new object a child of the level root.
-        objectToAdd.transform.parent = levelRoot.transform;
+        //Make the new object a child of the map root.
+        objectToAdd.transform.parent = mapRoot.transform;
         //Make the new object selectable
         objectSelection.addSelectable(objectToAdd);
+    }
+
+    //Convert the map into a script
+    public override string ToString()
+    {
+        return "";
     }
 }
