@@ -1,7 +1,8 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class MapObject : MonoBehaviour {
+public class MapObject : MonoBehaviour
+{
     //A list of types an object can be
     private enum objectType
     {
