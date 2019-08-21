@@ -1,28 +1,13 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public class AssetManager : MonoBehaviour
+public static class AssetManager
 {
-    //A reference to the main object
-    [SerializeField]
-    private  GameObject mainObject;
-    //A reference to the empty level object to add objects to
-    [SerializeField]
-    private GameObject levelRoot;
-    //A reference to object selection script
-    private ObjectSelection objectSelection;
     //The unity3d file that contains the assets from RC mod
-    private AssetBundle RCAssets;
-
-    //Load the assets and set references from other scripts
-    void Start()
-    {
-        base.StartCoroutine(LoadRCAssets());
-        objectSelection = mainObject.GetComponent<ObjectSelection>();
-    }
+    private static AssetBundle RCAssets;
 
     //Load the RC mod assets from RCAssets.unity3d
-    private IEnumerator LoadRCAssets()
+    public static IEnumerator LoadRCAssets()
     {
         //Reference to the file. Compatible with windows and Mac.
         string url = "File:///" + Application.dataPath + "/RCAssets.unity3d";
@@ -39,21 +24,16 @@ public class AssetManager : MonoBehaviour
     }
 
     //Instantiate a GameObject wtih only a position and angle
-    public GameObject instantiateRCAsset(string objectName, Vector3 position, Quaternion angle)
+    public static GameObject instantiateRCAsset(string objectName, Vector3 position, Quaternion angle)
     {
         //Instantiate the object with the given position and angle
-        GameObject newObject = (GameObject)Instantiate((GameObject)RCAssets.Load(objectName), position, angle);
-
-        //Make the new object a child of the level root.
-        newObject.transform.parent = levelRoot.transform;
-        //Make the new object selectable
-        objectSelection.addSelectable(newObject);
+        GameObject newObject = (GameObject)MonoBehaviour.Instantiate((GameObject)RCAssets.Load(objectName), position, angle);
 
         return newObject;
     }
 
     //Instantiate a GameObject wtih a texture
-    public GameObject instantiateRCAsset(string objectName, string material, Vector3? scale, Color? color, Vector2? tile, Vector3 position, Quaternion angle)
+    public static GameObject instantiateRCAsset(string objectName, string material, Vector3? scale, Color? color, Vector2? tile, Vector3 position, Quaternion angle)
     {
         //Instantiate the object with only a position and angle
         GameObject newObject = instantiateRCAsset(objectName, position, angle);

@@ -15,19 +15,14 @@ public enum Tool
     Scale
 }
 
-//Used in the ToolHandle class for which axis to move the object along
-enum Axis
+//A list of types an object can be
+enum objectType
 {
-    None = 0x0,
-    X = 0x1,
-    Y = 0x2,
-    Z = 0x4
-}
-
-//Used in the GILES classes to describe different culling options
-public enum Culling
-{
-    Back = 0x1,
-    Front = 0x2,
-    FrontBack = 0x4
+    //The '@' indicates that 'base' is a literal, not a keyword
+    @base,
+    spawnpoint,
+    photon,
+    custom,
+    racing,
+    misc
 }

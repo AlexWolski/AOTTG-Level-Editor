@@ -1,19 +1,7 @@
 ﻿using UnityEngine;
-using System.Collections;
 
-public class MapObject : MonoBehaviour
+public class LevelObject : MonoBehaviour
 {
-    //A list of types an object can be
-    private enum objectType
-    {
-        vanilla,
-        spawnpoint,
-        photon,
-        custom,
-        racing,
-        misc
-    }
-
     //The type of the object
     private objectType type;
     //The actual type name specified in the map script (can be longer than the type)
@@ -31,12 +19,8 @@ public class MapObject : MonoBehaviour
     //The opacity of the transparant material
     private float opacity;
 
-    public MapObject(string objectScript)
-    {
-        parseScript(objectScript);
-    }
-
-    private void parseScript(string objectScript)
+    //
+    public void setData()
     {
 
     }
