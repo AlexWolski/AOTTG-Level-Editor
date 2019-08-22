@@ -19,37 +19,85 @@ public class MapManager : MonoBehaviour
     //Parse the given map script and load the map
     public void loadMap(string mapScript)
     {
-        //Seperate the map by new lines into object scripts
-        string[] parsedMap = mapScript.Split('\n');
+        //Remove all of the new lines in the script
+        mapScript = mapScript.Replace("\n", "");
+
+        //Seperate the map by semicolon
+        string[] parsedMap = mapScript.Split(';');
 
         //Create each object and add it to the map
         foreach (string objectScript in parsedMap)
-            addObjectToMap(parseObject(objectScript));
+        {
+            //Parse the object script
+            ObjectData? objectData = parseObject(objectScript);
+
+            //If the object data is valid, create the object
+            if (objectData.HasValue)
+            {
+                //Instantiate the object
+                GameObject newObject = AssetManager.instantiateRcObject(objectData.Value.objectName);
+                //Attatch the MapObject script to the object
+                newObject.AddComponent<MapObject>();
+                //Add all of the object data to the object
+                newObject.GetComponent<MapObject>().setData(objectData.Value);
+                //Add the object to the map hierarchy
+                addObjectToMap(newObject);
+            }
+        }
     }
 
-    //Parse the given object script and instantiate the object
-    private GameObject parseObject(string objectScript)
+    //Parse the given object script and return the data
+    private ObjectData? parseObject(string objectScript)
     {
+        //Create a new struct to store the object data in
         ObjectData objectData = new ObjectData();
 
         //Seperate the object script by comma
         string[] parsedObject = objectScript.Split(',');
 
+        //Get the type of the object
+        objectType? type = stringToObjectType(parsedObject[0]);
+
+        //If the type is invalid, skip the object
+        if (!type.HasValue)
+            return null;
+
+        //If the type is valid, store it in the struct
+        objectData.type = type.Value;
+
+
+        ////
+
+        objectData.position = new Vector3(-10, 0, 0);
+        objectData.scale = new Vector3(1, 1, 1);
+        objectData.angle = Quaternion.identity;
+        objectData.objectName = "cuboid";
+
+        ////
+
+        //return the parsed data
+        return objectData;
+    }
+
+    //Return the objectType assosiated with the given string
+    private objectType? stringToObjectType(string typeString)
+    {
         //Make a string array containing the names of each type of object
         string[] objectTypes = Enum.GetNames(typeof(objectType));
 
-        //Check if the first element of the object script matches any of the types
+        //Check if the string matches any of the types
         foreach (string objectType in objectTypes)
         {
-            //If the first element matches a type, set it as the type of the object
-            if (parsedObject[0].StartsWith(objectType))
-                objectData.type = (objectType)Enum.Parse(typeof(objectType), objectType);
+            //If the string matches a type, return that type
+            if (typeString.StartsWith(objectType))
+                return (objectType)Enum.Parse(typeof(objectType), objectType);
         }
 
-        //
-        return AssetManager.instantiateRcObject("cuboid", new Vector3(-10, 0, 0), Quaternion.Euler(0, 0, 0));
+        //If the object type is not valid, return null
+        return null;
     }
 
+    //Add the given object to the map hierarchy and make it selectable
     private void addObjectToMap(GameObject objectToAdd)
     {
         //Make the new object a child of the map root.

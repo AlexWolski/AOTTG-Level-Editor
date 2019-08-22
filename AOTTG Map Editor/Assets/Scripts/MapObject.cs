@@ -13,8 +13,11 @@ public class MapObject : MonoBehaviour
         setTexture(objectData.texture);
         setTiling(objectData.tiling);
         setColor(objectData.color);
+        setPosition(objectData.position);
+        setAngle(objectData.angle);
     }
 
+    //Change the scale factor of the length, width, or height of the object
     public void scale(Vector3 scale)
     {
         //Transform the object
@@ -39,7 +42,7 @@ public class MapObject : MonoBehaviour
         renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * tiling.x, renderer.material.mainTextureScale.y * tiling.y);
     }
 
-    //Color the object
+    //Change the color of the texture on the object
     public void setColor(Color color)
     {
         //Iterate through all of the filters in the object
@@ -56,6 +59,18 @@ public class MapObject : MonoBehaviour
             //Apply the colors
             mesh.colors = colorArray;
         }
+    }
+
+    //Position the object
+    public void setPosition(Vector3 position)
+    {
+        gameObject.transform.position = position;
+    }
+
+    //Set the angle of the object
+    public void setAngle(Quaternion angle)
+    {
+        gameObject.transform.rotation = angle;
     }
 
     //Convert the object into a script

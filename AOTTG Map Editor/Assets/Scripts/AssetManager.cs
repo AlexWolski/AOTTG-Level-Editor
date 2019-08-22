@@ -23,13 +23,10 @@ public static class AssetManager
         }
     }
 
-    //Instantiate a GameObject wtih only a position and angle
-    public static GameObject instantiateRcObject(string objectName, Vector3 position, Quaternion angle)
+    //Instantiate the GameObject wtih the given name
+    public static GameObject instantiateRcObject(string objectName)
     {
-        //Instantiate the object with the given position and angle
-        GameObject newObject = (GameObject)MonoBehaviour.Instantiate((GameObject)RCAssets.Load(objectName), position, angle);
-
-        return newObject;
+        return (GameObject)MonoBehaviour.Instantiate((GameObject)RCAssets.Load(objectName));
     }
 
     //Load a material

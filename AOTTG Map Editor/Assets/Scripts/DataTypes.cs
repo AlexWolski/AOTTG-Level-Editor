@@ -40,10 +40,10 @@ public struct ObjectData
     public string objectName;
     //The name of the region if the object is a region
     public string regionName;
-    //The scale factor of the object from its default size
-    public Vector3 scale;
     //The name of the texture applied to the object
     public string texture;
+    //The scale factor of the object from its default size
+    public Vector3 scale;
     //How many times the texture will repeat in the x and y directions
     public Vector2 tiling;
     //Determines if colored materials are enabled
@@ -52,4 +52,8 @@ public struct ObjectData
     public bool transparantEnabled;
     //The color of the object, including opacity
     public Color color;
+    //The position of the object
+    public Vector3 position;
+    //The angle of the object
+    public Quaternion angle;
 }
