@@ -28,30 +28,18 @@ public class MapManager : MonoBehaviour
         //Create each object and add it to the map
         foreach (string objectScript in parsedMap)
         {
-            //Parse the object script
-            ObjectData? objectData = parseObject(objectScript);
+            //Parse the object script and create a new map object
+            GameObject newMapObject = loadObject(objectScript);
 
-            //If the object data is valid, create the object
-            if (objectData.HasValue)
-            {
-                //Instantiate the object
-                GameObject newObject = AssetManager.instantiateRcObject(objectData.Value.objectName);
-                //Attatch the MapObject script to the object
-                newObject.AddComponent<MapObject>();
-                //Add all of the object data to the object
-                newObject.GetComponent<MapObject>().setData(objectData.Value);
-                //Add the object to the map hierarchy
-                addObjectToMap(newObject);
-            }
+            //If the object data is valid, add the object to the map hierarchy
+            if (newMapObject)
+                addObjectToMap(newMapObject);
         }
     }
 
-    //Parse the given object script and return the data
-    private ObjectData? parseObject(string objectScript)
+    //Parse the given object script and instantiate a new GameObject with the data
+    private GameObject loadObject(string objectScript)
     {
-        //Create a new struct to store the object data in
-        ObjectData objectData = new ObjectData();
-
         //Seperate the object script by comma
         string[] parsedObject = objectScript.Split(',');
 
@@ -62,21 +50,21 @@ public class MapManager : MonoBehaviour
         if (!type.HasValue)
             return null;
 
-        //If the type is valid, store it in the struct
-        objectData.type = type.Value;
-
 
         ////
 
-        objectData.position = new Vector3(-10, 0, 0);
-        objectData.scale = new Vector3(1, 1, 1);
-        objectData.angle = Quaternion.identity;
-        objectData.objectName = "cuboid";
+        GameObject newObject = AssetManager.instantiateRcObject("cuboid");
+        newObject.AddComponent<MapObject>();
+        MapObject newMapObject = newObject.GetComponent<MapObject>();
+
+        newMapObject.Position = new Vector3(-10, 0, 0);
+        newMapObject.Scale = new Vector3(1, 1, 1);
+        newMapObject.Rotation = Quaternion.identity;
+        newMapObject.ObjectName = "cuboid";
 
         ////
 
-        //return the parsed data
-        return objectData;
+        return newObject;
     }
 
     //Return the objectType assosiated with the given string

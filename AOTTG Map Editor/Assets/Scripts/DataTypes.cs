@@ -28,32 +28,3 @@ public enum objectType
     racing,
     misc
 }
-
-//A struct that holds all of the information for a map object
-public struct ObjectData
-{
-    //The type of the object
-    public objectType type;
-    //The actual type name specified in the map script (can be longer than the type)
-    public string fullTypeName;
-    //The specific object
-    public string objectName;
-    //The name of the region if the object is a region
-    public string regionName;
-    //The name of the texture applied to the object
-    public string texture;
-    //The scale factor of the object from its default size
-    public Vector3 scale;
-    //How many times the texture will repeat in the x and y directions
-    public Vector2 tiling;
-    //Determines if colored materials are enabled
-    public bool colorEnabled;
-    //Determines if the transparant material is enabled
-    public bool transparantEnabled;
-    //The color of the object, including opacity
-    public Color color;
-    //The position of the object
-    public Vector3 position;
-    //The angle of the object
-    public Quaternion angle;
-}
