@@ -5,12 +5,16 @@ public class MapObject : MonoBehaviour
     #region Data Members
     //The type of the object
     private objectType type;
-    //The actual type name specified in the map script (can be longer than the type)
-    private string fullTypeName;
+    //The actual type name specified in the map script
+    private string fullType;
     //The specific object
     private string objectName;
     //The name of the region if the object is a region
     private string regionName;
+    //The amount of time until the titan spawns
+    private float spawnTimer;
+    //Determines if the the spawner will continue to spawn titans
+    private bool endlessSpawn;
     //The name of the texture applied to the object
     private string texture;
     //The scale factor of the object from its default size
@@ -33,8 +37,8 @@ public class MapObject : MonoBehaviour
 
     public string FullTypeName
     {
-        get { return fullTypeName; }
-        set { fullTypeName = value; }
+        get { return fullType; }
+        set { fullType = value; }
     }
 
     public string ObjectName
@@ -47,6 +51,18 @@ public class MapObject : MonoBehaviour
     {
         get { return regionName; }
         set { regionName = value; }
+    }
+
+    public float SpawnTimer
+    {
+        get { return spawnTimer; }
+        set { spawnTimer = value; }
+    }
+
+    public bool EndlessSpawn
+    {
+        get { return endlessSpawn; }
+        set { endlessSpawn = value; }
     }
 
     public string Texture
@@ -99,8 +115,9 @@ public class MapObject : MonoBehaviour
         //Apply the material to all of the children of the object
         foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
         {
-            Material newMaterial = AssetManager.loadRcMaterial(newTexture);
-            renderer.material = newMaterial;
+            //Don't apply the default texture and don't apply the material to the particle system of supply stations
+            if (!(newTexture == "default" || renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
+                renderer.material = AssetManager.loadRcMaterial(newTexture);
         }
     }
 
@@ -115,7 +132,9 @@ public class MapObject : MonoBehaviour
     //Resize the texture on the object
     private void setTiling(Vector2 newTiling)
     {
-        renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * newTiling.x, renderer.material.mainTextureScale.y * newTiling.y);
+        //Apply the texture resizing to all of the children of the object
+        foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
+            renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * newTiling.x, renderer.material.mainTextureScale.y * newTiling.y);
     }
 
     //Change the color of the texture on the object
