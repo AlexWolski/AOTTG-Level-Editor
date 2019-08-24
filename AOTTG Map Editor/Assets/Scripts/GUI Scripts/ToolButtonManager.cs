@@ -3,7 +3,7 @@ using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ButtonImageManager : MonoBehaviour
+public class ToolButtonManager : MonoBehaviour
 {
     //A list of the states the button can be in
     enum buttonState
@@ -22,19 +22,31 @@ public class ButtonImageManager : MonoBehaviour
     private Sprite selected;
 
     //The current state of the button
+    [SerializeField]
     private buttonState currentState;
+    //The tool this button corresponds to
+    [SerializeField]
+    private Tool toolType;
     //Determine if the left mouse button is currently pressed or not
     private static bool mouseDown;
     //The button script that is currently pressed down
-    private static ButtonImageManager pressedButton;
+    private static ToolButtonManager pressedButton;
+    //The button that is currently selected
+    private static ToolButtonManager selectedButton;
     //The object that listens for event updates
     private static EventTrigger eventTrigger;
 
     //Initialize data members and set up triggers
     void Start()
     {
+        //If this button is the one to be selected by default, select it
+        if (currentState == buttonState.selected)
+            select();
+        //Otherwise the button should be unselected
+        else
+            unselect();
+
         mouseDown = false;
-        currentState = buttonState.unselected;
         eventTrigger = GetComponent<EventTrigger>();
         eventTrigger.AddEventTrigger(this.OnMouseEnter, EventTriggerType.PointerEnter);
         eventTrigger.AddEventTrigger(this.OnMouseExit, EventTriggerType.PointerExit);
@@ -42,25 +54,37 @@ public class ButtonImageManager : MonoBehaviour
         eventTrigger.AddEventTrigger(this.OnMouseUp, EventTriggerType.PointerUp);
     }
 
+    //Change the image and state to unselected
+    private void unselect()
+    {
+        gameObject.GetComponent<Image>().sprite = unselected;
+        currentState = buttonState.unselected;
+    }
+
+    //Change the image and state to selected
+    private void select()
+    {
+        gameObject.GetComponent<Image>().sprite = selected;
+        currentState = buttonState.selected;
+        selectedButton = this;
+    }
+
     //If this button was last pressed and the mouse moves over it, change to the pressed image
-    void OnMouseEnter(BaseEventData data)
+    private void OnMouseEnter(BaseEventData data)
     {
         if (pressedButton == this && mouseDown && currentState == buttonState.unselected)
             OnMouseDown(data);
     }
 
     //If the button was pressed and the cursor moves off of the button, chagne to the unselected image
-    void OnMouseExit(BaseEventData data)
+    private void OnMouseExit(BaseEventData data)
     {
         if (currentState == buttonState.pressed)
-        {
-            gameObject.GetComponent<Image>().sprite = unselected;
-            currentState = buttonState.unselected;
-        }
+            unselect();
     }
 
     //If the mouse is pressed down on the button and its not selected, chagne to the pressed image
-    void OnMouseDown(BaseEventData data)
+    private void OnMouseDown(BaseEventData data)
     {
         mouseDown = true;
 
@@ -72,20 +96,15 @@ public class ButtonImageManager : MonoBehaviour
         }
     }
 
-    //If the mouse is released on the button, toggle its state
-    void OnMouseUp(BaseEventData data)
+    //If the mouse is released on the button and its unselected, then select it and unselect all other buttons
+    private void OnMouseUp(BaseEventData data)
     {
         mouseDown = false;
 
         if (currentState == buttonState.pressed)
         {
-            gameObject.GetComponent<Image>().sprite = selected;
-            currentState = buttonState.selected;
-        }
-        else
-        {
-            gameObject.GetComponent<Image>().sprite = unselected;
-            currentState = buttonState.unselected;
+            selectedButton.unselect();
+            select();
         }
     }
 }

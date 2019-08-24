@@ -11,7 +11,6 @@ public enum EditorMode
 //While in edit mode, there are three basic tools that can be used
 public enum Tool
 {
-    None,
     Position,
     Rotate,
     Scale

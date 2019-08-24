@@ -147,26 +147,31 @@ public class MapManager : MonoBehaviour
 
             return newObject;
         }
-        //If there was an error converting an element to a float, pass a new exception to the caller
+        //If there was an error converting an element to a float, destroy the object and pass a new exception to the caller
         catch(FormatException)
         {
+            destroyObject(newObject);
             throw new Exception("Error conveting data");
         }
-        //If there are any other errors, pass them back up to the caller
-        catch(Exception e)
+        //If there are any other errors, destroy the object and pass them back up to the caller
+        catch (Exception e)
         {
-            //If the object was already created, disable and destroy it
-            if (newObject)
-            {
-                newObject.SetActive(false);
-                Destroy(newObject);
-            }
-
+            destroyObject(newObject);
             throw e;
         }
     }
 
     #region Parser Helpers
+    //Check if the object exists. Then disable and destroy it
+    private void destroyObject(GameObject objectToDestroy)
+    {
+        if (objectToDestroy)
+        {
+            objectToDestroy.SetActive(false);
+            Destroy(objectToDestroy);
+        }
+    }
+
     //Destroy the smaller bounds around the map and isntantiate the larger bounds
     private void disableMapBounds()
     {
