@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using UnityEngine.Events;
 
 public class GenericButtonManager : MonoBehaviour
 {
@@ -17,6 +18,9 @@ public class GenericButtonManager : MonoBehaviour
     private Sprite unpressed;
     [SerializeField]
     private Sprite pressed;
+    //The function to call when the button is clicked
+    [SerializeField]
+    private UnityEvent onClick;
 
     //The current state of the button
     private buttonState currentState;
@@ -82,10 +86,15 @@ public class GenericButtonManager : MonoBehaviour
         }
     }
 
-    //Unpress the button
+    //If this button is clicked, unpress the button and invoke the 'on click' function
     private void OnMouseUp(BaseEventData data)
     {
         mouseDown = false;
-        unpress();
+
+        if (currentState == buttonState.pressed)
+        {
+            unpress();
+            onClick.Invoke();
+        }
     }
 }

@@ -96,7 +96,7 @@ public class ToolButtonManager : MonoBehaviour
         }
     }
 
-    //If the mouse is released on the button and its unselected, then select it and unselect all other buttons
+    //If this button is clicked, select it and unselect all other buttons
     private void OnMouseUp(BaseEventData data)
     {
         mouseDown = false;

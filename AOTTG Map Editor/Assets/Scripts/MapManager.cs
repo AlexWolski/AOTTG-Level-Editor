@@ -1,12 +1,17 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System;
+using UnityEngine.UI;
 
 public class MapManager : MonoBehaviour
 {
     //A reference to the empty map to add objects to
     [SerializeField]
     private GameObject mapRoot;
+    //A reference to the text box containing the map script
+    [SerializeField]
+    private InputField inputField;
+
     //A reference to object selection script
     private ObjectSelection objectSelection;
     //Determines if the small map bounds have been disabled or not
@@ -18,8 +23,14 @@ public class MapManager : MonoBehaviour
         objectSelection = gameObject.GetComponent<ObjectSelection>();
     }
 
+    //Import the map script in the input field
+    public void importInputField()
+    {
+        loadMap(inputField.text);
+    }
+
     //Parse the given map script and load the map
-    public void loadMap(string mapScript)
+    private void loadMap(string mapScript)
     {
         //Remove all of the new lines in the script
         mapScript = mapScript.Replace("\n", "");
