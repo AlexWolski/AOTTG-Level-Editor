@@ -3,48 +3,35 @@ using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class ToolButtonManager : MonoBehaviour
+public class GenericButtonManager : MonoBehaviour
 {
     //A list of the states the button can be in
     private enum buttonState
     {
-        unselected,
-        pressed,
-        selected
+        unpressed,
+        pressed
     }
 
     //The images used for the button
     [SerializeField]
-    private Sprite unselected;
+    private Sprite unpressed;
     [SerializeField]
     private Sprite pressed;
-    [SerializeField]
-    private Sprite selected;
 
     //The current state of the button
-    [SerializeField]
     private buttonState currentState;
-    //The tool this button corresponds to
-    [SerializeField]
-    private Tool toolType;
     //Determine if the left mouse button is currently pressed or not
     private static bool mouseDown;
     //The button script that is currently pressed down
-    private static ToolButtonManager pressedButton;
-    //The button that is currently selected
-    private static ToolButtonManager selectedButton;
+    private static GenericButtonManager pressedButton;
     //The object that listens for event updates
     private static EventTrigger eventTrigger;
 
     //Initialize data members and set up the triggers
     void Awake()
     {
-        //If this button is the one to be selected by default, select it
-        if (currentState == buttonState.selected)
-            select();
-        //Otherwise the button should be unselected
-        else
-            unselect();
+        //The button is unselected by default
+        currentState = buttonState.unpressed;
 
         mouseDown = false;
         eventTrigger = GetComponent<EventTrigger>();
@@ -54,33 +41,32 @@ public class ToolButtonManager : MonoBehaviour
         eventTrigger.AddEventTrigger(this.OnMouseUp, EventTriggerType.PointerUp);
     }
 
-    //Change the image and state to selected
-    private void select()
+    //Change the image and state to pressed
+    private void press()
     {
-        gameObject.GetComponent<Image>().sprite = selected;
-        currentState = buttonState.selected;
-        selectedButton = this;
+        gameObject.GetComponent<Image>().sprite = pressed;
+        currentState = buttonState.pressed;
     }
 
-    //Change the image and state to unselected
-    private void unselect()
+    //Change the image and state to unpressed
+    private void unpress()
     {
-        gameObject.GetComponent<Image>().sprite = unselected;
-        currentState = buttonState.unselected;
+        gameObject.GetComponent<Image>().sprite = unpressed;
+        currentState = buttonState.unpressed;
     }
 
     //If this button was last pressed and the mouse moves over it, change to the pressed image
     private void OnMouseEnter(BaseEventData data)
     {
-        if (pressedButton == this && mouseDown && currentState == buttonState.unselected)
+        if (pressedButton == this && mouseDown && currentState == buttonState.unpressed)
             OnMouseDown(data);
     }
 
-    //If the button was pressed and the cursor moves off of the button, chagne to the unselected image
+    //If the button was pressed and the cursor moves off of the button, chagne to the unpressed image
     private void OnMouseExit(BaseEventData data)
     {
         if (currentState == buttonState.pressed)
-            unselect();
+            unpress();
     }
 
     //If the mouse is pressed down on the button and its not selected, chagne to the pressed image
@@ -88,7 +74,7 @@ public class ToolButtonManager : MonoBehaviour
     {
         mouseDown = true;
 
-        if (currentState == buttonState.unselected)
+        if (currentState == buttonState.unpressed)
         {
             gameObject.GetComponent<Image>().sprite = pressed;
             currentState = buttonState.pressed;
@@ -96,15 +82,10 @@ public class ToolButtonManager : MonoBehaviour
         }
     }
 
-    //If the mouse is released on the button and its unselected, then select it and unselect all other buttons
+    //Unpress the button
     private void OnMouseUp(BaseEventData data)
     {
         mouseDown = false;
-
-        if (currentState == buttonState.pressed)
-        {
-            selectedButton.unselect();
-            select();
-        }
+        unpress();
     }
 }

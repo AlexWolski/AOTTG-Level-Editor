@@ -7,7 +7,13 @@ public class EditorManager : MonoBehaviour
     //Determines if the user is in fly more or edit mode. Default mode is edit
     public EditorMode currentMode;
 
-    //Load the assets from RC mod
+    void Awake()
+    {
+        Screen.fullScreen = false;
+        Screen.SetResolution(800, 600, false);
+    }
+
+    //Load the assets from RC mod and set the window settings
     void Start()
     {
         base.StartCoroutine(AssetManager.LoadRCAssets());
