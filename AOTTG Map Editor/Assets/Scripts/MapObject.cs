@@ -124,9 +124,9 @@ public class MapObject : MonoBehaviour
     //Change the scale factor of the length, width, or height of the object
     private void setScale(Vector3 newScale)
     {
-        //Transform the object
+        //Transform the object. Divide by 10 to adjust the scale for the editor
         Vector3 currentScale = gameObject.transform.localScale;
-        gameObject.transform.localScale = new Vector3(currentScale.x * newScale.x, currentScale.y * newScale.y, currentScale.z * newScale.z);
+        gameObject.transform.localScale = new Vector3(currentScale.x * newScale.x, currentScale.y * newScale.y, currentScale.z * newScale.z)/10;
     }
 
     //Resize the texture on the object
@@ -159,6 +159,8 @@ public class MapObject : MonoBehaviour
     //Position the object
     private void setPosition(Vector3 newPosition)
     {
+        //Divide the position by 10 to adjust the scale for the editor
+        newPosition /= 10;
         gameObject.transform.position = newPosition;
     }
 

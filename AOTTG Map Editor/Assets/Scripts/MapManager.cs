@@ -24,6 +24,7 @@ public class MapManager : MonoBehaviour
     {
         //Remove all of the new lines in the script
         mapScript = mapScript.Replace("\n", "");
+        mapScript = mapScript.Replace("\r", "");
 
         //Seperate the map by semicolon
         string[] parsedMap = mapScript.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
