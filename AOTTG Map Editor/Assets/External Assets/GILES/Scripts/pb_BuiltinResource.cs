@@ -17,11 +17,11 @@ namespace GILES
 	public static class pb_BuiltinResource
 	{
 		/// An opaque lit material used to shade handles with a faux lambert shadow.
-		public const string mat_HandleOpaque 			= "Handles/Material/HandleOpaqueMaterial";
+		public const string mat_HandleOpaque 		= "Handles/Material/HandleOpaqueMaterial";
 		/// A transparent unlit shader that fades based on normal and camera angle.  Used to draw sphere gizmos.
-		public const string mat_RotateHandle 			= "Handles/Material/HandleRotateMaterial";
+		public const string mat_RotateHandle 		= "Handles/Material/HandleRotateMaterial";
 		/// A transparent unlit shader.
-		public const string mat_HandleTransparent 		= "Handles/Material/HandleTransparentMaterial";
+		public const string mat_HandleTransparent 	= "Handles/Material/HandleTransparentMaterial";
 
 		/// The cone mesh used in creating the position handles.
 		public const string mesh_Cone 				= "Handles/Mesh/ConeMesh.asset";

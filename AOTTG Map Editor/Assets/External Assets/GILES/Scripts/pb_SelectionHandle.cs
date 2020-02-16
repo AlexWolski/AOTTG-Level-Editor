@@ -70,7 +70,8 @@ namespace GILES
             }
         }
 
-        private Tool tool = Tool.Rotate;  // Current tool.
+        //The current tool. Default is translate tool.
+        private Tool tool = Tool.Translate;
 
         private Mesh _coneRight, _coneUp, _coneForward;
 
@@ -208,7 +209,7 @@ namespace GILES
 
                     switch (tool)
                     {
-                        case Tool.Position:
+                        case Tool.Translate:
                             {
                                 trs.position = a - drag.offset;
                             }
@@ -390,7 +391,7 @@ namespace GILES
         {
             plane = (Axis)0x0;
 
-            if (tool == Tool.Position || tool == Tool.Scale)
+            if (tool == Tool.Translate || tool == Tool.Scale)
             {
                 float sceneHandleSize = pb_HandleUtility.GetHandleSize(trs.position);
 
@@ -519,7 +520,7 @@ namespace GILES
 
             switch (tool)
             {
-                case Tool.Position:
+                case Tool.Translate:
                 case Tool.Scale:
                     HandleOpaqueMaterial.SetPass(0);
                     Graphics.DrawMeshNow(HandleLineMesh, handleMatrix);
@@ -594,7 +595,7 @@ namespace GILES
         {
             switch (tool)
             {
-                case Tool.Position:
+                case Tool.Translate:
                 case Tool.Scale:
                     pb_HandleMesh.CreatePositionLineMesh(ref mesh, trs, scale, cam, HANDLE_BOX_SIZE);
                     break;
@@ -610,7 +611,7 @@ namespace GILES
 
         private void CreateHandleTriangleMesh(ref Mesh mesh, Vector3 scale)
         {
-            if (tool == Tool.Position)
+            if (tool == Tool.Translate)
                 pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, cam, ConeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
             else if (tool == Tool.Scale)
                 pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, cam, CubeMesh, HANDLE_BOX_SIZE, CAP_SIZE);

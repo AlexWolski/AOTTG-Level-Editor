@@ -2,6 +2,7 @@
 using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using GILES;
 
 public class ToolButtonManager : MonoBehaviour
 {
@@ -12,6 +13,12 @@ public class ToolButtonManager : MonoBehaviour
         pressed,
         selected
     }
+
+    //The object the selection handle script is attatched to
+    [SerializeField]
+    private GameObject toolHandle;
+    //The selection handle management script
+    private pb_SelectionHandle handleUtility;
 
     //The images used for the button
     [SerializeField]
@@ -39,6 +46,9 @@ public class ToolButtonManager : MonoBehaviour
     //Initialize data members and set up the triggers
     void Awake()
     {
+        //Get the selection handle script from the tool handle object
+        handleUtility = toolHandle.GetComponent<pb_SelectionHandle>();
+
         //If this button is the one to be selected by default, select it
         if (currentState == buttonState.selected)
             select();
@@ -105,6 +115,13 @@ public class ToolButtonManager : MonoBehaviour
         {
             selectedButton.unselect();
             select();
+            action();
         }
+    }
+
+    //The action triggered by the button press
+    private void action()
+    {
+        handleUtility.SetTool(toolType);
     }
 }
