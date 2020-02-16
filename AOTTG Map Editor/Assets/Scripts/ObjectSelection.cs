@@ -160,6 +160,13 @@ public class ObjectSelection : MonoBehaviour
         selectedObjects = new List<GameObject>();
     }
 
+    //Resets both the selected and selectable object lists
+    public void resetSelections()
+    {
+        selectedObjects = new List<GameObject>();
+        selectableObjects = new List<GameObject>();
+    }
+
     //Add a green outline around a GameObject
     private void addOutline(GameObject objectToAddOutline)
     {

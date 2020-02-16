@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 
-public static class AssetManager
+public class AssetManager : MonoBehaviour
 {
     //The unity3d file that contains the assets from RC mod
     private static AssetBundle RCAssets;
@@ -20,13 +20,19 @@ public static class AssetManager
         using (WWW iteratorVariable2 = WWW.LoadFromCacheOrDownload(url, 1))
         {
             RCAssets = iteratorVariable2.assetBundle;
+
+            if (!RCAssets)
+            {
+                Debug.Log("RC Assets Didn't Load Successfully");
+                Debug.Log("RC Assets File Location: " + url);
+            }
         }
     }
 
     //Instantiate the GameObject wtih the given name
     public static GameObject instantiateRcObject(string objectName)
     {
-        return (GameObject)MonoBehaviour.Instantiate((GameObject)RCAssets.Load(objectName));
+        return (GameObject)Instantiate((GameObject)RCAssets.Load(objectName));
     }
 
     //Load a material

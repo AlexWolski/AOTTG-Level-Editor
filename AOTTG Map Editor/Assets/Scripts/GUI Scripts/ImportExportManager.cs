@@ -2,7 +2,7 @@
 using System.Collections;
 using UnityEngine.UI;
 
-public class ImportManager : MonoBehaviour
+public class ImportExportManager : MonoBehaviour
 {
     //A reference to the main object of the scene
     [SerializeField]
@@ -55,9 +55,13 @@ public class ImportManager : MonoBehaviour
         gameObject.SetActive(!gameObject.activeSelf);
     }
 
-    //Import the map script in the text field
     public void importTextField()
     {
+        //Clear the existing map objects
+        mapManager.clearMap();
+        //Import the map script in the text field
         mapManager.loadMap(textArea);
+        //Clear the textfield after the map is loaded
+        textArea = "";
     }
 }
