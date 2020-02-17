@@ -161,101 +161,112 @@ namespace GILES
 
         void Update()
         {
-            //
+            //Rebuild the gizmo meshes and matricies when the camera moves
             OnCameraMove();
-            //
 
+            //Don't check for handle interactions if the handle is hidden
             if (isHidden)
-            {
                 return;
-            }
 
-            if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftAlt))
-            {
+            //If the mouse is pressed, check if the handle was clicked
+            if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
                 OnMouseDown();
-            }
 
-            if (draggingHandle)
-            {
-                if (Input.GetKey(KeyCode.LeftAlt))
-                    OnFinishHandleMovement();
-            }
-
-            if (Input.GetMouseButton(0) && draggingHandle)
-            {
-                Vector3 a = Vector3.zero;
-
-                bool valid = false;
-
-                if (draggingAxes < 2 && tool != Tool.Rotate)
-                {
-                    Vector3 b;
-                    valid = pb_HandleUtility.PointOnLine(new Ray(trs.position, drag.axis), cam.ScreenPointToRay(Input.mousePosition), out a, out b);
-                }
-                else
-                {
-                    Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-                    float hit = 0f;
-                    if (drag.plane.Raycast(ray, out hit))
-                    {
-                        a = ray.GetPoint(hit);
-                        valid = true;
-                    }
-                }
-
-                if (valid)
-                {
-                    drag.origin = trs.position;
-
-                    switch (tool)
-                    {
-                        case Tool.Translate:
-                            {
-                                trs.position = a - drag.offset;
-                            }
-                            break;
-
-                        case Tool.Rotate:
-                            {
-                                Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
-                                mouseOrigin = Input.mousePosition;
-                                float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.axis, drag.cross, delta);
-                                axisAngle += delta.magnitude * sign;
-                                trs.localRotation = Quaternion.AngleAxis(axisAngle, drag.axis) * handleOrigin.rotation;// trs.localRotation;
-                            }
-                            break;
-
-                        case Tool.Scale:
-                            {
-                                Vector3 v;
-
-                                if (draggingAxes > 1)
-                                {
-                                    v = SetUniformMagnitude(((a - drag.offset) - trs.position));
-                                }
-                                else
-                                {
-                                    v = Quaternion.Inverse(handleOrigin.rotation) * ((a - drag.offset) - trs.position);
-                                }
-
-                                v += Vector3.one;
-                                scale = v;
-                                RebuildGizmoMesh(scale);
-                            }
-                            break;
-                    }
-
-                    if (OnHandleMove != null)
-                        OnHandleMove(GetTransform());
-
-                    RebuildGizmoMatrix();
-                }
-            }
-
+            //If the mouse is released, finish interacting with the handle
             if (Input.GetMouseButtonUp(0))
-            {
                 OnFinishHandleMovement();
+            //If the mouse is pressed and dragging the handle, interact with the handle
+            else if (draggingHandle && Input.GetMouseButton(0))
+                interactHandle();
+        }
+
+        private void interactHandle()
+        {
+            //Get the point on the movement plane the cursor is over
+            Vector3 planeHit = getMovementPlaneHit();
+
+            //Set the starting point of the drag to the position of the handle
+            drag.origin = trs.position;
+
+            switch (tool)
+            {
+                case Tool.Translate:
+                    //If the plane translate is selected, use the whole hit point as the position of the handle
+                    if (draggingAxes > 1)
+                        trs.position = planeHit - drag.offset;
+                    //If only an axis is selected, use the corresponding axis of the hit point in the position of the handle
+                    else
+                    {
+                        //Get the component of the ray hit position corresponding to the axis of movement
+                        Vector3 positionAlongAxis = new Vector3(drag.axis.x * planeHit.x, drag.axis.y * planeHit.y, drag.axis.z * planeHit.z);
+
+                        if(positionAlongAxis.x != 0)
+                            trs.position = new Vector3(positionAlongAxis.x, trs.position.y, trs.position.z) - drag.offset;
+                        if (positionAlongAxis.y != 0)
+                            trs.position = new Vector3(trs.position.x, positionAlongAxis.y, trs.position.z) - drag.offset;
+                        if (positionAlongAxis.z != 0)
+                            trs.position = new Vector3(trs.position.x, trs.position.y, positionAlongAxis.z) - drag.offset;
+                    }
+                    break;
+
+                case Tool.Rotate:
+                    Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
+                    mouseOrigin = Input.mousePosition;
+                    float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.axis, drag.cross, delta);
+                    axisAngle += delta.magnitude * sign;
+                    trs.localRotation = Quaternion.AngleAxis(axisAngle, drag.axis) * handleOrigin.rotation;// trs.localRotation;
+                    break;
+
+                case Tool.Scale:
+                    Vector3 v;
+
+                    //If the entire object is being scaled, enlargen all three axis handles
+                    if (draggingAxes > 1)
+                        v = SetUniformMagnitude(((planeHit - drag.offset) - trs.position));
+                    //Enlargen the axis handle being iteracted with
+                    else
+                        v = Quaternion.Inverse(handleOrigin.rotation) * ((planeHit - drag.offset) - trs.position);
+
+                    v += Vector3.one;
+                    scale = v;
+                    RebuildGizmoMesh(scale);
+                    break;
             }
+
+            if (OnHandleMove != null)
+                OnHandleMove(GetTransform());
+
+            RebuildGizmoMatrix();
+        }
+
+        //Find the point the mouse is over on the plane the handle is moving along
+        private Vector3 getMovementPlaneHit()
+        {
+            //Create a ray originating from the camera and passing through the cursor
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            //The distance between the origin of the ray and the intersection with the plane
+            float distToHit = 0f;
+
+            //A plane to interesct the ray casted from the camera. The plane must face the camera
+            Plane movementPlane = new Plane();
+
+            //If the handle is moving along two axes, use the dragging plane
+            if (draggingAxes >= 2)
+                movementPlane = drag.plane;
+            //Otherwise, determine the plane to use
+            else
+            {
+                //If the handle is moving along either the x or z axes, use an x-z plane
+                if (drag.axis.x != 0 || drag.axis.z != 0)
+                    movementPlane.SetNormalAndPosition(trs.up.normalized, trs.position);
+            }
+
+            //Find the position the cursor over on the corresponding plane
+            if (movementPlane.Raycast(ray, out distToHit))
+                return ray.GetPoint(distToHit);
+
+            //If the ray didn't hit anything, return an empty vector
+            return new Vector3();
         }
 
         float axisAngle = 0f;
