@@ -33,7 +33,7 @@ public class CameraController : MonoBehaviour
     }
 
     //If the editor is in fly mode, translate and rotate the camera
-    void Update()
+    void LateUpdate()
     {
         if(editorManager.currentMode == EditorMode.Fly)
         {

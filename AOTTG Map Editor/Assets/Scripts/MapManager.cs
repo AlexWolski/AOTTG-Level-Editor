@@ -7,6 +7,9 @@ public class MapManager : MonoBehaviour
     //A reference to the empty map to add objects to
     [SerializeField]
     private GameObject mapRoot;
+    //A reference to the billboard prefab
+    [SerializeField]
+    private GameObject billboardPrefab;
 
     //A reference to object selection script
     private ObjectSelection objectSelection;
@@ -179,6 +182,14 @@ public class MapManager : MonoBehaviour
             //Otherwise set the rotation of the object
             else
                 mapObject.Rotation = parseQuaternion(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
+
+            //If the object is a region, intantiate a billboard and set it as a child of the region
+            if (type == objectType.misc && parsedObject[1] == "regionEditor")
+            {
+                GameObject billboard = (GameObject)Instantiate(billboardPrefab);
+                billboard.GetComponent<TextMesh>().text = mapObject.RegionName;
+                billboard.transform.parent = newObject.transform;
+            }
 
             //If there is a flag to disable the boundries, disable them
             if (boundsDisabled)
