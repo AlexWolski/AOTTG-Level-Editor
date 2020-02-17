@@ -223,9 +223,12 @@ namespace GILES
                     //If the entire object is being scaled, enlargen all three axis handles
                     if (draggingAxes > 1)
                         v = SetUniformMagnitude(((planeHit - drag.offset) - trs.position));
-                    //Enlargen the axis handle being iteracted with
+                    //Otherwise enlargen the axis handle being iteracted with
                     else
-                        v = Quaternion.Inverse(handleOrigin.rotation) * ((planeHit - drag.offset) - trs.position);
+                    {
+                        //v = Quaternion.Inverse(handleOrigin.rotation) * ((planeHit - drag.offset) - trs.position);
+                        v = new Vector3(1, 2, 3);
+                    }
 
                     v += Vector3.one;
                     scale = v;

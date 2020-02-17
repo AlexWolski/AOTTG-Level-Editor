@@ -110,6 +110,11 @@ public class MapManager : MonoBehaviour
 
             //Parse the object type
             type = parseType(parsedObject[0]);
+
+            //If the object is a barrier or region, change it to the editor version
+            if (type == objectType.misc && parsedObject[1] == "barrier" || parsedObject[1] == "region")
+                parsedObject[1] += "Editor";
+
             //Use the object name to load the asset
             newObject = createMapObject(type, parsedObject[1]);
             //Get the MapObject script attached to the new GameObject
@@ -133,7 +138,7 @@ public class MapManager : MonoBehaviour
             {
                 mapObject.RegionName = parsedObject[2];
                 mapObject.Scale = parseVector3(parsedObject[3], parsedObject[4], parsedObject[5]);
-                indexOfPosition = 3;
+                indexOfPosition = 6;
             }
             //If the object has a texture, store the texture, scale, color, and tiling information
             else if(mapObject.Type == objectType.custom || parsedObject.Length >= 15 && (mapObject.Type == objectType.@base || mapObject.Type == objectType.photon))
@@ -154,16 +159,26 @@ public class MapManager : MonoBehaviour
                 mapObject.Tiling = parseVector2(parsedObject[10], parsedObject[11]);
                 indexOfPosition = 12;
             }
-            //If the object just scale information before the position and rotation, store the scale
+            //If the object has scale information just before the position and rotation, store the scale
             else if(mapObject.Type == objectType.racing || mapObject.Type == objectType.misc)
             {
                 mapObject.Scale = parseVector3(parsedObject[2], parsedObject[3], parsedObject[4]);
                 indexOfPosition = 5;
             }
 
-            //Set the position and rotation for all objects
+            //If the object is a spawnpoint, set its default size
+            if (mapObject.Type == objectType.spawnpoint || mapObject.Type == objectType.photon)
+                mapObject.Scale = new Vector3(1f, 1f, 1f);
+
+            //Set the position for all objects
             mapObject.Position = parseVector3(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
-            mapObject.Rotation = parseQuaternion(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
+
+            //If the object is a barrier or region, give it a default rotation
+            if (type == objectType.misc && parsedObject[1] == "barrierEditor" || parsedObject[1] == "regionEditor")
+                mapObject.Rotation = new Quaternion(0f, 0f, 0f, 1f);
+            //Otherwise set the rotation of the object
+            else
+                mapObject.Rotation = parseQuaternion(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
 
             //If there is a flag to disable the boundries, disable them
             if (boundsDisabled)

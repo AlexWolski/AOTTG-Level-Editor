@@ -20,6 +20,12 @@ public class CameraController : MonoBehaviour
     [SerializeField]
     private float rotateSpeed;
 
+    //Disable the fog on distant objects
+    void OnPreRender()
+    {
+        RenderSettings.fog = false;
+    }
+
     //Get the EditorManager from the main object
     void Start()
     {
