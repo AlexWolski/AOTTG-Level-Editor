@@ -8,7 +8,16 @@ namespace GILES
 	 */
 	public static class pb_HandleMesh
 	{
-		static readonly Color red = new Color(.85f, .256f, .16f, 0f);
+        //A reference to the pb_SelectionHandle script attatched to the tool handle
+        static pb_SelectionHandle selectionHandle;
+
+        //Find and store a reference to the seleciton handle script on start
+        static pb_HandleMesh()
+        {
+            selectionHandle = GameObject.Find("Tool Handle").GetComponent<pb_SelectionHandle>();
+        }
+
+        static readonly Color red = new Color(.85f, .256f, .16f, 0f);
 		static readonly Color green = new Color(.2f, .9f, .2f, 0f);
 		static readonly Color blue = new Color(.26f, .56f, .85f, 0f);
 
@@ -17,9 +26,9 @@ namespace GILES
 		 */
 		public static Mesh CreatePositionLineMesh(ref Mesh mesh, Transform transform, Vector3 scale, Camera cam, float handleSize)
 		{
-			Vector3 viewDir = pb_HandleUtility.DirectionMask(transform, cam.transform.forward);
+            Vector3 octant = selectionHandle.viewOctant;
 
-			List<Vector3> v = new List<Vector3>();
+            List<Vector3> v = new List<Vector3>();
 			List<Vector3> n = new List<Vector3>();
 			List<Vector2> u = new List<Vector2>();
 			List<Color> c = new List<Color>();
@@ -32,21 +41,21 @@ namespace GILES
 				Vector3.right * scale.x,
 
 				// Z Plane
-				new Vector3( viewDir.x * 0f, viewDir.y * handleSize, 0f),
-				new Vector3( viewDir.x * handleSize, viewDir.y * handleSize, 0f),
-				new Vector3( viewDir.x * handleSize, viewDir.y * handleSize, 0f),
-				new Vector3( viewDir.x * handleSize, viewDir.y * 0f, 0f),
-				new Vector3( viewDir.x * handleSize, viewDir.y * 0f, 0f),
+				new Vector3( octant.x * 0f, octant.y * handleSize, 0f),
+				new Vector3( octant.x * handleSize, octant.y * handleSize, 0f),
+				new Vector3( octant.x * handleSize, octant.y * handleSize, 0f),
+				new Vector3( octant.x * handleSize, octant.y * 0f, 0f),
+				new Vector3( octant.x * handleSize, octant.y * 0f, 0f),
 				Vector3.zero,
 
 				// Up Axis
 				Vector3.zero,
 				Vector3.up * scale.y,
 
-				new Vector3( viewDir.x * handleSize, 0f,  viewDir.z * 0f),
-				new Vector3( viewDir.x * handleSize, 0f,  viewDir.z * handleSize),
-				new Vector3( viewDir.x * handleSize, 0f,  viewDir.z * handleSize),
-				new Vector3( viewDir.x * 0f, 0f, viewDir.z * handleSize),
+				new Vector3( octant.x * handleSize, 0f,  octant.z * 0f),
+				new Vector3( octant.x * handleSize, 0f,  octant.z * handleSize),
+				new Vector3( octant.x * handleSize, 0f,  octant.z * handleSize),
+				new Vector3( octant.x * 0f, 0f, octant.z * handleSize),
 
 				// Forward Axis
 				Vector3.zero,
@@ -54,12 +63,12 @@ namespace GILES
 
 				// X Plane
 				Vector3.zero,
-				new Vector3(0f, viewDir.y * 0f, viewDir.z * handleSize),
-				new Vector3(0f, viewDir.y * 0f, viewDir.z * handleSize),
-				new Vector3(0f, viewDir.y * handleSize, viewDir.z * handleSize),
-				new Vector3(0f, viewDir.y * handleSize, viewDir.z * handleSize),
-				new Vector3(0f, viewDir.y * handleSize, viewDir.z * 0f),
-				new Vector3(0f, viewDir.y * handleSize, viewDir.z * 0f),
+				new Vector3(0f, octant.y * 0f, octant.z * handleSize),
+				new Vector3(0f, octant.y * 0f, octant.z * handleSize),
+				new Vector3(0f, octant.y * handleSize, octant.z * handleSize),
+				new Vector3(0f, octant.y * handleSize, octant.z * handleSize),
+				new Vector3(0f, octant.y * handleSize, octant.z * 0f),
+				new Vector3(0f, octant.y * handleSize, octant.z * 0f),
 				Vector3.zero
 				});
 
@@ -106,7 +115,7 @@ namespace GILES
 			mesh.colors = c.ToArray();
 			mesh.normals = n.ToArray();
 
-			return mesh;
+            return mesh;
 		}
 
 		/**
@@ -223,26 +232,26 @@ namespace GILES
 		 * Create the little planar box and end caps using `cap`.
 		 */
 		public static Mesh CreateTriangleMesh(ref Mesh mesh, Transform transform, Vector3 scale, Camera cam, Mesh cap, float handleSize, float capSize)
-		{		
-			Vector3 viewDir = pb_HandleUtility.DirectionMask(transform, cam.transform.forward);
+		{
+            Vector3 octant = selectionHandle.viewOctant;
 
-			List<Vector3> v = new List<Vector3>()
+            List<Vector3> v = new List<Vector3>()
 			{
 				// X Axis
-				new Vector3(0f, viewDir.y * 0f, viewDir.z * 0f),
-				new Vector3(0f, viewDir.y * 0f, viewDir.z * handleSize),
-				new Vector3(0f, viewDir.y * handleSize, viewDir.z * handleSize),
-				new Vector3(0f,	viewDir.y * handleSize, viewDir.z * 0f),
+				new Vector3(0f, octant.y * 0f, octant.z * 0f),
+				new Vector3(0f, octant.y * 0f, octant.z * handleSize),
+				new Vector3(0f, octant.y * handleSize, octant.z * handleSize),
+				new Vector3(0f,	octant.y * handleSize, octant.z * 0f),
 
 				new Vector3(0f, 0f, 0f),
-				new Vector3(viewDir.x * handleSize, 0f, 0f),
-				new Vector3(viewDir.x * handleSize, viewDir.y * handleSize, 0f),
-				new Vector3(0f, viewDir.y * handleSize, 0f),
+				new Vector3(octant.x * handleSize, 0f, 0f),
+				new Vector3(octant.x * handleSize, octant.y * handleSize, 0f),
+				new Vector3(0f, octant.y * handleSize, 0f),
 
 				new Vector3(0f, 0f, 0f),
-				new Vector3(0f, 0f, handleSize * viewDir.z),
-				new Vector3(handleSize * viewDir.x, 0f, handleSize * viewDir.z),
-				new Vector3(handleSize * viewDir.x, 0f, 0f),
+				new Vector3(0f, 0f, handleSize * octant.z),
+				new Vector3(handleSize * octant.x, 0f, handleSize * octant.z),
+				new Vector3(handleSize * octant.x, 0f, 0f),
 			};
 
 			List<Vector3> nrm = new List<Vector3>()
@@ -345,7 +354,8 @@ namespace GILES
 			mesh.SetTriangles(t.ToArray(), 0);
 			mesh.SetTriangles(t2.ToArray(), 1);
 			mesh.colors = c.ToArray();
-			return mesh;
+
+            return mesh;
 		}
 
 		public static void TransformMesh(Mesh mesh, Matrix4x4 matrix, out Vector3[] v, out Vector3[] n, out Vector2[] u, out Color[] c, out int[] t, int indexOffset, Color color)

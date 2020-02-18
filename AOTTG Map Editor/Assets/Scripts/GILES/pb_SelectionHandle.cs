@@ -88,6 +88,22 @@ namespace GILES
         public bool isHidden { get; private set; }
         public bool InUse() { return draggingHandle; }
 
+        //The octant of the camera relative ot the tool handle
+        public Vector3 viewOctant { get; private set; }
+        //The octant of the camera in the previous frame
+        private Vector3 previousOctant;
+
+        //Get the octant to display the planes in based on camera position and tool dragging status
+        private Vector3 getViewOctant()
+        {
+            //If the tool is not being dragged, use the current octant
+            if (!draggingHandle)
+                return EditorMath.getOctant(transform.position, cam.transform.position);
+
+            //If it is being dragged, use the octant the camera was in before the drag
+            return previousOctant;
+        }
+
         #endregion
 
         #region Initialization
@@ -159,8 +175,12 @@ namespace GILES
 
         DragOrientation drag = new DragOrientation();
 
-        void Update()
+        void LateUpdate()
         {
+            //Update the octant the camera is in relative to the tool handle
+            previousOctant = viewOctant;
+            viewOctant = getViewOctant();
+
             //Rebuild the gizmo meshes and matricies when the camera moves
             OnCameraMove();
 
@@ -423,11 +443,9 @@ namespace GILES
 
                 // First check if the plane boxes have been activated
 
-                Vector3 cameraMask = pb_HandleUtility.DirectionMask(trs, cam.transform.forward);
-
-                Vector2 p_right = (cen + ((right - cen) * cameraMask.x) * HANDLE_BOX_SIZE);
-                Vector2 p_up = (cen + ((up - cen) * cameraMask.y) * HANDLE_BOX_SIZE);
-                Vector2 p_forward = (cen + ((forward - cen) * cameraMask.z) * HANDLE_BOX_SIZE);
+                Vector2 p_right = (cen + ((right - cen) * viewOctant.x) * HANDLE_BOX_SIZE);
+                Vector2 p_up = (cen + ((up - cen) * viewOctant.y) * HANDLE_BOX_SIZE);
+                Vector2 p_forward = (cen + ((forward - cen) * viewOctant.z) * HANDLE_BOX_SIZE);
 
                 // x plane
                 if (pb_HandleUtility.PointInPolygon(new Vector2[] {

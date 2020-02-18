@@ -10,8 +10,16 @@ namespace GILES
 	 */
 	public class pb_HandleUtility
 	{
+        //A reference to the pb_SelectionHandle script attatched to the tool handle
+        pb_SelectionHandle selectionHandle;
 
-		/**
+        //Find and store a reference to the seleciton handle script on start
+        pb_HandleUtility()
+        {
+            selectionHandle = GameObject.Find("Tool Handle").GetComponent<pb_SelectionHandle>();
+        }
+
+        /**
 		 * Returns the nearest point on each line to the other line.
 		 *
 		 * http://wiki.unity3d.com/index.php?title=3d_Math_functions
@@ -19,7 +27,7 @@ namespace GILES
 		 * to each other. This function finds those two points. If the lines are not parallel, the function
 		 * outputs true, otherwise false.
 		 */
-		public static bool ClosestPointsOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2, out Vector3 closestPointLine1, out Vector3 closestPointLine2)
+        public static bool ClosestPointsOnTwoLines(Vector3 linePoint1, Vector3 lineVec1, Vector3 linePoint2, Vector3 lineVec2, out Vector3 closestPointLine1, out Vector3 closestPointLine2)
 		{
 			closestPointLine1 = Vector3.zero;
 			closestPointLine2 = Vector3.zero;
@@ -97,14 +105,6 @@ namespace GILES
 		private static float Mask(float val)
 		{
 			return val > 0f ? 1f : -1f;
-		}
-
-		public static Vector3 DirectionMask(Transform target, Vector3 rayDirection)
-		{
-			Vector3 viewDir = -Mask(new Vector3(Vector3.Dot(rayDirection, target.right),
-												Vector3.Dot(rayDirection, target.up),
-												Vector3.Dot(rayDirection, target.forward)));
-			return viewDir;
 		}
 
 		/**
