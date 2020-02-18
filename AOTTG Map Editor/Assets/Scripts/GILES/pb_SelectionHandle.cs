@@ -214,7 +214,7 @@ namespace GILES
                     //If the plane translate is selected, use the whole hit point as the position of the handle
                     if (draggingAxes > 1)
                         trs.position = planeHit - drag.offset;
-                    //If only an axis is selected, use the corresponding axis of the hit point in the position of the handle
+                    //If only one axis is selected, use the corresponding component of the hit point in the position of the handle
                     else
                     {
                         //Get the component of the ray hit position corresponding to the axis of movement
@@ -276,12 +276,32 @@ namespace GILES
             //If the handle is moving along two axes, use the dragging plane
             if (draggingAxes >= 2)
                 movementPlane = drag.plane;
-            //Otherwise, determine the plane to use
+            //Otherwise, determine the plane to use based on the camera angle
             else
             {
-                //If the handle is moving along either the x or z axes, use an x-z plane
-                if (drag.axis.x != 0 || drag.axis.z != 0)
+                //Get the rotation of the camera in Euler angles
+                Vector3 camRot = cam.transform.rotation.eulerAngles;
+
+                //If the drag axis is x or z and the x angle is 45 degrees away from default, use the y axis
+                if (drag.axis.y == 0 && (45f < camRot.x && camRot.x < 90f || 270f < camRot.x && camRot.x < 315f))
                     movementPlane.SetNormalAndPosition(trs.up.normalized, trs.position);
+                //If the drag axis is the y, use either the x or z plane based on the camera's angle
+                else if (drag.axis.y != 0)
+                {
+                    if (45 < camRot.y && camRot.y < 135 ||
+                        225 < camRot.y && camRot.y < 315)
+                        movementPlane.SetNormalAndPosition(trs.right.normalized, trs.position);
+                    else
+                        movementPlane.SetNormalAndPosition(trs.forward.normalized, trs.position);
+                }
+                //Otherwise use the plane of the axis being dragged
+                else
+                {
+                    if (drag.axis.x != 0)
+                        movementPlane.SetNormalAndPosition(trs.forward.normalized, trs.position);
+                    else
+                        movementPlane.SetNormalAndPosition(trs.right.normalized, trs.position);
+                }
             }
 
             //Find the position the cursor over on the corresponding plane

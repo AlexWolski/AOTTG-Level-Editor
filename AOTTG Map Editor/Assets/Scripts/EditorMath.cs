@@ -17,10 +17,4 @@ public static class EditorMath
         //Return a representation of the octant
         return octant;
     }
-
-    //Returns a number between 0 and 7 representing which octant the point is in relative to the origin
-    public static int getOctantNumber(Vector3 origin, Vector3 point)
-    {
-        return 1;
-    }
 }
