@@ -24,7 +24,7 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         objectSelection = gameObject.GetComponent<ObjectSelection>();
-        vertexColoredShader = Shader.Find("Legacy Shaders/Diffuse");
+        vertexColoredShader = Shader.Find("Vertex Colored");
         transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
         StartCoroutine(testLoadMap());
     }
@@ -179,19 +179,17 @@ public class MapManager : MonoBehaviour
             if (mapObject.Type == objectType.spawnpoint || mapObject.Type == objectType.photon)
                 mapObject.Scale = new Vector3(1f, 1f, 1f);
 
-            //Set the position for all objects
+            //Set the position and rotation for all objects
             mapObject.Position = parseVector3(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
+            mapObject.Rotation = parseQuaternion(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
 
-            //If the object is a barrier or region, give it a default rotation
-            if (type == objectType.misc && parsedObject[1] == "barrierEditor" || parsedObject[1] == "regionEditor")
-                mapObject.Rotation = new Quaternion(0f, 0f, 0f, 1f);
-            //Otherwise set the rotation of the object
-            else
-                mapObject.Rotation = parseQuaternion(parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++], parsedObject[indexOfPosition++]);
-
-            //If the object is a region, intantiate a billboard and set it as a child of the region
+            //Check if the object is a region
             if (type == objectType.misc && parsedObject[1] == "regionEditor")
             {
+                //Give the region a default rotation
+                mapObject.Rotation = new Quaternion(0f, 0f, 0f, 1f);
+
+                //intantiate a billboard and set it as a child of the region
                 GameObject billboard = (GameObject)Instantiate(billboardPrefab);
                 billboard.GetComponent<TextMesh>().text = mapObject.RegionName;
                 billboard.transform.parent = newObject.transform;

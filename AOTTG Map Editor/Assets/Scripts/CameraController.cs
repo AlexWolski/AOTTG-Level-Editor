@@ -26,9 +26,9 @@ public class CameraController : MonoBehaviour
         RenderSettings.fog = false;
     }
 
-    //Get the EditorManager from the main object
     void Start()
     {
+        //Get the EditorManager from the main object
         editorManager = mainObject.GetComponent<EditorManager>();
     }
 
