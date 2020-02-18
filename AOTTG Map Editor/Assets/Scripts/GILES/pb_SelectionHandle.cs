@@ -13,7 +13,7 @@ namespace GILES
         private Camera _cam;
         private Camera cam { get { if (_cam == null) _cam = Camera.main; return _cam; } }
 
-        const int MAX_DISTANCE_TO_HANDLE = 15;
+        const int MAX_DISTANCE_TO_HANDLE = 10;
 
         static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
 
@@ -70,6 +70,12 @@ namespace GILES
             }
         }
 
+        //A reference to the main object
+        [SerializeField]
+        private GameObject mainObject;
+        //A reference to the editorManager on the main object
+        private EditorManager editorManager;
+
         //The current tool. Default is translate tool.
         private Tool tool = Tool.Translate;
 
@@ -81,7 +87,8 @@ namespace GILES
 
         private Vector2 mouseOrigin = Vector2.zero;
         public bool draggingHandle { get; private set; }
-        private int draggingAxes = 0;   // In how many directions is the handle able to move
+        //In how many directions is the handle able to move
+        private int draggingAxes = 0;
         private Vector3 scale = Vector3.one;
         private pb_Transform handleOrigin = pb_Transform.identity;
 
@@ -112,12 +119,12 @@ namespace GILES
         {
             _trs = null;
             _cam = null;
-            //base.Awake();
         }
 
         void Start()
         {
-            //pb_SceneCamera.AddOnCameraMoveDelegate(this.OnCameraMove);
+            //Get a reference to the editor manager on the main object
+            editorManager = mainObject.GetComponent<EditorManager>();
 
             //SetIsHidden(true);
             SetIsHidden(false);
@@ -184,8 +191,8 @@ namespace GILES
             //Rebuild the gizmo meshes and matricies when the camera moves
             OnCameraMove();
 
-            //Don't check for handle interactions if the handle is hidden
-            if (isHidden)
+            //Don't check for handle interactions if the handle is hidden or the editor is not in edit mode
+            if (isHidden || editorManager.currentMode != EditorMode.Edit)
                 return;
 
             //If the mouse is pressed, check if the handle was clicked
@@ -315,8 +322,8 @@ namespace GILES
         float axisAngle = 0f;
 
         /**
-            * Sets all the components of a vector to the component with the largest magnitude.
-            */
+        * Sets all the components of a vector to the component with the largest magnitude.
+        */
         Vector3 SetUniformMagnitude(Vector3 a)
         {
             float max = Mathf.Abs(a.x) > Mathf.Abs(a.y) && Mathf.Abs(a.x) > Mathf.Abs(a.z) ? a.x : Mathf.Abs(a.y) > Mathf.Abs(a.z) ? a.y : a.z;
@@ -462,7 +469,6 @@ namespace GILES
                 Vector2 forward = cam.WorldToScreenPoint((trs.position + (trs.forward + trs.forward * CAP_SIZE * 4f) * (sceneHandleSize * HandleSize)));
 
                 // First check if the plane boxes have been activated
-
                 Vector2 p_right = (cen + ((right - cen) * viewOctant.x) * HANDLE_BOX_SIZE);
                 Vector2 p_up = (cen + ((up - cen) * viewOctant.y) * HANDLE_BOX_SIZE);
                 Vector2 p_forward = (cen + ((forward - cen) * viewOctant.z) * HANDLE_BOX_SIZE);
@@ -559,6 +565,7 @@ namespace GILES
 
             return false;
         }
+
         #endregion
 
         #region Render
