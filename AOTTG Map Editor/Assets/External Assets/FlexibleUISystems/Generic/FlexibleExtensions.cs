@@ -10,6 +10,6 @@ public static class FlexibleExtensions
         trigger.AddListener(action);
 
         EventTrigger.Entry entry = new EventTrigger.Entry { callback = trigger, eventID = triggerType };
-        eventTrigger.delegates.Add(entry);
+        eventTrigger.triggers.Add(entry);
     }
 }

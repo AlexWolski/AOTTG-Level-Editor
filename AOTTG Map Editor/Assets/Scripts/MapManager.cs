@@ -11,15 +11,21 @@ public class MapManager : MonoBehaviour
     [SerializeField]
     private GameObject billboardPrefab;
 
+    //The two shaders applied to the RC objects
+    private Shader vertexColoredShader;
+    private Shader transparentShader;
+
     //A reference to object selection script
     private ObjectSelection objectSelection;
     //Determines if the small map bounds have been disabled or not
     private bool boundsDisabled;
 
-    //Get a reference to the ObjectSelection script
+    //Get a references to components out of the scope of the script
     void Start()
     {
         objectSelection = gameObject.GetComponent<ObjectSelection>();
+        vertexColoredShader = Shader.Find("Legacy Shaders/Diffuse");
+        transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
         StartCoroutine(testLoadMap());
     }
 
@@ -189,6 +195,20 @@ public class MapManager : MonoBehaviour
                 GameObject billboard = (GameObject)Instantiate(billboardPrefab);
                 billboard.GetComponent<TextMesh>().text = mapObject.RegionName;
                 billboard.transform.parent = newObject.transform;
+            }
+
+            //Replace the broken shader on the object with a working version
+            if (mapObject.Type == objectType.misc ||
+                mapObject.name.StartsWith("start") || mapObject.name.StartsWith("end") ||
+                mapObject.name.StartsWith("kill") || mapObject.name.StartsWith("checkpoint"))
+            {
+                foreach (MeshRenderer renderer in newObject.GetComponentsInChildren<MeshRenderer>())
+                    renderer.material.shader = transparentShader;
+            }
+            else
+            {
+                foreach (MeshRenderer renderer in newObject.GetComponentsInChildren<MeshRenderer>())
+                    renderer.material.shader = vertexColoredShader;
             }
 
             //If there is a flag to disable the boundries, disable them

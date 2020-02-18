@@ -32,12 +32,12 @@ public class AssetManager : MonoBehaviour
     //Instantiate the GameObject wtih the given name
     public static GameObject instantiateRcObject(string objectName)
     {
-        return (GameObject)Instantiate((GameObject)RCAssets.Load(objectName));
+        return (GameObject)Instantiate((GameObject)RCAssets.LoadAsset(objectName));
     }
 
     //Load a material
     public static Material loadRcMaterial(string materialName)
     {
-        return (Material)RCAssets.Load(materialName);
+        return (Material)RCAssets.LoadAsset(materialName);
     }
 }
