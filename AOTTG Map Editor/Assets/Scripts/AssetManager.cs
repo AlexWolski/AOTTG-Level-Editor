@@ -32,7 +32,28 @@ public class AssetManager : MonoBehaviour
     //Instantiate the GameObject wtih the given name
     public static GameObject instantiateRcObject(string objectName)
     {
-        return (GameObject)Instantiate((GameObject)RCAssets.LoadAsset(objectName));
+        //Instantiate the object
+        GameObject newObject = Instantiate((GameObject)RCAssets.LoadAsset(objectName));
+
+        //If the gameobject has a mesh, add the outline script
+        if (newObject.GetComponent<Renderer>() != null)
+            newObject.AddComponent<Outline>();
+
+        //Go through the children of the object and add the outline script if it has a mesh
+        foreach (Transform child in newObject.transform)
+        {
+            if (child.GetComponent<Renderer>() != null)
+            {
+                //Add the outline script to the object and give it a selectable tag
+                child.gameObject.AddComponent<Outline>();
+                child.gameObject.tag = "Selectable Object";
+            }
+        }
+
+        //Add a Map Object tag to the 
+        newObject.tag = "Map Object";
+
+        return newObject;
     }
 
     //Load a material

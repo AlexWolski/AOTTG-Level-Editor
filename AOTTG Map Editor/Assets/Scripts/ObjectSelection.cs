@@ -10,12 +10,6 @@ public class ObjectSelection : MonoBehaviour
     //A reference to the tool handle
     [SerializeField]
     private GameObject toolHandle;
-    //The shader that adds an outline to an object
-    [SerializeField]
-    private Shader outlineShader;
-    //The defailt shader
-    [SerializeField]
-    private  Shader defaultShader;
     //A reference to the editorManager on the main object
     private EditorManager editorManager;
     //A reference to the selectionHandle script on the tool handle
@@ -24,18 +18,12 @@ public class ObjectSelection : MonoBehaviour
     private List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
     private List<GameObject> selectedObjects = new List<GameObject>();
-    //A list containing the names of the GameObjects that shouldn't be outlined
-    private List<string> noOutline = new List<string>();
 
     //Get references from other scripts
     void Start()
     {
         editorManager = mainObject.GetComponent<EditorManager>();
         selectionHandle = toolHandle.GetComponent<pb_SelectionHandle>();
-
-        //Add the walls of the arenas to the noOutline list
-        noOutline.Add("Cube_Cube_Things_Floor.png");
-        noOutline.Add("Plane_Plane_Floor");
     }
 
     //Check for object selections after the pb_SelectionHandle script checks for handle interaction
@@ -178,22 +166,32 @@ public class ObjectSelection : MonoBehaviour
     //Add a green outline around a GameObject
     private void addOutline(GameObject objectToAddOutline)
     {
-        //Iterate through all of the children in the GameObject and apply a green outline
-        foreach (MeshRenderer renderer in objectToAddOutline.GetComponentsInChildren<MeshRenderer>())
-        {
-            //Only add the outline if the object isn't in the noOutline list
-            if (!noOutline.Contains(renderer.gameObject.name))
-            {
-                renderer.material.shader = outlineShader;
-                renderer.sharedMaterial.SetColor("_OutlineColor", Color.green);
-            }
-        }
+        //Get the outline script of the parent object
+        Outline outlineScript = objectToAddOutline.GetComponent<Outline>();
+
+        //If parent has an outline script, enable it
+        if (outlineScript != null)
+            outlineScript.enabled = true;
+
+        //Go through the children of the object and enable the outline if it is a selectable object
+        foreach (Transform child in objectToAddOutline.transform)
+            if (child.gameObject.tag == "Selectable Object")
+                child.GetComponent<Outline>().enabled = true;
     }
 
     //Remove the green outline shader
     private void removeOutline(GameObject objectToRemoveOutline)
     {
-        foreach (MeshRenderer renderer in objectToRemoveOutline.GetComponentsInChildren<MeshRenderer>())
-            renderer.material.shader = defaultShader;
+        //Get the outline script of the parent object
+        Outline outlineScript = objectToRemoveOutline.GetComponent<Outline>();
+
+        //If parent has an outline script, disable it
+        if (outlineScript != null)
+            outlineScript.enabled = false;
+
+        //Go through the children of the object and disable the outline if it is a selectable object
+        foreach (Transform child in objectToRemoveOutline.transform)
+            if (child.gameObject.tag == "Selectable Object")
+                child.GetComponent<Outline>().enabled = false;
     }
 }
