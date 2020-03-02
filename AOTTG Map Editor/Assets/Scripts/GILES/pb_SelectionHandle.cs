@@ -182,7 +182,8 @@ namespace GILES
 
         DragOrientation drag = new DragOrientation();
 
-        void LateUpdate()
+        //Using Update instead of LateUpdate so that the dragginHandle bool can update before ObjectSelection.cs call LateUpdate
+        void Update()
         {
             //Update the octant the camera is in relative to the tool handle
             previousOctant = viewOctant;
@@ -198,7 +199,6 @@ namespace GILES
             //If the mouse is pressed, check if the handle was clicked
             if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
                 OnMouseDown();
-
             //If the mouse is released, finish interacting with the handle
             if (Input.GetMouseButtonUp(0))
                 OnFinishHandleMovement();

@@ -7,17 +7,21 @@ public class ObjectSelection : MonoBehaviour
     //A reference to the main object
     [SerializeField]
     private GameObject mainObject;
+    //A reference to the editorManager on the main object
+    private EditorManager editorManager;
     //A reference to the tool handle
     [SerializeField]
     private GameObject toolHandle;
-    //A reference to the editorManager on the main object
-    private EditorManager editorManager;
     //A reference to the selectionHandle script on the tool handle
     private pb_SelectionHandle selectionHandle;
     //A list containing the objects that can be selected
     private List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
     private List<GameObject> selectedObjects = new List<GameObject>();
+    //The average point of all the selected objects
+    private Vector3 selecionAverage;
+    //The sum of the points of all the selected objects for calculating the average
+    private Vector3 pointTotal;
 
     //Get references from other scripts
     void Start()
@@ -110,6 +114,65 @@ public class ObjectSelection : MonoBehaviour
         return parentObject;
     }
 
+    //Add a point to the total average
+    private void addAveragePoint(Vector3 point)
+    {
+        //Add the point to the total and update the average
+        pointTotal += point;
+        selecionAverage = pointTotal / selectedObjects.Count;
+        toolHandle.transform.position = selecionAverage;
+
+        //If the tool handle is not active, activate it
+        toolHandle.SetActive(true);
+    }
+
+    //Add all selected objects to the total average
+    private void addAverageAll()
+    {
+        //Reset the total
+        pointTotal = Vector3.zero;
+
+        //Count up the total of all the objects
+        foreach (GameObject mapObject in selectedObjects)
+            pointTotal += mapObject.transform.position;
+
+        //Average the points
+        selecionAverage = pointTotal / selectableObjects.Count;
+
+        //If the tool handle is not active, activate it
+        toolHandle.SetActive(true);
+    }
+
+    //Remove a point from the total average
+    private void removeAveragePoint(Vector3 point)
+    {
+        //Subtract the point to the total and update the average
+        pointTotal -= point;
+
+        //If there are any objects selected, update the handle position
+        if (selectedObjects.Count != 0)
+        {
+            selecionAverage = pointTotal / selectedObjects.Count;
+            toolHandle.transform.position = selecionAverage;
+        }
+        //Otherwise, disable the tool handle
+        else
+        {
+            toolHandle.SetActive(false);
+        }
+    }
+
+    //Remove all selected objects from the total average
+    private void removeAverageAll()
+    {
+        //Reset the total and average
+        pointTotal = Vector3.zero;
+        selecionAverage = Vector3.zero;
+
+        //Hide the tool handle
+        toolHandle.SetActive(false);
+    }
+
     //Add an object to the list of selectable objects
     public void addSelectable(GameObject objectToAdd)
     {
@@ -124,6 +187,9 @@ public class ObjectSelection : MonoBehaviour
         //Select the object
         selectedObjects.Add(parentObject);
         addOutline(parentObject);
+
+        //Update the position of the tool handle
+        addAveragePoint(parentObject.transform.position);
     }
 
     public void selectAll()
@@ -134,6 +200,9 @@ public class ObjectSelection : MonoBehaviour
         //Add the outline to all of the objects
         foreach (GameObject selectedObject in selectedObjects)
             addOutline(selectedObject);
+
+        //Update the tool handle position
+        addAverageAll();
     }
 
     public void deselectObject(GameObject objectToDeselect)
@@ -144,6 +213,9 @@ public class ObjectSelection : MonoBehaviour
         //Deselect the object
         selectedObjects.Remove(parentObject);
         removeOutline(parentObject);
+
+        //Update the position of the tool handle
+        removeAveragePoint(parentObject.transform.position);
     }
 
     public void deselectAll()
@@ -154,6 +226,9 @@ public class ObjectSelection : MonoBehaviour
 
         //Deselect all objects by deleting the selected objects list
         selectedObjects = new List<GameObject>();
+
+        //Update the position of the tool handle
+        removeAverageAll();
     }
 
     //Resets both the selected and selectable object lists
@@ -161,6 +236,7 @@ public class ObjectSelection : MonoBehaviour
     {
         selectedObjects = new List<GameObject>();
         selectableObjects = new List<GameObject>();
+        removeAverageAll();
     }
 
     //Add a green outline around a GameObject
