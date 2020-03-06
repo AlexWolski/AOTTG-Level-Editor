@@ -36,6 +36,41 @@ public class ObjectSelection : MonoBehaviour
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
         if (editorManager.currentMode == EditorMode.Edit && !selectionHandle.draggingHandle)
             checkSelect();
+        //Displace the selected objects based on the tool handle
+        if(selectionHandle.draggingHandle)
+            updateSelection();
+    }
+
+    //Update the position, rotation, or scale of the object selections based on the tool handle
+    void updateSelection()
+    {
+        //Get the displacement vector of the tool handle
+        Vector3 displacement = selectionHandle.getDisplacement();
+
+        //Don't edit the objects if the tool handle wasn't moved
+        if (displacement != Vector3.zero)
+        {
+            //Iterate through all of the objects and displace them
+            foreach (GameObject selectedObject in selectedObjects)
+            {
+                //Change what to displace based on the handle tool mode
+                switch (selectionHandle.tool)
+                {
+                    case Tool.Translate:
+                        selectedObject.transform.position += displacement;
+                        break;
+
+                    case Tool.Rotate:
+                        Vector3 newRotation = selectedObject.transform.rotation.eulerAngles + displacement;
+                        selectedObject.transform.localRotation = Quaternion.Euler(newRotation);
+                        break;
+
+                    default:
+                        selectedObject.transform.localScale += displacement;
+                        break;
+                }
+            }
+        }
     }
 
     //Return a reference to the seleceted objects

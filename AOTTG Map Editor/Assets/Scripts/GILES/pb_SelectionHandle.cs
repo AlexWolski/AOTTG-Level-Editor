@@ -76,8 +76,13 @@ namespace GILES
         //A reference to the editorManager on the main object
         private EditorManager editorManager;
 
-        //The current tool. Default is translate tool.
-        private Tool tool = Tool.Translate;
+        //The current tool. Default is translate tool
+        public Tool tool { get; private set; } = Tool.Translate;
+        //The tool handle status for position, rotation, and scale
+        private Vector3 prevPosition = Vector3.zero;
+        private Vector3 prevRotation = Vector3.zero;
+        private Vector3 prevScale = Vector3.one;
+        private Vector3 scale = Vector3.one;
 
         private Mesh _coneRight, _coneUp, _coneForward;
 
@@ -89,7 +94,6 @@ namespace GILES
         public bool draggingHandle { get; private set; }
         //In how many directions is the handle able to move
         private int draggingAxes = 0;
-        private Vector3 scale = Vector3.one;
         private pb_Transform handleOrigin = pb_Transform.identity;
 
         public bool isHidden { get; private set; }
@@ -218,6 +222,9 @@ namespace GILES
             switch (tool)
             {
                 case Tool.Translate:
+                    //Save the old position
+                    prevPosition = trs.position;
+
                     //If the plane translate is selected, use the whole hit point as the position of the handle
                     if (draggingAxes > 1)
                         trs.position = planeHit - drag.offset;
@@ -237,6 +244,9 @@ namespace GILES
                     break;
 
                 case Tool.Rotate:
+                    //Save the old rotation
+                    prevRotation = trs.localRotation.eulerAngles;
+
                     Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
                     mouseOrigin = Input.mousePosition;
                     float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.axis, drag.cross, delta);
@@ -245,6 +255,9 @@ namespace GILES
                     break;
 
                 case Tool.Scale:
+                    //Save the old position
+                    prevScale = scale;
+
                     Vector3 v;
 
                     //If the entire object is being scaled, enlargen all three axis handles
@@ -267,6 +280,22 @@ namespace GILES
                 OnHandleMove(GetTransform());
 
             RebuildGizmoMatrix();
+        }
+
+        //Return the displacement of the tool handle
+        public Vector3 getDisplacement()
+        {
+            switch (tool)
+            {
+                case Tool.Translate:
+                    return trs.position - prevPosition;
+
+                case Tool.Rotate:
+                    return trs.localScale - prevRotation;
+
+                default:
+                    return scale - prevScale;
+            }
         }
 
         //Find the point the mouse is over on the plane the handle is moving along
