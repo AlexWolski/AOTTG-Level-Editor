@@ -13,12 +13,17 @@ public class ToolButtonManager : MonoBehaviour
         pressed,
         selected
     }
-
+    
+    //The objec the object selection script is attatched to
+    [SerializeField]
+    private GameObject mainObject;
     //The object the selection handle script is attatched to
     [SerializeField]
     private GameObject toolHandle;
     //The selection handle management script
     private pb_SelectionHandle handleUtility;
+    //The object selection managemetn script
+    private ObjectSelection selectionUtility;
 
     //The images used for the button
     [SerializeField]
@@ -46,8 +51,9 @@ public class ToolButtonManager : MonoBehaviour
     //Initialize data members and set up the triggers
     void Awake()
     {
-        //Get the selection handle script from the tool handle object
+        //Get references to required scripts
         handleUtility = toolHandle.GetComponent<pb_SelectionHandle>();
+        selectionUtility = mainObject.GetComponent<ObjectSelection>();
 
         //If this button is the one to be selected by default, select it
         if (currentState == buttonState.selected)
@@ -123,5 +129,6 @@ public class ToolButtonManager : MonoBehaviour
     private void action()
     {
         handleUtility.SetTool(toolType);
+        selectionUtility.resetToolHandleRotation();
     }
 }

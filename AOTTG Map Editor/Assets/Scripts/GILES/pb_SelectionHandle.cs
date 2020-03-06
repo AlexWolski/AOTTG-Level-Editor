@@ -137,7 +137,7 @@ namespace GILES
         public void SetTRS(Vector3 position, Quaternion rotation, Vector3 scale)
         {
             trs.position = position;
-            trs.localRotation = rotation;
+            trs.rotation = rotation;
             trs.localScale = scale;
 
             RebuildGizmoMatrix();
@@ -245,13 +245,13 @@ namespace GILES
 
                 case Tool.Rotate:
                     //Save the old rotation
-                    prevRotation = trs.localRotation.eulerAngles;
+                    prevRotation = trs.rotation.eulerAngles;
 
                     Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
                     mouseOrigin = Input.mousePosition;
                     float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.axis, drag.cross, delta);
                     axisAngle += delta.magnitude * sign;
-                    trs.localRotation = Quaternion.AngleAxis(axisAngle, drag.axis) * handleOrigin.rotation;// trs.localRotation;
+                    trs.rotation = Quaternion.AngleAxis(axisAngle, drag.axis) * handleOrigin.rotation;// trs.localRotation;
                     break;
 
                 case Tool.Scale:
@@ -291,11 +291,17 @@ namespace GILES
                     return trs.position - prevPosition;
 
                 case Tool.Rotate:
-                    return trs.localScale - prevRotation;
+                    return trs.rotation.eulerAngles - prevRotation;
 
                 default:
                     return scale - prevScale;
             }
+        }
+
+        //Set the rotation of the tool handle based on the context and tool
+        public void setRotation(Quaternion newRotation)
+        {
+            trs.rotation = newRotation;
         }
 
         //Find the point the mouse is over on the plane the handle is moving along
@@ -473,7 +479,7 @@ namespace GILES
         {
             return new pb_Transform(
                 trs.position,
-                trs.localRotation,
+                trs.rotation,
                 scale);
         }
 

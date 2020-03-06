@@ -19,7 +19,7 @@ public class ObjectSelection : MonoBehaviour
     //A list containing the objects currently selected
     private List<GameObject> selectedObjects = new List<GameObject>();
     //The average point of all the selected objects
-    private Vector3 selecionAverage;
+    private Vector3 selectionAverage;
     //The sum of the points of all the selected objects for calculating the average
     private Vector3 pointTotal;
 
@@ -61,8 +61,22 @@ public class ObjectSelection : MonoBehaviour
                         break;
 
                     case Tool.Rotate:
-                        Vector3 newRotation = selectedObject.transform.rotation.eulerAngles + displacement;
-                        selectedObject.transform.localRotation = Quaternion.Euler(newRotation);
+                        //If only one object is selected, rotate it locally
+                        if (selectedObjects.Count == 1)
+                        {
+                            Vector3 newRotation = selectedObject.transform.rotation.eulerAngles + displacement;
+                            selectedObject.transform.rotation = Quaternion.Euler(newRotation);
+                        }
+                        //Otherwise, rotate it around the average point
+                        else
+                        {
+                            if(displacement.x != 0)
+                                selectedObject.transform.RotateAround(selectionAverage, Vector3.right, displacement.x);
+                            else if(displacement.y != 0)
+                                selectedObject.transform.RotateAround(selectionAverage, Vector3.up, displacement.y);
+                            else
+                                selectedObject.transform.RotateAround(selectionAverage, Vector3.forward, displacement.z);
+                        }
                         break;
 
                     default:
@@ -154,8 +168,8 @@ public class ObjectSelection : MonoBehaviour
     {
         //Add the point to the total and update the average
         pointTotal += point;
-        selecionAverage = pointTotal / selectedObjects.Count;
-        toolHandle.transform.position = selecionAverage;
+        selectionAverage = pointTotal / selectedObjects.Count;
+        toolHandle.transform.position = selectionAverage;
 
         //If the tool handle is not active, activate it
         toolHandle.SetActive(true);
@@ -172,7 +186,7 @@ public class ObjectSelection : MonoBehaviour
             pointTotal += mapObject.transform.position;
 
         //Average the points
-        selecionAverage = pointTotal / selectableObjects.Count;
+        selectionAverage = pointTotal / selectableObjects.Count;
 
         //If the tool handle is not active, activate it
         toolHandle.SetActive(true);
@@ -187,8 +201,8 @@ public class ObjectSelection : MonoBehaviour
         //If there are any objects selected, update the handle position
         if (selectedObjects.Count != 0)
         {
-            selecionAverage = pointTotal / selectedObjects.Count;
-            toolHandle.transform.position = selecionAverage;
+            selectionAverage = pointTotal / selectedObjects.Count;
+            toolHandle.transform.position = selectionAverage;
         }
         //Otherwise, disable the tool handle
         else
@@ -202,7 +216,7 @@ public class ObjectSelection : MonoBehaviour
     {
         //Reset the total and average
         pointTotal = Vector3.zero;
-        selecionAverage = Vector3.zero;
+        selectionAverage = Vector3.zero;
 
         //Hide the tool handle
         toolHandle.SetActive(false);
@@ -225,6 +239,8 @@ public class ObjectSelection : MonoBehaviour
 
         //Update the position of the tool handle
         addAveragePoint(parentObject.transform.position);
+        //Reset the rotation on the tool handle
+        resetToolHandleRotation();
     }
 
     public void selectAll()
@@ -238,6 +254,8 @@ public class ObjectSelection : MonoBehaviour
 
         //Update the tool handle position
         addAverageAll();
+        //Reset the rotation on the tool handle
+        resetToolHandleRotation(); ;
     }
 
     public void deselectObject(GameObject objectToDeselect)
@@ -251,6 +269,8 @@ public class ObjectSelection : MonoBehaviour
 
         //Update the position of the tool handle
         removeAveragePoint(parentObject.transform.position);
+        //Reset the rotation on the tool handle
+        resetToolHandleRotation();
     }
 
     public void deselectAll()
@@ -264,6 +284,19 @@ public class ObjectSelection : MonoBehaviour
 
         //Update the position of the tool handle
         removeAverageAll();
+        //Reset the rotation on the tool handle
+        resetToolHandleRotation();
+    }
+
+    //Set the rotation of the tool handle based on how many objects are selected
+    public void resetToolHandleRotation()
+    {
+        //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
+        if (selectionHandle.tool == Tool.Rotate && selectedObjects.Count == 1)
+            selectionHandle.setRotation(selectedObjects[0].transform.rotation);
+        //Otherwise reset the rotation
+        else
+            selectionHandle.setRotation(Quaternion.Euler(Vector3.up));
     }
 
     //Resets both the selected and selectable object lists
