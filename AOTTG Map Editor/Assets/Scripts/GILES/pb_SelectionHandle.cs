@@ -220,6 +220,8 @@ namespace GILES
         {
             //Get the point on the movement plane the cursor is over
             Vector3 planeHit = getMovementPlaneHit();
+            //The plane hit relative to the local coordinate system of the tool handle
+            Vector3 localPlaneHit;
 
             //Set the starting point of the drag to the position of the handle
             drag.origin = trs.position;
@@ -236,8 +238,8 @@ namespace GILES
                     //If only one axis is selected, use the corresponding component of the hit point in the position of the handle
                     else
                     {
-                        //Convert the plane hit to the local coordinates of the tool handle, accounting for the offset
-                        Vector3 localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
+                        //Convert the plane hit to local coordinates
+                        localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
 
                         //Erase the unneeded components of the displacement
                         for (int axis = 0; axis < 3; axis++)
@@ -262,21 +264,39 @@ namespace GILES
                 case Tool.Scale:
                     //Save the old position
                     prevScale = scale;
+                    //The amount by which the scale will change
+                    Vector3 scaleDisplacement;
 
-                    Vector3 v;
+                    //Convert the plane hit to local coordinates
+                    localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
+
+                    ////Use the magnitude of the displacement vector as the scaling factor
+                    //float scaleFactor = localPlaneHit.magnitude;
+
+                    ////Determine if the scaling factor should be positive or negative
+                    //if (drag.localAxis.x != 0 && localPlaneHit.x < 0 ||
+                    //    drag.localAxis.y != 0 && localPlaneHit.y < 0 ||
+                    //    drag.localAxis.z != 0 && localPlaneHit.z < 0)
+                    //        scaleFactor *= -1;
+
+                    float scaleFactor;
+
+                    if (drag.localAxis.x != 0)
+                        scaleFactor = localPlaneHit.x;
+                    else if (drag.localAxis.y != 0)
+                        scaleFactor = localPlaneHit.y;
+                    else
+                        scaleFactor = localPlaneHit.z;
 
                     //If the entire object is being scaled, enlargen all three axis handles
                     if (draggingAxes > 1)
-                        v = SetUniformMagnitude(((planeHit - drag.offset) - trs.position));
+                        scaleDisplacement = new Vector3(scaleFactor, scaleFactor, scaleFactor);
                     //Otherwise enlargen the axis handle being iteracted with
                     else
-                    {
-                        //v = Quaternion.Inverse(handleOrigin.rotation) * ((planeHit - drag.offset) - trs.position);
-                        v = new Vector3(1, 2, 3);
-                    }
+                        scaleDisplacement = drag.localAxis * scaleFactor;
 
-                    v += Vector3.one;
-                    scale = v;
+                    //
+                    scale = scaleDisplacement + Vector3.one;
                     RebuildGizmoMesh(scale);
                     break;
             }
@@ -372,20 +392,6 @@ namespace GILES
         }
 
         float axisAngle = 0f;
-
-        /**
-        * Sets all the components of a vector to the component with the largest magnitude.
-        */
-        Vector3 SetUniformMagnitude(Vector3 a)
-        {
-            float max = Mathf.Abs(a.x) > Mathf.Abs(a.y) && Mathf.Abs(a.x) > Mathf.Abs(a.z) ? a.x : Mathf.Abs(a.y) > Mathf.Abs(a.z) ? a.y : a.z;
-
-            a.x = max;
-            a.y = max;
-            a.z = max;
-
-            return a;
-        }
 
         void OnMouseDown()
         {
