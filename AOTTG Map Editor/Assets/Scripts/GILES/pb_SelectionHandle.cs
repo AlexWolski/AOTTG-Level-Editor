@@ -80,9 +80,11 @@ namespace GILES
         public Tool tool { get; private set; } = Tool.Translate;
         //The tool handle status for position, rotation, and scale
         private Vector3 prevPosition = Vector3.zero;
-        private Vector3 prevRotation = Vector3.zero;
+        private Quaternion prevRotation = Quaternion.identity;
         private Vector3 prevScale = Vector3.one;
         private Vector3 scale = Vector3.one;
+        //Determines if the rotation handle was moved in the positive or negative direction
+        private float sign;
 
         private Mesh _coneRight, _coneUp, _coneForward;
 
@@ -248,11 +250,11 @@ namespace GILES
 
                 case Tool.Rotate:
                     //Save the old rotation
-                    prevRotation = trs.rotation.eulerAngles;
+                    prevRotation = trs.rotation;
 
                     Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
                     mouseOrigin = Input.mousePosition;
-                    float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.worldAxis, drag.cross, delta);
+                    sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.worldAxis, drag.cross, delta);
                     axisAngle += delta.magnitude * sign;
                     trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;// trs.localRotation;
                     break;
@@ -294,7 +296,17 @@ namespace GILES
                     return trs.position - prevPosition;
 
                 case Tool.Rotate:
-                    return trs.rotation.eulerAngles - prevRotation;
+                    //Find the angle between the two quaternions and multiply it by the sign of the movement
+                    float angle = Quaternion.Angle(prevRotation, trs.rotation) * sign;
+
+                    if (drag.localAxis.x != 0)
+                        return new Vector3(angle, 0, 0);
+                    else if (drag.localAxis.y != 0)
+                        return new Vector3(0, angle, 0);
+                    else
+                        return new Vector3(0, 0, angle);
+
+                    //return Vector3.Angle(prevRotation, trs.rotation.eulerAngles);
 
                 default:
                     return scale - prevScale;

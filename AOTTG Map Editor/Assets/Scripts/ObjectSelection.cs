@@ -61,28 +61,39 @@ public class ObjectSelection : MonoBehaviour
                         break;
 
                     case Tool.Rotate:
+                        //The poit to rotate around
+                        Vector3 pivot;
+
                         //If only one object is selected, rotate it locally
                         if (selectedObjects.Count == 1)
-                        {
-                            Vector3 newRotation = selectedObject.transform.rotation.eulerAngles + displacement;
-                            selectedObject.transform.rotation = Quaternion.Euler(newRotation);
-                        }
+                            pivot = selectedObject.transform.position;
                         //Otherwise, rotate it around the average point
                         else
-                        {
-                            if(displacement.x != 0)
-                                selectedObject.transform.RotateAround(selectionAverage, Vector3.right, displacement.x);
-                            else if(displacement.y != 0)
-                                selectedObject.transform.RotateAround(selectionAverage, Vector3.up, displacement.y);
-                            else
-                                selectedObject.transform.RotateAround(selectionAverage, Vector3.forward, displacement.z);
-                        }
+                            pivot = selectionAverage;
+
+                        //Find the corresponding axis and rotate around it
+                        if(displacement.x != 0)
+                            selectedObject.transform.RotateAround(pivot, toolHandle.transform.right, displacement.x);
+                        else if (displacement.y != 0)
+                            selectedObject.transform.RotateAround(pivot, toolHandle.transform.up, displacement.y);
+                        else
+                            selectedObject.transform.RotateAround(pivot, toolHandle.transform.forward, displacement.z);
+
                         break;
 
                     default:
                         selectedObject.transform.localScale += displacement;
                         break;
                 }
+            }
+
+            //Update the selection average
+            switch (selectionHandle.tool)
+            {
+                case Tool.Translate:
+                    pointTotal += displacement * selectedObjects.Count;
+                    selectionAverage += displacement;
+                    break;
             }
         }
     }

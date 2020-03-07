@@ -187,7 +187,7 @@ public class MapManager : MonoBehaviour
             if (type == objectType.misc && parsedObject[1] == "regionEditor")
             {
                 //Give the region a default rotation
-                mapObject.Rotation = new Quaternion(0f, 0f, 0f, 1f);
+                mapObject.Rotation = Quaternion.identity;
 
                 //intantiate a billboard and set it as a child of the region
                 GameObject billboard = (GameObject)Instantiate(billboardPrefab);
