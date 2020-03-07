@@ -167,7 +167,10 @@ namespace GILES
         class DragOrientation
         {
             public Vector3 origin;
-            public Vector3 axis;
+            //The primary axis the handle is being dragged along in local coordiantes (x, y, or z)
+            public Vector3 localAxis;
+            //The arbitrary axis the handle is being dragged along in world coordinates
+            public Vector3 worldAxis;
             public Vector3 mouse;
             public Vector3 cross;
             public Vector3 offset;
@@ -176,7 +179,7 @@ namespace GILES
             public DragOrientation()
             {
                 origin = Vector3.zero;
-                axis = Vector3.zero;
+                worldAxis = Vector3.zero;
                 mouse = Vector3.zero;
                 cross = Vector3.zero;
                 offset = Vector3.zero;
@@ -231,15 +234,15 @@ namespace GILES
                     //If only one axis is selected, use the corresponding component of the hit point in the position of the handle
                     else
                     {
-                        //Get the component of the ray hit position corresponding to the axis of movement
-                        Vector3 positionAlongAxis = new Vector3(drag.axis.x * planeHit.x, drag.axis.y * planeHit.y, drag.axis.z * planeHit.z);
+                        //Convert the plane hit to the local coordinates of the tool handle, accounting for the offset
+                        Vector3 localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
 
-                        if(positionAlongAxis.x != 0)
-                            trs.position = new Vector3(positionAlongAxis.x, trs.position.y, trs.position.z) - drag.offset;
-                        if (positionAlongAxis.y != 0)
-                            trs.position = new Vector3(trs.position.x, positionAlongAxis.y, trs.position.z) - drag.offset;
-                        if (positionAlongAxis.z != 0)
-                            trs.position = new Vector3(trs.position.x, trs.position.y, positionAlongAxis.z) - drag.offset;
+                        //Erase the unneeded components of the displacement
+                        for (int axis = 0; axis < 3; axis++)
+                            localPlaneHit[axis] *= drag.localAxis[axis];
+
+                        //Translate the tool handle so it matches the position of the plane hit
+                        trs.Translate(localPlaneHit, Space.Self);
                     }
                     break;
 
@@ -249,9 +252,9 @@ namespace GILES
 
                     Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
                     mouseOrigin = Input.mousePosition;
-                    float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.axis, drag.cross, delta);
+                    float sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.worldAxis, drag.cross, delta);
                     axisAngle += delta.magnitude * sign;
-                    trs.rotation = Quaternion.AngleAxis(axisAngle, drag.axis) * handleOrigin.rotation;// trs.localRotation;
+                    trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;// trs.localRotation;
                     break;
 
                 case Tool.Scale:
@@ -298,11 +301,13 @@ namespace GILES
             }
         }
 
-        //Set the rotation of the tool handle based on the context and tool
-        public void setRotation(Quaternion newRotation)
-        {
-            trs.rotation = newRotation;
-        }
+        //Public getters and setters for the variables of the handle transform component
+        public Vector3 getPosition() { return trs.position; }
+        public void setPosition(Vector3 newPosition) { trs.position = newPosition; }
+        public Quaternion getRotation() { return trs.rotation; }
+        public void setRotation(Quaternion newRotation) { trs.rotation = newRotation; }
+        public Vector3 getScale() { return trs.localScale; }
+        public void setScale(Vector3 newScale) { trs.localScale = newScale; }
 
         //Find the point the mouse is over on the plane the handle is moving along
         private Vector3 getMovementPlaneHit()
@@ -321,14 +326,14 @@ namespace GILES
             //Otherwise, determine the plane to use based on the camera angle
             else
             {
-                //Get the rotation of the camera in Euler angles
+                //Get the rotation of the camera in Euler angles relative to the handle rotation
                 Vector3 camRot = cam.transform.rotation.eulerAngles;
 
                 //If the drag axis is x or z and the x angle is 45 degrees away from default, use the y axis
-                if (drag.axis.y == 0 && (45f < camRot.x && camRot.x < 90f || 270f < camRot.x && camRot.x < 315f))
+                if (drag.localAxis.y == 0 && (45f < camRot.x && camRot.x < 90f || 270f < camRot.x && camRot.x < 315f))
                     movementPlane.SetNormalAndPosition(trs.up.normalized, trs.position);
                 //If the drag axis is the y, use either the x or z plane based on the camera's angle
-                else if (drag.axis.y != 0)
+                else if (drag.localAxis.y != 0)
                 {
                     if (45 < camRot.y && camRot.y < 135 ||
                         225 < camRot.y && camRot.y < 315)
@@ -339,7 +344,7 @@ namespace GILES
                 //Otherwise use the plane of the axis being dragged
                 else
                 {
-                    if (drag.axis.x != 0)
+                    if (drag.localAxis.x != 0)
                         movementPlane.SetNormalAndPosition(trs.forward.normalized, trs.position);
                     else
                         movementPlane.SetNormalAndPosition(trs.right.normalized, trs.position);
@@ -385,7 +390,9 @@ namespace GILES
             mouseOrigin = Input.mousePosition;
             handleOrigin.SetTRS(trs);
 
-            drag.axis = Vector3.zero;
+            //Reset the axes being dragged
+            drag.worldAxis = Vector3.zero;
+            drag.localAxis = Vector3.zero;
             draggingAxes = 0;
 
             if (draggingHandle)
@@ -395,7 +402,8 @@ namespace GILES
                 if ((plane & Axis.X) == Axis.X)
                 {
                     draggingAxes++;
-                    drag.axis = trs.right;
+                    drag.worldAxis = trs.right.normalized;
+                    drag.localAxis = Vector3.right;
                     drag.plane.SetNormalAndPosition(trs.right.normalized, trs.position);
                 }
 
@@ -403,25 +411,29 @@ namespace GILES
                 {
                     draggingAxes++;
                     if (draggingAxes > 1)
-                        drag.plane.SetNormalAndPosition(Vector3.Cross(drag.axis, trs.up).normalized, trs.position);
+                        drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.up).normalized, trs.position);
                     else
                         drag.plane.SetNormalAndPosition(trs.up.normalized, trs.position);
-                    drag.axis += trs.up;
+
+                    drag.worldAxis += trs.up.normalized;
+                    drag.localAxis += Vector3.up;
                 }
 
                 if ((plane & Axis.Z) == Axis.Z)
                 {
                     draggingAxes++;
                     if (draggingAxes > 1)
-                        drag.plane.SetNormalAndPosition(Vector3.Cross(drag.axis, trs.forward).normalized, trs.position);
+                        drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.forward).normalized, trs.position);
                     else
                         drag.plane.SetNormalAndPosition(trs.forward.normalized, trs.position);
-                    drag.axis += trs.forward;
+
+                    drag.worldAxis += trs.forward.normalized;
+                    drag.localAxis += Vector3.forward;
                 }
 
                 if (draggingAxes < 2)
                 {
-                    if (pb_HandleUtility.PointOnLine(new Ray(trs.position, drag.axis), ray, out a, out b))
+                    if (pb_HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
                         drag.offset = a - trs.position;
 
                     float hit = 0f;
@@ -429,7 +441,7 @@ namespace GILES
                     if (drag.plane.Raycast(ray, out hit))
                     {
                         drag.mouse = (ray.GetPoint(hit) - trs.position).normalized;
-                        drag.cross = Vector3.Cross(drag.axis, drag.mouse);
+                        drag.cross = Vector3.Cross(drag.worldAxis, drag.mouse);
                     }
                 }
                 else
@@ -440,7 +452,7 @@ namespace GILES
                     {
                         drag.offset = ray.GetPoint(hit) - trs.position;
                         drag.mouse = (ray.GetPoint(hit) - trs.position).normalized;
-                        drag.cross = Vector3.Cross(drag.axis, drag.mouse);
+                        drag.cross = Vector3.Cross(drag.worldAxis, drag.mouse);
                     }
                 }
 

@@ -187,6 +187,7 @@ public class ObjectSelection : MonoBehaviour
 
         //Average the points
         selectionAverage = pointTotal / selectableObjects.Count;
+        toolHandle.transform.position = selectionAverage;
 
         //If the tool handle is not active, activate it
         toolHandle.SetActive(true);
