@@ -28,6 +28,8 @@ public class MapManager : MonoBehaviour
     private Hashtable objectScriptTable = new Hashtable();
     //Determines if the small map bounds have been disabled or not
     private bool boundsDisabled;
+    //A list of objects cloned from the copied selection
+    private List<GameObject> copiedObjects;
     #endregion
 
     #region Initialization
@@ -51,6 +53,45 @@ public class MapManager : MonoBehaviour
             //Check delete keys
             if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
                 deleteSelection();
+            //Check for shortcuts that require the control key to be pressed down
+            else if(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
+            {
+                //Copy a selection by cloning all of the selected objects and storing them
+                if(Input.GetKeyDown(KeyCode.C))
+                {
+                    //Reset the old list of copied objects
+                    copiedObjects = new List<GameObject>();
+                    //Get a reference to the list of selected objects
+                    ref List<GameObject> selectedObjects = ref selectionUtility.getSelectedObjects();
+                    //Temporary GameObject to disable cloned objects before storing them
+                    GameObject objectClone;
+
+                    //Clone each selected object and save it in the copied objects list
+                    foreach (GameObject mapObject in selectedObjects)
+                    {
+                        objectClone = Instantiate(mapObject);
+                        objectClone.SetActive(false);
+                        copiedObjects.Add(objectClone);
+                    }
+                }
+                //Paste the copied objects by instantiating them
+                else if(Input.GetKeyDown(KeyCode.V))
+                {
+                    //Temporary GameObject to enable cloned objects before storing them
+                    GameObject objectClone;
+                    //Reset the current selection
+                    selectionUtility.deselectAll();
+
+                    //Instantiate all of the copied objects and select them
+                    foreach (GameObject mapObject in copiedObjects)
+                    {
+                        objectClone = Instantiate(mapObject);
+                        objectClone.SetActive(true);
+                        addObjectToMap(objectClone);
+                        selectionUtility.selectObject(objectClone);
+                    }
+                }
+            }
         }
     }
 
@@ -62,20 +103,14 @@ public class MapManager : MonoBehaviour
         ref List<GameObject> selectedObjects = ref selectionUtility.removeSelected();
 
         //Remove each selected object from the script table and destroy the object
-        foreach (GameObject gameObject in selectedObjects)
+        foreach (GameObject mapObject in selectedObjects)
         {
-            objectScriptTable.Remove(gameObject);
-            destroyObject(gameObject);
+            objectScriptTable.Remove(mapObject);
+            destroyObject(mapObject);
         }
 
         //Reset the selected objects lsit
         selectedObjects = new List<GameObject>();
-    }
-
-    //
-    private void changeTool()
-    {
-        
     }
     #endregion
 

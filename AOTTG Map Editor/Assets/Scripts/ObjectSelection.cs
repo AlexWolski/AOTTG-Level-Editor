@@ -261,8 +261,8 @@ public class ObjectSelection : MonoBehaviour
         else
         {
             //Remove all of the selected objects from the selectable list
-            foreach (GameObject gameObject in selectedObjects)
-                selectableObjects.Remove(gameObject);
+            foreach (GameObject mapObject in selectedObjects)
+                selectableObjects.Remove(mapObject);
         }
 
         //Reset the selection average
