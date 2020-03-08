@@ -99,16 +99,24 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Return a reference to the seleceted objects
-    public List<GameObject> getSelectedObjects()
+    public ref List<GameObject> getSelectedObjects()
     {
-        return selectedObjects;
+        return ref selectedObjects;
     }
 
     //Test if any objects were clicked
     private void checkSelect()
     {
+        //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            if (selectedObjects.Count > 0)
+                deselectAll();
+            else
+                selectAll();
+        }
         //If the mouse was clicked, check if any objects were selected
-        if (Input.GetMouseButtonDown(0))
+        else if (Input.GetMouseButtonDown(0))
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -142,15 +150,6 @@ public class ObjectSelection : MonoBehaviour
                     }
                 }
             }
-        }
-
-        //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
-        else if(Input.GetKeyDown(KeyCode.A))
-        {
-            if (selectedObjects.Count > 0)
-                deselectAll();
-            else
-                selectAll();
         }
     }
 
@@ -249,6 +248,28 @@ public class ObjectSelection : MonoBehaviour
 
         //Remove the object from the selectable objects list
         selectableObjects.Remove(getParent(objectToAdd));
+    }
+
+    //Remove any selected objects from both the selected and selectable objects lists
+    //Returns a the selected objects list. Caller is expected to reset it after use
+    public ref List<GameObject> removeSelected()
+    {
+        //If all of the objects are selected, reset just the selectable objects list
+        if (selectedObjects.Count == selectableObjects.Count)
+            selectableObjects = new List<GameObject>();
+        //If a subset of objects are selected, remove just the selected objects from the selectable list
+        else
+        {
+            //Remove all of the selected objects from the selectable list
+            foreach (GameObject gameObject in selectedObjects)
+                selectableObjects.Remove(gameObject);
+        }
+
+        //Reset the selection average
+        removeAverageAll();
+
+        //Return a reference to the selected objects list
+        return ref selectedObjects;
     }
 
     public void selectObject(GameObject objectToSelect)

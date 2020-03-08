@@ -300,6 +300,7 @@ public class MapObject : MonoBehaviour
         //The exported object script. Every script starts with the type and name
         string objectScript = FullTypeName + "," + ObjectName;
 
+        //Add properties to the script based on what type of object it is
         if (Type == objectType.photon && ObjectName.StartsWith("spawn"))
             objectScript += "," + SpawnTimer + "," + boolToString(EndlessSpawn);
         else if (ObjectName.StartsWith("region"))
@@ -309,6 +310,7 @@ public class MapObject : MonoBehaviour
         else if (Type == objectType.racing || Type == objectType.misc)
             objectScript += "," + vector3ToString(Scale);
 
+        //Add the position and rotation to all objects. Scale the position up by a factor of 10
         objectScript += "," + vector3ToString(Position * 10) + "," + quaternionToString(Rotation) + ";";
 
         return objectScript;

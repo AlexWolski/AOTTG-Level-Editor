@@ -1,10 +1,16 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 public class MapManager : MonoBehaviour
 {
     #region Data Members
+    //A reference to the main object
+    [SerializeField]
+    private GameObject mainObject;
+    //A reference to the editorManager on the main object
+    private EditorManager editorManager;
     //A reference to the empty map to add objects to
     [SerializeField]
     private GameObject mapRoot;
@@ -28,10 +34,42 @@ public class MapManager : MonoBehaviour
     //Get a references to components out of the scope of the script
     void Start()
     {
+        editorManager = mainObject.GetComponent<EditorManager>();
         objectSelection = gameObject.GetComponent<ObjectSelection>();
         vertexColoredShader = Shader.Find("Vertex Colored");
         transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
         StartCoroutine(testLoadMap());
+    }
+    #endregion
+
+    #region Update
+    private void Update()
+    {
+        //If the game is in edit mode, check for keyboard shortcut inputs
+        if (editorManager.currentMode == EditorMode.Edit)
+        {
+            //Check delete keys
+            if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
+                deleteSelection();
+        }
+    }
+
+    //Delete the selected objects
+    //To-Do: store deleted objects so the delete can be undone
+    private void deleteSelection()
+    {
+        //Get a reference to the selected objects list
+        ref List<GameObject> selectedObjects = ref objectSelection.removeSelected();
+
+        //Remove each selected object from the script table and destroy the object
+        foreach (GameObject gameObject in selectedObjects)
+        {
+            objectScriptTable.Remove(gameObject);
+            destroyObject(gameObject);
+        }
+
+        //Reset the selected objects lsit
+        selectedObjects = new List<GameObject>();
     }
     #endregion
 
