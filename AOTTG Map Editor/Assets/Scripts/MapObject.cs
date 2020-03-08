@@ -4,74 +4,70 @@ using System;
 public class MapObject : MonoBehaviour
 {
     #region Data Members
-    //The type of the object
-    private objectType type;
-    //The actual type name specified in the map script
-    private string fullType;
-    //The specific object
-    private string objectName;
-    //The name of the region if the object is a region
-    private string regionName;
-    //The amount of time until the titan spawns
-    private float spawnTimer;
-    //Determines if the the spawner will continue to spawn titans
-    private bool endlessSpawn;
-    //The name of the texture applied to the object
-    private string texture;
-    //The scale factor of the object from its default size
-    private Vector3 scale;
-    //How many times the texture will repeat in the x and y directions
-    private Vector2 tiling;
-    //Determines if colored materials are enabled
-    private bool colorEnabled;
-    //The color of the object, including opacity
-    private Color color;
+    //The underlying values for properties with complex setters
+    //These extra fields are required due to a Unity bug
+    private string textureValue;
+    private Vector3 scaleValue;
+    private Vector2 tilingValue;
+    private Color colorValue;
+
+    //The number of properties the object has
+    int propertyNumber = 0;
     #endregion
 
     #region Properties
-    //Properties for getting and setting the data members
+    //The type of the object
     public objectType Type { get; set; }
+    //The actual type name specified in the map script
     public string FullTypeName { get; set; }
+    //The specific object
     public string ObjectName { get; set; }
+    //The name of the region if the object is a region
     public string RegionName { get; set; }
+    //The amount of time until the titan spawns
     public float SpawnTimer { get; set; }
+    //Determines if the the spawner will continue to spawn titans
     public bool EndlessSpawn { get; set; }
-
-    public string Texture
-    {
-        get { return texture; }
-        set { texture = value; setTexture(value); }
-    }
-
-    public Vector3 Scale
-    {
-        get { return scale; }
-        set { scale = value; setScale(value); }
-    }
-
-    public Vector2 Tiling
-    {
-        get { return tiling; }
-        set { tiling = value; setTiling(value); }
-    }
-
+    //Determines if colored materials are enabled
     public bool ColorEnabled { get; set; }
 
+    //The name of the texture applied to the object
+    public string Texture
+    {
+        get { return textureValue; }
+        set { textureValue = value; setTexture(value); }
+    }
+
+    //The scale factor of the object from its default size
+    public Vector3 Scale
+    {
+        get { return scaleValue; }
+        set { scaleValue = value; setScale(value); }
+    }
+
+    //How many times the texture will repeat in the x and y directions
+    public Vector2 Tiling
+    {
+        get { return tilingValue; }
+        set { tilingValue = value; setTiling(value); }
+    }
+
+    //The color of the object, including opacity
     public Color Color
     {
-        get { return color; }
-        set { color = value; setColor(color); }
+        get { return colorValue; }
+        set { colorValue = value; setColor(colorValue); }
     }
 
     public Vector3 Position
     {
-        get { return gameObject.transform.position; }
+        get { return transform.position; }
         set { setPosition(value); }
     }
 
     public Quaternion Rotation
     {
-        get { return gameObject.transform.rotation; }
+        get { return transform.rotation; }
         set { setRotation(value); }
     }
     #endregion
@@ -141,7 +137,7 @@ public class MapObject : MonoBehaviour
     }
     #endregion
 
-    #region Utility Methods
+    #region Parsing Utility Methods
     //A set of methods for parsing parts of an object script
 
     //Return the objectType assosiated with the given string
@@ -187,66 +183,135 @@ public class MapObject : MonoBehaviour
     }
     #endregion
 
+    #region Exporting Utility Methods
+    //Convert a boolean to the string 1 or 0
+    private string boolToString(bool boolToStringify)
+    {
+        if (boolToStringify)
+            return "1";
+
+        return "0";
+    }
+
+    //Convert a color to a script friendly string
+    private string colorToString(Color colorToStrinfigy)
+    {
+        return colorToStrinfigy.r.ToString() + "," +
+               colorToStrinfigy.g.ToString() + "," +
+               colorToStrinfigy.b.ToString();
+    }
+
+    //Convert a vector2 to a script friendly string
+    private string vector2ToString(Vector2 vectorToStringify)
+    {
+        return vectorToStringify.x.ToString() + ","+
+               vectorToStringify.y.ToString();
+    }
+    //Convert a vector2 to a script friendly string
+    private string vector3ToString(Vector3 vectorToStringify)
+    {
+        return vectorToStringify.x.ToString() + "," +
+               vectorToStringify.y.ToString() + "," +
+               vectorToStringify.z.ToString();
+    }
+
+    //Convert a vector2 to a script friendly string
+    private string quaternionToString(Quaternion quatToStringify)
+    {
+        return quatToStringify.x.ToString() + "," +
+               quatToStringify.y.ToString() + "," +
+               quatToStringify.z.ToString() + "," +
+               quatToStringify.w.ToString();
+    }
+    #endregion
+
     #region Methods
     //Takes an array containing a parsed object script and set all of the variables except for the type
     public void loadProperties(string[] properties)
     {
+        //Save the number of properties the object hsa
+        propertyNumber = properties.Length;
+
         //The position in the properties array where the position data starts.
         //Defaults to 3 for objects that only have a type, name, posiiton, and angle
         int indexOfPosition = 2;
 
         //Store the full type
-        this.FullTypeName = properties[0];
+        FullTypeName = properties[0];
         //Store the object name
-        this.ObjectName = properties[1];
+        ObjectName = properties[1];
 
         //If the object is a titan spawner, store the spawn timer and whether or not it spawns endlessly
-        if (this.Type == objectType.photon && this.ObjectName.StartsWith("spawn"))
+        if (Type == objectType.photon && ObjectName.StartsWith("spawn"))
         {
-            this.SpawnTimer = Convert.ToSingle(properties[2]);
-            this.EndlessSpawn = (Convert.ToInt32(properties[3]) != 0);
+            SpawnTimer = Convert.ToSingle(properties[2]);
+            EndlessSpawn = (Convert.ToInt32(properties[3]) != 0);
             indexOfPosition = 4;
         }
         //If the object is a region, store the region name and scale
-        else if (this.ObjectName.StartsWith("region"))
+        else if (ObjectName.StartsWith("region"))
         {
-            this.RegionName = properties[2];
-            this.Scale = parseVector3(properties[3], properties[4], properties[5]);
+            RegionName = properties[2];
+            Scale = parseVector3(properties[3], properties[4], properties[5]);
             indexOfPosition = 6;
         }
         //If the object has a texture, store the texture, scale, color, and tiling information
-        else if (this.Type == objectType.custom || properties.Length >= 15 && (this.Type == objectType.@base || this.Type == objectType.photon))
+        else if (Type == objectType.custom || propertyNumber >= 15 && (Type == objectType.@base || Type == objectType.photon))
         {
-            this.Texture = properties[2];
-            this.Scale = parseVector3(properties[3], properties[4], properties[5]);
-            this.ColorEnabled = (Convert.ToInt32(properties[6]) != 0);
+            Texture = properties[2];
+            Scale = parseVector3(properties[3], properties[4], properties[5]);
+            ColorEnabled = (Convert.ToInt32(properties[6]) != 0);
 
-            if (this.ColorEnabled)
+            //If the color is enabled, parse the color and set it
+            if (ColorEnabled)
             {
                 //If the transparent texture is applied, parse the opacity and use it. Otherwise default to fully opaque
-                if (this.Texture.StartsWith("transparent"))
-                    this.Color = parseColor(properties[7], properties[8], properties[9], this.Texture.Substring(11));
+                if (Texture.StartsWith("transparent"))
+                    Color = parseColor(properties[7], properties[8], properties[9], Texture.Substring(11));
                 else
-                    this.Color = parseColor(properties[7], properties[8], properties[9], "1");
+                    Color = parseColor(properties[7], properties[8], properties[9], "1");
             }
+            //Otherwise, use white as a default color
+            else
+                Color = Color.white;
 
-            this.Tiling = parseVector2(properties[10], properties[11]);
+            Tiling = parseVector2(properties[10], properties[11]);
             indexOfPosition = 12;
         }
         //If the object has scale information just before the position and rotation, store the scale
-        else if (this.Type == objectType.racing || this.Type == objectType.misc)
+        else if (Type == objectType.racing || Type == objectType.misc)
         {
-            this.Scale = parseVector3(properties[2], properties[3], properties[4]);
+            Scale = parseVector3(properties[2], properties[3], properties[4]);
             indexOfPosition = 5;
         }
 
         //If the object is a spawnpoint, set its default size
-        if (this.Type == objectType.spawnpoint || this.Type == objectType.photon)
-            this.Scale = new Vector3(1f, 1f, 1f);
+        if (Type == objectType.spawnpoint || Type == objectType.photon)
+            Scale = new Vector3(1f, 1f, 1f);
 
         //Set the position and rotation for all objects
-        this.Position = parseVector3(properties[indexOfPosition++], properties[indexOfPosition++], properties[indexOfPosition++]);
-        this.Rotation = parseQuaternion(properties[indexOfPosition++], properties[indexOfPosition++], properties[indexOfPosition++], properties[indexOfPosition++]);
+        Position = parseVector3(properties[indexOfPosition++], properties[indexOfPosition++], properties[indexOfPosition++]);
+        Rotation = parseQuaternion(properties[indexOfPosition++], properties[indexOfPosition++], properties[indexOfPosition++], properties[indexOfPosition++]);
+    }
+
+    //Convert the map object into a script
+    public override string ToString()
+    {
+        //The exported object script. Every script starts with the type and name
+        string objectScript = FullTypeName + "," + ObjectName;
+
+        if (Type == objectType.photon && ObjectName.StartsWith("spawn"))
+            objectScript += "," + SpawnTimer + "," + boolToString(EndlessSpawn);
+        else if (ObjectName.StartsWith("region"))
+            objectScript += "," + RegionName + "," + vector3ToString(Scale);
+        else if (Type == objectType.custom || propertyNumber >= 15 && (Type == objectType.@base || Type == objectType.photon))
+            objectScript += "," + Texture + "," + vector3ToString(Scale) + "," + boolToString(ColorEnabled) + "," + colorToString(Color) + "," + vector2ToString(Tiling);
+        else if (Type == objectType.racing || Type == objectType.misc)
+            objectScript += "," + vector3ToString(Scale);
+
+        objectScript += "," + vector3ToString(Position * 10) + "," + quaternionToString(Rotation) + ";";
+
+        return objectScript;
     }
     #endregion
 }

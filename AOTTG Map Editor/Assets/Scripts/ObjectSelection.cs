@@ -234,10 +234,21 @@ public class ObjectSelection : MonoBehaviour
         toolHandle.SetActive(false);
     }
 
-    //Add an object to the list of selectable objects
+    //Add the given object to the selectable objects list
     public void addSelectable(GameObject objectToAdd)
     {
         selectableObjects.Add(getParent(objectToAdd));
+    }
+
+    //Remove the given object from both the selectable and selected objects lists
+    public void removeSelectable(GameObject objectToAdd)
+    {
+        //If the object is selected, deselect it
+        if (selectedObjects.Contains(objectToAdd))
+            deselectObject(objectToAdd);
+
+        //Remove the object from the selectable objects list
+        selectableObjects.Remove(getParent(objectToAdd));
     }
 
     public void selectObject(GameObject objectToSelect)

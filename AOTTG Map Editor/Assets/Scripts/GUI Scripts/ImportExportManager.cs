@@ -22,7 +22,7 @@ public class ImportExportManager : MonoBehaviour
     private string textArea = "";
 
     //Get the needed scripts
-    void Start()
+    void Awake()
     {
         mapManager = mainObject.GetComponent<MapManager>();
         rectTransform = textAreaPlaceholder.GetComponent<RectTransform>();
@@ -53,8 +53,13 @@ public class ImportExportManager : MonoBehaviour
     public void togglePopup()
     {
         gameObject.SetActive(!gameObject.activeSelf);
+
+        //If the export popup is being shown, export the map script and set it as the text area content
+        if (gameObject.name == "Export" && gameObject.activeSelf)
+            textArea = mapManager.ToString();
     }
 
+    //Import the map text in the input field
     public void importTextField()
     {
         //Clear the existing map objects
@@ -63,5 +68,14 @@ public class ImportExportManager : MonoBehaviour
         mapManager.loadMap(textArea);
         //Clear the textfield after the map is loaded
         textArea = "";
+    }
+
+    //Copy the content of the text field to the clipboard
+    public void copyTextField()
+    {
+        TextEditor te = new TextEditor();
+        te.text = textArea;
+        te.SelectAll();
+        te.Copy();
     }
 }

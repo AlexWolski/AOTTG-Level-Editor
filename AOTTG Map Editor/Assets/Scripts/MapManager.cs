@@ -4,6 +4,7 @@ using System;
 
 public class MapManager : MonoBehaviour
 {
+    #region Data Members
     //A reference to the empty map to add objects to
     [SerializeField]
     private GameObject mapRoot;
@@ -17,9 +18,13 @@ public class MapManager : MonoBehaviour
 
     //A reference to object selection script
     private ObjectSelection objectSelection;
+    //A hashtable mapping gameobjects to MapObject scripts
+    private Hashtable objectScriptTable = new Hashtable();
     //Determines if the small map bounds have been disabled or not
     private bool boundsDisabled;
+    #endregion
 
+    #region Initialization
     //Get a references to components out of the scope of the script
     void Start()
     {
@@ -28,7 +33,9 @@ public class MapManager : MonoBehaviour
         transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
         StartCoroutine(testLoadMap());
     }
+    #endregion
 
+    #region Map Methods
     private IEnumerator testLoadMap()
     {
         ///TODO: Determine when assets are finished loading and remove test load
@@ -44,6 +51,10 @@ public class MapManager : MonoBehaviour
     {
         //Remove all deleted objects from the selection lists
         objectSelection.resetSelections();
+        //Reset the hash table for MapObject scripts
+        objectScriptTable = new Hashtable();
+        //Reset the boundaries disabled flag
+        boundsDisabled = false;
 
         //Iterate over all children objects and delete them
         foreach (Transform child in mapRoot.GetComponentInChildren<Transform>())
@@ -90,6 +101,17 @@ public class MapManager : MonoBehaviour
         objectSelection.addSelectable(objectToAdd);
     }
 
+    //Remove the given object to the map hierarchy and make object selection script
+    private void removeObjectFromMap(GameObject objectToRemove)
+    {
+        //Remove the object from the object selection script
+        objectSelection.removeSelectable(objectToRemove);
+        //Remove the object from the script hashtable
+        objectScriptTable.Remove(objectToRemove);
+        //Delete the object itself
+        Destroy(objectToRemove);
+    }
+
     //Parse the given object script and instantiate a new GameObject with the data
     private GameObject loadObject(string objectScript)
     {
@@ -119,10 +141,6 @@ public class MapManager : MonoBehaviour
             //Parse the object type
             type = MapObject.parseType(parsedObject[0]);
 
-            //If the object is a barrier or region, change it to the editor version
-            if (type == objectType.misc && parsedObject[1] == "barrier" || parsedObject[1] == "region")
-                parsedObject[1] += "Editor";
-
             //Use the object name to load the asset
             newObject = createMapObject(type, parsedObject[1]);
             //Get the MapObject script attached to the new GameObject
@@ -132,7 +150,7 @@ public class MapManager : MonoBehaviour
             mapObject.loadProperties(parsedObject);
 
             //Check if the object is a region
-            if (type == objectType.misc && parsedObject[1] == "regionEditor")
+            if (type == objectType.misc && parsedObject[1] == "region")
             {
                 //Give the region a default rotation
                 mapObject.Rotation = Quaternion.identity;
@@ -173,6 +191,24 @@ public class MapManager : MonoBehaviour
         }
     }
 
+    //Convert the map into a script
+    public override string ToString()
+    {
+        //The exported map script
+        string mapScript = "";
+
+        //If bounds are disabled, add that script to the beginning of the script
+        if (boundsDisabled)
+            mapScript += "map,disablebounds;\n";
+
+        //Add the script for each object to the map script
+        foreach (MapObject objectScript in objectScriptTable.Values)
+            mapScript += objectScript.ToString() + "\n";
+
+        return mapScript;
+    }
+    #endregion
+
     #region Parser Helpers
     //Check if the object exists. Then disable and destroy it
     private void destroyObject(GameObject objectToDestroy)
@@ -196,12 +232,18 @@ public class MapManager : MonoBehaviour
         //The GameObject loaded from RCAssets corresponding to the object name
         GameObject newObject;
 
-        //Instantiate the object using the object name. If the 
+        //Instantiate the object using the object name. If the object is a vanilla object, load a substitute model
         if(type == objectType.@base)
         {
             //To-DO
             newObject = null;
         }
+        //If the object is a barrier or region, change it to the editor version
+        else if (objectName == "barrier" || objectName == "region")
+        {
+            newObject = AssetManager.instantiateRcObject(objectName + "Editor");
+        }
+        //Otherwise, instantiate the object regularly
         else
             newObject = AssetManager.instantiateRcObject(objectName);
 
@@ -213,15 +255,11 @@ public class MapManager : MonoBehaviour
         MapObject mapObjectScript = newObject.AddComponent<MapObject>();
         //Set the type of the mapObject
         mapObjectScript.Type = type;
+        //Add the object and its MapObject script to the hashtable
+        objectScriptTable.Add(newObject, mapObjectScript);
 
         //Return the new object 
         return newObject;
     }
     #endregion
-
-    //Convert the map into a script
-    public override string ToString()
-    {
-        return "";
-    }
 }
