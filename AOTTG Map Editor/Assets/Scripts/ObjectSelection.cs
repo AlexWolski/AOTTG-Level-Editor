@@ -13,7 +13,7 @@ public class ObjectSelection : MonoBehaviour
     [SerializeField]
     private GameObject toolHandle;
     //A reference to the selectionHandle script on the tool handle
-    private pb_SelectionHandle selectionHandle;
+    private pb_SelectionHandle handleUtility;
     //A list containing the objects that can be selected
     private List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
@@ -27,17 +27,17 @@ public class ObjectSelection : MonoBehaviour
     void Start()
     {
         editorManager = mainObject.GetComponent<EditorManager>();
-        selectionHandle = toolHandle.GetComponent<pb_SelectionHandle>();
+        handleUtility = toolHandle.GetComponent<pb_SelectionHandle>();
     }
 
     //Check for object selections after the pb_SelectionHandle script checks for handle interaction
     void LateUpdate()
     {
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
-        if (editorManager.currentMode == EditorMode.Edit && !selectionHandle.draggingHandle)
+        if (editorManager.currentMode == EditorMode.Edit && !handleUtility.draggingHandle)
             checkSelect();
         //Displace the selected objects based on the tool handle
-        if(selectionHandle.draggingHandle)
+        if(handleUtility.draggingHandle)
             updateSelection();
     }
 
@@ -45,7 +45,7 @@ public class ObjectSelection : MonoBehaviour
     void updateSelection()
     {
         //Get the displacement vector of the tool handle
-        Vector3 displacement = selectionHandle.getDisplacement();
+        Vector3 displacement = handleUtility.getDisplacement();
 
         //Don't edit the objects if the tool handle wasn't moved
         if (displacement != Vector3.zero)
@@ -54,7 +54,7 @@ public class ObjectSelection : MonoBehaviour
             foreach (GameObject selectedObject in selectedObjects)
             {
                 //Change what to displace based on the handle tool mode
-                switch (selectionHandle.tool)
+                switch (handleUtility.tool)
                 {
                     case Tool.Translate:
                         selectedObject.transform.position += displacement;
@@ -88,7 +88,7 @@ public class ObjectSelection : MonoBehaviour
             }
 
             //Update the selection average
-            switch (selectionHandle.tool)
+            switch (handleUtility.tool)
             {
                 case Tool.Translate:
                     pointTotal += displacement * selectedObjects.Count;
@@ -332,15 +332,22 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation();
     }
 
+    //Set the type of the tool handle
+    public void setTool(Tool toolType)
+    {
+        handleUtility.SetTool(toolType);
+        resetToolHandleRotation();
+    }
+
     //Set the rotation of the tool handle based on how many objects are selected
     public void resetToolHandleRotation()
     {
         //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
-        if (selectionHandle.tool == Tool.Rotate && selectedObjects.Count == 1)
-            selectionHandle.setRotation(selectedObjects[0].transform.rotation);
+        if (handleUtility.tool == Tool.Rotate && selectedObjects.Count == 1)
+            handleUtility.setRotation(selectedObjects[0].transform.rotation);
         //Otherwise reset the rotation
         else
-            selectionHandle.setRotation(Quaternion.Euler(Vector3.up));
+            handleUtility.setRotation(Quaternion.Euler(Vector3.up));
     }
 
     //Resets both the selected and selectable object lists

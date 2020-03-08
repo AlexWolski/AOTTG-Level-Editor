@@ -721,7 +721,7 @@ namespace GILES
             {
                 case Tool.Translate:
                 case Tool.Scale:
-                    pb_HandleMesh.CreatePositionLineMesh(ref mesh, trs, scale, cam, HANDLE_BOX_SIZE);
+                    pb_HandleMesh.CreatePositionLineMesh(ref mesh, trs, scale, viewOctant, cam, HANDLE_BOX_SIZE);
                     break;
                 
                 case Tool.Rotate:
@@ -736,9 +736,9 @@ namespace GILES
         private void CreateHandleTriangleMesh(ref Mesh mesh, Vector3 scale)
         {
             if (tool == Tool.Translate)
-                pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, cam, ConeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
+                pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, ConeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
             else if (tool == Tool.Scale)
-                pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, cam, CubeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
+                pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, CubeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
         }
 
         #endregion

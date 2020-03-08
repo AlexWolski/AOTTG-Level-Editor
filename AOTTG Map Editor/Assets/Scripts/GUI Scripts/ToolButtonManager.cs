@@ -17,13 +17,10 @@ public class ToolButtonManager : MonoBehaviour
     //The objec the object selection script is attatched to
     [SerializeField]
     private GameObject mainObject;
-    //The object the selection handle script is attatched to
-    [SerializeField]
-    private GameObject toolHandle;
-    //The selection handle management script
-    private pb_SelectionHandle handleUtility;
     //The object selection managemetn script
     private ObjectSelection selectionUtility;
+    //A reference to the editorManager on the main object
+    private EditorManager editorManager;
 
     //The images used for the button
     [SerializeField]
@@ -39,6 +36,9 @@ public class ToolButtonManager : MonoBehaviour
     //The tool this button corresponds to
     [SerializeField]
     private Tool toolType;
+    //The keyboard key that selects this button
+    [SerializeField]
+    private KeyCode shortCutKey;
     //Determine if the left mouse button is currently pressed or not
     private static bool mouseDown;
     //The button script that is currently pressed down
@@ -52,8 +52,8 @@ public class ToolButtonManager : MonoBehaviour
     void Awake()
     {
         //Get references to required scripts
-        handleUtility = toolHandle.GetComponent<pb_SelectionHandle>();
         selectionUtility = mainObject.GetComponent<ObjectSelection>();
+        editorManager = mainObject.GetComponent<EditorManager>();
 
         //If this button is the one to be selected by default, select it
         if (currentState == buttonState.selected)
@@ -68,6 +68,17 @@ public class ToolButtonManager : MonoBehaviour
         eventTrigger.AddEventTrigger(this.OnMouseExit, EventTriggerType.PointerExit);
         eventTrigger.AddEventTrigger(this.OnMouseDown, EventTriggerType.PointerDown);
         eventTrigger.AddEventTrigger(this.OnMouseUp, EventTriggerType.PointerUp);
+    }
+
+    //Check if the shortcut key was pressed
+    private void Update()
+    {
+        if (editorManager.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
+        {
+            selectedButton.unselect();
+            select();
+            action();
+        }
     }
 
     //Change the image and state to selected
@@ -128,7 +139,6 @@ public class ToolButtonManager : MonoBehaviour
     //The action triggered by the button press
     private void action()
     {
-        handleUtility.SetTool(toolType);
-        selectionUtility.resetToolHandleRotation();
+        selectionUtility.setTool(toolType);
     }
 }

@@ -23,7 +23,7 @@ public class MapManager : MonoBehaviour
     private Shader transparentShader;
 
     //A reference to object selection script
-    private ObjectSelection objectSelection;
+    private ObjectSelection selectionUtility;
     //A hashtable mapping gameobjects to MapObject scripts
     private Hashtable objectScriptTable = new Hashtable();
     //Determines if the small map bounds have been disabled or not
@@ -35,7 +35,7 @@ public class MapManager : MonoBehaviour
     void Start()
     {
         editorManager = mainObject.GetComponent<EditorManager>();
-        objectSelection = gameObject.GetComponent<ObjectSelection>();
+        selectionUtility = gameObject.GetComponent<ObjectSelection>();
         vertexColoredShader = Shader.Find("Vertex Colored");
         transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
         StartCoroutine(testLoadMap());
@@ -59,7 +59,7 @@ public class MapManager : MonoBehaviour
     private void deleteSelection()
     {
         //Get a reference to the selected objects list
-        ref List<GameObject> selectedObjects = ref objectSelection.removeSelected();
+        ref List<GameObject> selectedObjects = ref selectionUtility.removeSelected();
 
         //Remove each selected object from the script table and destroy the object
         foreach (GameObject gameObject in selectedObjects)
@@ -70,6 +70,12 @@ public class MapManager : MonoBehaviour
 
         //Reset the selected objects lsit
         selectedObjects = new List<GameObject>();
+    }
+
+    //
+    private void changeTool()
+    {
+        
     }
     #endregion
 
@@ -88,7 +94,7 @@ public class MapManager : MonoBehaviour
     public void clearMap()
     {
         //Remove all deleted objects from the selection lists
-        objectSelection.resetSelections();
+        selectionUtility.resetSelections();
         //Reset the hash table for MapObject scripts
         objectScriptTable = new Hashtable();
         //Reset the boundaries disabled flag
@@ -136,14 +142,14 @@ public class MapManager : MonoBehaviour
         //Make the new object a child of the map root.
         objectToAdd.transform.parent = mapRoot.transform;
         //Make the new object selectable
-        objectSelection.addSelectable(objectToAdd);
+        selectionUtility.addSelectable(objectToAdd);
     }
 
     //Remove the given object to the map hierarchy and make object selection script
     private void removeObjectFromMap(GameObject objectToRemove)
     {
         //Remove the object from the object selection script
-        objectSelection.removeSelectable(objectToRemove);
+        selectionUtility.removeSelectable(objectToRemove);
         //Remove the object from the script hashtable
         objectScriptTable.Remove(objectToRemove);
         //Delete the object itself
