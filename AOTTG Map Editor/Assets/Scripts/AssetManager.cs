@@ -50,6 +50,13 @@ public class AssetManager : MonoBehaviour
             }
         }
 
+        //Find all mesh colliders in the object's children and alter the settings for the newer version of Unity
+        foreach (MeshCollider meshCollider in newObject.GetComponentsInChildren<MeshCollider>())
+        {
+            meshCollider.convex = false;
+            meshCollider.isTrigger = false;
+        }
+
         //Add a Map Object tag to the 
         newObject.tag = "Map Object";
 

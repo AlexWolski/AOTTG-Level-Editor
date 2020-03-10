@@ -9,7 +9,7 @@ namespace GILES
 	public static class pb_HandleMesh
 	{
         //A reference to the pb_SelectionHandle script attatched to the tool handle
-        static pb_SelectionHandle selectionHandle;
+        static SelectionHandle selectionHandle;
 
         static readonly Color red = new Color(.85f, .256f, .16f, 0f);
 		static readonly Color green = new Color(.2f, .9f, .2f, 0f);

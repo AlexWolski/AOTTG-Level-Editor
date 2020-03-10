@@ -4,7 +4,7 @@ using System.Collections.Generic;
 
 namespace GILES
 {
-    public class pb_SelectionHandle : MonoBehaviour
+    public class SelectionHandle : MonoBehaviour
     {
         #region Member
 
@@ -77,11 +77,10 @@ namespace GILES
         private EditorManager editorManager;
 
         //The current tool. Default is translate tool
-        public Tool tool { get; private set; } = Tool.Translate;
+        public static Tool tool { get; private set; } = Tool.Translate;
         //The tool handle status for position, rotation, and scale
         private Vector3 prevPosition = Vector3.zero;
         private Quaternion prevRotation = Quaternion.identity;
-        private Vector3 prevScale = Vector3.one;
         private Vector3 scale = Vector3.one;
         //Determines if the rotation handle was moved in the positive or negative direction
         private float sign;
@@ -262,22 +261,8 @@ namespace GILES
                     break;
 
                 case Tool.Scale:
-                    //Save the old position
-                    prevScale = scale;
-                    //The amount by which the scale will change
-                    Vector3 scaleDisplacement;
-
                     //Convert the plane hit to local coordinates
                     localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
-
-                    ////Use the magnitude of the displacement vector as the scaling factor
-                    //float scaleFactor = localPlaneHit.magnitude;
-
-                    ////Determine if the scaling factor should be positive or negative
-                    //if (drag.localAxis.x != 0 && localPlaneHit.x < 0 ||
-                    //    drag.localAxis.y != 0 && localPlaneHit.y < 0 ||
-                    //    drag.localAxis.z != 0 && localPlaneHit.z < 0)
-                    //        scaleFactor *= -1;
 
                     float scaleFactor;
 
@@ -288,16 +273,15 @@ namespace GILES
                     else
                         scaleFactor = localPlaneHit.z;
 
-                    //If the entire object is being scaled, enlargen all three axis handles
+                    //If the entire object is being scaled, scale all three axis
                     if (draggingAxes > 1)
-                        scaleDisplacement = new Vector3(scaleFactor, scaleFactor, scaleFactor);
-                    //Otherwise enlargen the axis handle being iteracted with
+                        scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+                    //Otherwise scale the axis handle being iteracted with
                     else
-                        scaleDisplacement = drag.localAxis * scaleFactor;
+                        scale = drag.localAxis * scaleFactor;
 
-                    //
-                    scale = scaleDisplacement + Vector3.one;
-                    RebuildGizmoMesh(scale);
+                    //Add the default scale to the displacement to get the amount to scale the object
+                    RebuildGizmoMesh(Vector3.one + scale);
                     break;
             }
 
@@ -326,10 +310,8 @@ namespace GILES
                     else
                         return new Vector3(0, 0, angle);
 
-                    //return Vector3.Angle(prevRotation, trs.rotation.eulerAngles);
-
                 default:
-                    return scale - prevScale;
+                    return scale;
             }
         }
 
@@ -686,9 +668,9 @@ namespace GILES
 
         public void SetTool(Tool tool)
         {
-            if (this.tool != tool)
+            if (SelectionHandle.tool != tool)
             {
-                this.tool = tool;
+                SelectionHandle.tool = tool;
                 RebuildGizmoMesh(Vector3.one);
             }
         }

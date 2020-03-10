@@ -1,5 +1,5 @@
 ﻿//Used in the ToolHandle class for which axis to move the object along
-enum Axis
+public enum Axis
 {
     None = 0x0,
     X = 0x1,

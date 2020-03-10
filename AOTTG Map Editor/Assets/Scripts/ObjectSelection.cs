@@ -13,7 +13,7 @@ public class ObjectSelection : MonoBehaviour
     [SerializeField]
     private GameObject toolHandle;
     //A reference to the selectionHandle script on the tool handle
-    private pb_SelectionHandle handleUtility;
+    private SelectionHandle handleUtility;
     //A list containing the objects that can be selected
     private List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
@@ -27,7 +27,7 @@ public class ObjectSelection : MonoBehaviour
     void Start()
     {
         editorManager = mainObject.GetComponent<EditorManager>();
-        handleUtility = toolHandle.GetComponent<pb_SelectionHandle>();
+        handleUtility = toolHandle.GetComponent<SelectionHandle>();
     }
 
     //Check for object selections after the pb_SelectionHandle script checks for handle interaction
@@ -36,13 +36,13 @@ public class ObjectSelection : MonoBehaviour
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
         if (editorManager.currentMode == EditorMode.Edit && !handleUtility.draggingHandle)
             checkSelect();
-        //Displace the selected objects based on the tool handle
+        //Edit the selected objects if they were edited through the tool handle
         if(handleUtility.draggingHandle)
-            updateSelection();
+            checkEdit();
     }
 
     //Update the position, rotation, or scale of the object selections based on the tool handle
-    void updateSelection()
+    void checkEdit()
     {
         //Get the displacement vector of the tool handle
         Vector3 displacement = handleUtility.getDisplacement();
@@ -50,45 +50,47 @@ public class ObjectSelection : MonoBehaviour
         //Don't edit the objects if the tool handle wasn't moved
         if (displacement != Vector3.zero)
         {
-            //Iterate through all of the objects and displace them
-            foreach (GameObject selectedObject in selectedObjects)
+            //Determine which tool was used and call the respective transform
+            switch (SelectionHandle.tool)
             {
-                //Change what to displace based on the handle tool mode
-                switch (handleUtility.tool)
-                {
-                    case Tool.Translate:
-                        selectedObject.transform.position += displacement;
-                        break;
+                case Tool.Translate:
+                    TransformTools.TranslateSelection(ref selectedObjects, displacement);
+                    break;
 
-                    case Tool.Rotate:
-                        //The poit to rotate around
-                        Vector3 pivot;
+                case Tool.Rotate:
+                    //The angle and axis and to rotate around
+                    float angle = 0f;
+                    Vector3 rotationAxis;
 
-                        //If only one object is selected, rotate it locally
-                        if (selectedObjects.Count == 1)
-                            pivot = selectedObject.transform.position;
-                        //Otherwise, rotate it around the average point
-                        else
-                            pivot = selectionAverage;
+                    //The angle is the only non-zero component of the displacement
+                    for (int axis = 0; axis < 3; axis++)
+                        if (displacement[axis] != 0)
+                            angle = displacement[axis];
 
-                        //Find the corresponding axis and rotate around it
-                        if(displacement.x != 0)
-                            selectedObject.transform.RotateAround(pivot, toolHandle.transform.right, displacement.x);
-                        else if (displacement.y != 0)
-                            selectedObject.transform.RotateAround(pivot, toolHandle.transform.up, displacement.y);
-                        else
-                            selectedObject.transform.RotateAround(pivot, toolHandle.transform.forward, displacement.z);
+                    //Find which axis to rotate around
+                    if(displacement.x != 0)
+                        rotationAxis = handleUtility.transform.right;
+                    else if (displacement.y != 0)
+                        rotationAxis = handleUtility.transform.up;
+                    else
+                        rotationAxis = handleUtility.transform.forward;
 
-                        break;
+                    //If only one object is selected, rotate around its local position
+                    if (selectedObjects.Count == 1)
+                        TransformTools.RotateSelection(ref selectedObjects, rotationAxis, angle);
+                    //Otherwise, rotate around the seleciton average
+                    else
+                        TransformTools.RotateSelection(ref selectedObjects, selectionAverage, rotationAxis, angle);
 
-                    default:
-                        selectedObject.transform.localScale += displacement;
-                        break;
-                }
+                    break;
+
+                case Tool.Scale:
+                    TransformTools.ScaleSelection(ref selectedObjects, displacement, false);
+                    break;
             }
 
             //Update the selection average
-            switch (handleUtility.tool)
+            switch (SelectionHandle.tool)
             {
                 case Tool.Translate:
                     pointTotal += displacement * selectedObjects.Count;
@@ -217,9 +219,7 @@ public class ObjectSelection : MonoBehaviour
         }
         //Otherwise, disable the tool handle
         else
-        {
             toolHandle.SetActive(false);
-        }
     }
 
     //Remove all selected objects from the total average
@@ -343,7 +343,7 @@ public class ObjectSelection : MonoBehaviour
     public void resetToolHandleRotation()
     {
         //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
-        if (handleUtility.tool == Tool.Rotate && selectedObjects.Count == 1)
+        if ((SelectionHandle.tool == Tool.Rotate || SelectionHandle.tool == Tool.Scale) && selectedObjects.Count == 1)
             handleUtility.setRotation(selectedObjects[0].transform.rotation);
         //Otherwise reset the rotation
         else

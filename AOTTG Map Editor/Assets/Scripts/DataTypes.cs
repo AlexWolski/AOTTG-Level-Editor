@@ -1,6 +1,4 @@
-﻿using UnityEngine;
-
-//In fly mode, the camera can move but none of the tools can be used
+﻿//In fly mode, the camera can move but none of the tools can be used
 //In edit mode, the camera is stationary but objects can be interacted with
 public enum EditorMode
 {

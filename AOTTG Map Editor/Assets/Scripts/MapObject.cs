@@ -38,13 +38,6 @@ public class MapObject : MonoBehaviour
         set { textureValue = value; setTexture(value); }
     }
 
-    //The scale factor of the object from its default size
-    public Vector3 Scale
-    {
-        get { return scaleValue; }
-        set { scaleValue = value; setScale(value); }
-    }
-
     //How many times the texture will repeat in the x and y directions
     public Vector2 Tiling
     {
@@ -57,6 +50,13 @@ public class MapObject : MonoBehaviour
     {
         get { return colorValue; }
         set { colorValue = value; setColor(colorValue); }
+    }
+
+    //Shorthand ways of accessing variables in the transform component
+    public Vector3 Scale
+    {
+        get { return scaleValue; }
+        set { scaleValue = value; setScale(value); }
     }
 
     public Vector3 Position
@@ -90,9 +90,8 @@ public class MapObject : MonoBehaviour
     //Change the scale factor of the length, width, or height of the object
     private void setScale(Vector3 newScale)
     {
-        //Transform the object. Divide by 10 to adjust the scale for the editor
         Vector3 currentScale = gameObject.transform.localScale;
-        gameObject.transform.localScale = new Vector3(currentScale.x * newScale.x, currentScale.y * newScale.y, currentScale.z * newScale.z)/10;
+        gameObject.transform.localScale = new Vector3(currentScale.x * newScale.x, currentScale.y * newScale.y, currentScale.z * newScale.z);
     }
 
     //Resize the texture on the object
@@ -125,8 +124,6 @@ public class MapObject : MonoBehaviour
     //Position the object
     private void setPosition(Vector3 newPosition)
     {
-        //Divide the position by 10 to adjust the scale for the editor
-        newPosition /= 10;
         gameObject.transform.position = newPosition;
     }
 
@@ -311,7 +308,7 @@ public class MapObject : MonoBehaviour
             objectScript += "," + vector3ToString(Scale);
 
         //Add the position and rotation to all objects. Scale the position up by a factor of 10
-        objectScript += "," + vector3ToString(Position * 10) + "," + quaternionToString(Rotation) + ";";
+        objectScript += "," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";";
 
         return objectScript;
     }

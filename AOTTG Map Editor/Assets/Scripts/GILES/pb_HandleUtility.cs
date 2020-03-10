@@ -11,12 +11,12 @@ namespace GILES
 	public class pb_HandleUtility
 	{
         //A reference to the pb_SelectionHandle script attatched to the tool handle
-        pb_SelectionHandle selectionHandle;
+        SelectionHandle selectionHandle;
 
         //Find and store a reference to the seleciton handle script on start
         pb_HandleUtility()
         {
-            selectionHandle = GameObject.Find("Tool Handle").GetComponent<pb_SelectionHandle>();
+            selectionHandle = GameObject.Find("Tool Handle").GetComponent<SelectionHandle>();
         }
 
         /**
