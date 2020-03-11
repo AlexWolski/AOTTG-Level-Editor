@@ -204,7 +204,7 @@ namespace GILES
             if (isHidden || editorManager.currentMode != EditorMode.Edit)
                 return;
 
-            //If the mouse is pressed, check if the handle was clicked
+            //If the mouse is pressed, check wif the handle was clicked
             if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
                 OnMouseDown();
             //If the mouse is released, finish interacting with the handle
@@ -278,7 +278,7 @@ namespace GILES
                         scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
                     //Otherwise scale the axis handle being iteracted with
                     else
-                        scale = drag.localAxis * scaleFactor;
+                        scale = (drag.localAxis * scaleFactor) + Vector3.one;
 
                     //Add the default scale to the displacement to get the amount to scale the object
                     RebuildGizmoMesh(Vector3.one + scale);
@@ -377,8 +377,6 @@ namespace GILES
 
         void OnMouseDown()
         {
-            scale = Vector3.one;
-
             Vector3 a, b;
             drag.offset = Vector3.zero;
             Axis plane;
@@ -397,6 +395,13 @@ namespace GILES
 
             if (draggingHandle)
             {
+                //If the scale handle was just clicked, reset the handle size and prime it for scaling
+                if (tool == Tool.Scale)
+                {
+                    scale = Vector3.one;
+                    TransformTools.saveScaleTransforms();
+                }
+
                 Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
                 if ((plane & Axis.X) == Axis.X)
@@ -476,6 +481,10 @@ namespace GILES
         {
             yield return new WaitForEndOfFrame();
             draggingHandle = false;
+
+            //Release the stored transforms for scaling
+            if (tool == Tool.Scale)
+                TransformTools.releaseScaleTransforms();
         }
         #endregion
 

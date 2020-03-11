@@ -25,7 +25,7 @@ public class MapManager : MonoBehaviour
     //A reference to object selection script
     private ObjectSelection selectionUtility;
     //A hashtable mapping gameobjects to MapObject scripts
-    private Hashtable objectScriptTable = new Hashtable();
+    private Dictionary<GameObject, MapObject> objectScriptTable = new Dictionary<GameObject, MapObject>();
     //Determines if the small map bounds have been disabled or not
     private bool boundsDisabled;
     //A list of objects cloned from the copied selection
@@ -56,43 +56,52 @@ public class MapManager : MonoBehaviour
             //Check for shortcuts that require the control key to be pressed down
             else if(Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
             {
-                //Copy a selection by cloning all of the selected objects and storing them
-                if(Input.GetKeyDown(KeyCode.C))
-                {
-                    //Reset the old list of copied objects
-                    copiedObjects = new List<GameObject>();
-                    //Get a reference to the list of selected objects
-                    ref List<GameObject> selectedObjects = ref selectionUtility.getSelectedObjects();
-                    //Temporary GameObject to disable cloned objects before storing them
-                    GameObject objectClone;
-
-                    //Clone each selected object and save it in the copied objects list
-                    foreach (GameObject mapObject in selectedObjects)
-                    {
-                        objectClone = Instantiate(mapObject);
-                        objectClone.SetActive(false);
-                        copiedObjects.Add(objectClone);
-                    }
-                }
-                //Paste the copied objects by instantiating them
-                else if(Input.GetKeyDown(KeyCode.V))
-                {
-                    //Temporary GameObject to enable cloned objects before storing them
-                    GameObject objectClone;
-                    //Reset the current selection
-                    selectionUtility.deselectAll();
-
-                    //Instantiate all of the copied objects and select them
-                    foreach (GameObject mapObject in copiedObjects)
-                    {
-                        objectClone = Instantiate(mapObject);
-                        objectClone.SetActive(true);
-                        addObjectToMap(objectClone);
-                        selectionUtility.selectObject(objectClone);
-                    }
-                }
+                if (Input.GetKeyDown(KeyCode.C))
+                    copySelection();
+                else if (Input.GetKeyDown(KeyCode.V))
+                    pasteSelection();
             }
         }
+    }
+
+    //Copy a selection by cloning all of the selected objects and storing them
+    private void copySelection()
+    {
+        //Reset the old list of copied objects
+        copiedObjects = new List<GameObject>();
+        //Get a reference to the list of selected objects
+        ref List<GameObject> selectedObjects = ref ObjectSelection.getSelection();
+        //Temporary GameObject to disable cloned objects before storing them
+        GameObject objectClone;
+
+        //Clone each selected object and save it in the copied objects list
+        foreach (GameObject mapObject in selectedObjects)
+        {
+            objectClone = Instantiate(mapObject);
+            objectClone.SetActive(false);
+            copiedObjects.Add(objectClone);
+        }
+    }
+
+    //Paste the copied objects by instantiating them
+    private void pasteSelection()
+    {
+        //Temporary GameObject to enable cloned objects before storing them
+        GameObject objectClone;
+        //Reset the current selection
+        selectionUtility.deselectAll();
+
+        //Instantiate all of the copied objects and select them
+        foreach (GameObject mapObject in copiedObjects)
+        {
+            objectClone = Instantiate(mapObject);
+            objectClone.SetActive(true);
+            addObjectToMap(objectClone);
+            selectionUtility.selectObject(objectClone);
+        }
+
+        //Once the selection is pasted, change the tool type to translate
+        selectionUtility.setTool(Tool.Translate);
     }
 
     //Delete the selected objects
@@ -129,9 +138,9 @@ public class MapManager : MonoBehaviour
     public void clearMap()
     {
         //Remove all deleted objects from the selection lists
-        selectionUtility.resetSelections();
+        selectionUtility.resetSelection();
         //Reset the hash table for MapObject scripts
-        objectScriptTable = new Hashtable();
+        objectScriptTable = new Dictionary<GameObject, MapObject>();
         //Reset the boundaries disabled flag
         boundsDisabled = false;
 

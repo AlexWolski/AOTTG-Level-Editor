@@ -4,24 +4,25 @@ using GILES;
 
 public class ObjectSelection : MonoBehaviour
 {
+    #region Data Members
     //A reference to the main object
     [SerializeField]
     private GameObject mainObject;
     //A reference to the editorManager on the main object
-    private EditorManager editorManager;
+    private static EditorManager editorManager;
     //A reference to the tool handle
     [SerializeField]
     private GameObject toolHandle;
     //A reference to the selectionHandle script on the tool handle
-    private SelectionHandle handleUtility;
+    private static SelectionHandle handleUtility;
     //A list containing the objects that can be selected
-    private List<GameObject> selectableObjects = new List<GameObject>();
+    private static List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
-    private List<GameObject> selectedObjects = new List<GameObject>();
+    private static List<GameObject> selectedObjects = new List<GameObject>();
     //The average point of all the selected objects
-    private Vector3 selectionAverage;
+    private static Vector3 selectionAverage;
     //The sum of the points of all the selected objects for calculating the average
-    private Vector3 pointTotal;
+    private static Vector3 pointTotal;
 
     //Get references from other scripts
     void Start()
@@ -29,7 +30,9 @@ public class ObjectSelection : MonoBehaviour
         editorManager = mainObject.GetComponent<EditorManager>();
         handleUtility = toolHandle.GetComponent<SelectionHandle>();
     }
+    #endregion
 
+    #region Update
     //Check for object selections after the pb_SelectionHandle script checks for handle interaction
     void LateUpdate()
     {
@@ -85,7 +88,7 @@ public class ObjectSelection : MonoBehaviour
                     break;
 
                 case Tool.Scale:
-                    TransformTools.ScaleSelection(ref selectedObjects, displacement, false);
+                    TransformTools.ScaleSelection(ref selectedObjects, selectionAverage, displacement, false);
                     break;
             }
 
@@ -99,82 +102,9 @@ public class ObjectSelection : MonoBehaviour
             }
         }
     }
+    #endregion
 
-    //Return a reference to the seleceted objects
-    public ref List<GameObject> getSelectedObjects()
-    {
-        return ref selectedObjects;
-    }
-
-    //Test if any objects were clicked
-    private void checkSelect()
-    {
-        //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
-        if (Input.GetKeyDown(KeyCode.A))
-        {
-            if (selectedObjects.Count > 0)
-                deselectAll();
-            else
-                selectAll();
-        }
-        //If the mouse was clicked, check if any objects were selected
-        else if (Input.GetMouseButtonDown(0))
-        {
-            RaycastHit hit;
-            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
-
-            //If an object was clicked, select it
-            if (Physics.Raycast(ray, out hit, 1000.0f))
-            {
-                //Select the parent of the object
-                GameObject parentObject = getParent(hit.transform.gameObject);
-
-                //Only select the object if it is selectable
-                if (selectableObjects.Contains(parentObject))
-                {
-                    //If left control is not held, deselect all objects and select the clicked object
-                    if (!Input.GetKey(KeyCode.LeftControl))
-                    {
-                        deselectAll();
-
-                        //Select the object that was clicked on
-                        selectObject(parentObject);
-                    }
-                    //If left control is held, select or deselect the object based on if its currently selected
-                    else
-                    {
-                        if (!selectedObjects.Contains(parentObject))
-                        {
-                            selectObject(parentObject);
-                        }
-                        else
-                            deselectObject(parentObject);
-                    }
-                }
-            }
-        }
-    }
-
-    //Return the parent of the given object. If there is no parent, return the given object
-    private GameObject getParent(GameObject childObject)
-    {
-        //The parent object that gets returned
-        GameObject parentObject = childObject;
-        //The tag of the parent object
-        string parentTag = childObject.transform.parent.gameObject.tag;
-
-        //Keep going up the hierarchy until the parent is a map or group
-        while (parentTag != "Map" && parentTag != "Group")
-        {
-            //Move up the hierarchy
-            parentObject = parentObject.transform.parent.gameObject;
-            //Update the parent tag
-            parentTag = parentObject.transform.parent.gameObject.tag;
-        }
-
-        return parentObject;
-    }
-
+    #region Selection Average Methods
     //Add a point to the total average
     private void addAveragePoint(Vector3 point)
     {
@@ -233,6 +163,83 @@ public class ObjectSelection : MonoBehaviour
         toolHandle.SetActive(false);
     }
 
+    //Return the selection average
+    public ref Vector3 getSelectionAverage()
+    {
+        return ref selectionAverage;
+    }
+    #endregion
+
+    #region Select Objects Methods
+    //Return the parent of the given object. If there is no parent, return the given object
+    private GameObject getParent(GameObject childObject)
+    {
+        //The parent object that gets returned
+        GameObject parentObject = childObject;
+        //The tag of the parent object
+        string parentTag = childObject.transform.parent.gameObject.tag;
+
+        //Keep going up the hierarchy until the parent is a map or group
+        while (parentTag != "Map" && parentTag != "Group")
+        {
+            //Move up the hierarchy
+            parentObject = parentObject.transform.parent.gameObject;
+            //Update the parent tag
+            parentTag = parentObject.transform.parent.gameObject.tag;
+        }
+
+        return parentObject;
+    }
+
+    //Test if any objects were clicked
+    private void checkSelect()
+    {
+        //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            if (selectedObjects.Count > 0)
+                deselectAll();
+            else
+                selectAll();
+        }
+        //If the mouse was clicked, check if any objects were selected
+        else if (Input.GetMouseButtonDown(0))
+        {
+            RaycastHit hit;
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+
+            //If an object was clicked, select it
+            if (Physics.Raycast(ray, out hit, 1000.0f))
+            {
+                //Select the parent of the object
+                GameObject parentObject = getParent(hit.transform.gameObject);
+
+                //Only select the object if it is selectable
+                if (selectableObjects.Contains(parentObject))
+                {
+                    //If left control is not held, deselect all objects and select the clicked object
+                    if (!Input.GetKey(KeyCode.LeftControl))
+                    {
+                        deselectAll();
+
+                        //Select the object that was clicked on
+                        selectObject(parentObject);
+                    }
+                    //If left control is held, select or deselect the object based on if its currently selected
+                    else
+                    {
+                        if (!selectedObjects.Contains(parentObject))
+                        {
+                            selectObject(parentObject);
+                        }
+                        else
+                            deselectObject(parentObject);
+                    }
+                }
+            }
+        }
+    }
+
     //Add the given object to the selectable objects list
     public void addSelectable(GameObject objectToAdd)
     {
@@ -248,28 +255,6 @@ public class ObjectSelection : MonoBehaviour
 
         //Remove the object from the selectable objects list
         selectableObjects.Remove(getParent(objectToAdd));
-    }
-
-    //Remove any selected objects from both the selected and selectable objects lists
-    //Returns a the selected objects list. Caller is expected to reset it after use
-    public ref List<GameObject> removeSelected()
-    {
-        //If all of the objects are selected, reset just the selectable objects list
-        if (selectedObjects.Count == selectableObjects.Count)
-            selectableObjects = new List<GameObject>();
-        //If a subset of objects are selected, remove just the selected objects from the selectable list
-        else
-        {
-            //Remove all of the selected objects from the selectable list
-            foreach (GameObject mapObject in selectedObjects)
-                selectableObjects.Remove(mapObject);
-        }
-
-        //Reset the selection average
-        removeAverageAll();
-
-        //Return a reference to the selected objects list
-        return ref selectedObjects;
     }
 
     public void selectObject(GameObject objectToSelect)
@@ -332,6 +317,44 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation();
     }
 
+    //Resets both the selected and selectable object lists
+    public void resetSelection()
+    {
+        selectedObjects = new List<GameObject>();
+        selectableObjects = new List<GameObject>();
+        removeAverageAll();
+    }
+
+    //Remove any selected objects from both the selected and selectable objects lists
+    //Returns a the selected objects list. Caller is expected to reset it after use
+    public ref List<GameObject> removeSelected()
+    {
+        //If all of the objects are selected, reset just the selectable objects list
+        if (selectedObjects.Count == selectableObjects.Count)
+            selectableObjects = new List<GameObject>();
+        //If a subset of objects are selected, remove just the selected objects from the selectable list
+        else
+        {
+            //Remove all of the selected objects from the selectable list
+            foreach (GameObject mapObject in selectedObjects)
+                selectableObjects.Remove(mapObject);
+        }
+
+        //Reset the selection average
+        removeAverageAll();
+
+        //Return a reference to the selected objects list
+        return ref selectedObjects;
+    }
+
+    //Return a reference to the seleceted objects
+    public static ref List<GameObject> getSelection()
+    {
+        return ref selectedObjects;
+    }
+    #endregion
+
+    #region Tool Methods
     //Set the type of the tool handle
     public void setTool(Tool toolType)
     {
@@ -349,15 +372,9 @@ public class ObjectSelection : MonoBehaviour
         else
             handleUtility.setRotation(Quaternion.Euler(Vector3.up));
     }
+    #endregion
 
-    //Resets both the selected and selectable object lists
-    public void resetSelections()
-    {
-        selectedObjects = new List<GameObject>();
-        selectableObjects = new List<GameObject>();
-        removeAverageAll();
-    }
-
+    #region Outline Methods
     //Add a green outline around a GameObject
     private void addOutline(GameObject objectToAddOutline)
     {
@@ -389,4 +406,5 @@ public class ObjectSelection : MonoBehaviour
             if (child.gameObject.tag == "Selectable Object")
                 child.GetComponent<Outline>().enabled = false;
     }
+    #endregion
 }
