@@ -6,11 +6,6 @@ using System.Collections.Generic;
 public class MapManager : MonoBehaviour
 {
     #region Data Members
-    //A reference to the main object
-    [SerializeField]
-    private GameObject mainObject;
-    //A reference to the editorManager on the main object
-    private EditorManager editorManager;
     //A reference to the empty map to add objects to
     [SerializeField]
     private GameObject mapRoot;
@@ -22,8 +17,6 @@ public class MapManager : MonoBehaviour
     private Shader vertexColoredShader;
     private Shader transparentShader;
 
-    //A reference to object selection script
-    private ObjectSelection selectionUtility;
     //A hashtable mapping gameobjects to MapObject scripts
     private Dictionary<GameObject, MapObject> objectScriptTable = new Dictionary<GameObject, MapObject>();
     //Determines if the small map bounds have been disabled or not
@@ -36,8 +29,6 @@ public class MapManager : MonoBehaviour
     //Get a references to components out of the scope of the script
     void Start()
     {
-        editorManager = mainObject.GetComponent<EditorManager>();
-        selectionUtility = gameObject.GetComponent<ObjectSelection>();
         vertexColoredShader = Shader.Find("Vertex Colored");
         transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
         StartCoroutine(testLoadMap());
@@ -48,7 +39,7 @@ public class MapManager : MonoBehaviour
     private void Update()
     {
         //If the game is in edit mode, check for keyboard shortcut inputs
-        if (editorManager.currentMode == EditorMode.Edit)
+        if (CommonReferences.editorManager.currentMode == EditorMode.Edit)
         {
             //Check delete keys
             if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
@@ -89,7 +80,7 @@ public class MapManager : MonoBehaviour
         //Temporary GameObject to enable cloned objects before storing them
         GameObject objectClone;
         //Reset the current selection
-        selectionUtility.deselectAll();
+        ObjectSelection.deselectAll();
 
         //Instantiate all of the copied objects and select them
         foreach (GameObject mapObject in copiedObjects)
@@ -97,11 +88,11 @@ public class MapManager : MonoBehaviour
             objectClone = Instantiate(mapObject);
             objectClone.SetActive(true);
             addObjectToMap(objectClone);
-            selectionUtility.selectObject(objectClone);
+            ObjectSelection.selectObject(objectClone);
         }
 
         //Once the selection is pasted, change the tool type to translate
-        selectionUtility.setTool(Tool.Translate);
+        ObjectSelection.setTool(Tool.Translate);
     }
 
     //Delete the selected objects
@@ -109,7 +100,7 @@ public class MapManager : MonoBehaviour
     private void deleteSelection()
     {
         //Get a reference to the selected objects list
-        ref List<GameObject> selectedObjects = ref selectionUtility.removeSelected();
+        ref List<GameObject> selectedObjects = ref ObjectSelection.removeSelected();
 
         //Remove each selected object from the script table and destroy the object
         foreach (GameObject mapObject in selectedObjects)
@@ -138,7 +129,7 @@ public class MapManager : MonoBehaviour
     public void clearMap()
     {
         //Remove all deleted objects from the selection lists
-        selectionUtility.resetSelection();
+        ObjectSelection.resetSelection();
         //Reset the hash table for MapObject scripts
         objectScriptTable = new Dictionary<GameObject, MapObject>();
         //Reset the boundaries disabled flag
@@ -186,14 +177,14 @@ public class MapManager : MonoBehaviour
         //Make the new object a child of the map root.
         objectToAdd.transform.parent = mapRoot.transform;
         //Make the new object selectable
-        selectionUtility.addSelectable(objectToAdd);
+        ObjectSelection.addSelectable(objectToAdd);
     }
 
     //Remove the given object to the map hierarchy and make object selection script
     private void removeObjectFromMap(GameObject objectToRemove)
     {
         //Remove the object from the object selection script
-        selectionUtility.removeSelectable(objectToRemove);
+        ObjectSelection.removeSelectable(objectToRemove);
         //Remove the object from the script hashtable
         objectScriptTable.Remove(objectToRemove);
         //Delete the object itself

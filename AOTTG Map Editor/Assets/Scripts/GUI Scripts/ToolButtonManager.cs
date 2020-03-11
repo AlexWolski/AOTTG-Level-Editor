@@ -13,14 +13,6 @@ public class ToolButtonManager : MonoBehaviour
         pressed,
         selected
     }
-    
-    //The objec the object selection script is attatched to
-    [SerializeField]
-    private GameObject mainObject;
-    //The object selection managemetn script
-    private ObjectSelection selectionUtility;
-    //A reference to the editorManager on the main object
-    private EditorManager editorManager;
 
     //The images used for the button
     [SerializeField]
@@ -51,10 +43,6 @@ public class ToolButtonManager : MonoBehaviour
     //Initialize data members and set up the triggers
     void Awake()
     {
-        //Get references to required scripts
-        selectionUtility = mainObject.GetComponent<ObjectSelection>();
-        editorManager = mainObject.GetComponent<EditorManager>();
-
         //If this button is the one to be selected by default, select it
         if (currentState == buttonState.selected)
             select();
@@ -73,7 +61,7 @@ public class ToolButtonManager : MonoBehaviour
     //Check if the shortcut key was pressed
     private void Update()
     {
-        if (editorManager.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
+        if (CommonReferences.editorManager.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
         {
             selectedButton.unselect();
             select();
@@ -139,6 +127,6 @@ public class ToolButtonManager : MonoBehaviour
     //The action triggered by the button press
     private void action()
     {
-        selectionUtility.setTool(toolType);
+        ObjectSelection.setTool(toolType);
     }
 }

@@ -4,15 +4,10 @@ using UnityEngine.UI;
 
 public class ImportExportManager : MonoBehaviour
 {
-    //A reference to the main object of the scene
-    [SerializeField]
-    private GameObject mainObject;
     //A rectangle marking the position where the text area should be
     [SerializeField]
     private GameObject textAreaPlaceholder;
 
-    //The MapManager script attached to the main object
-    private MapManager mapManager;
     //The RectTransform script attatched to the text area placeholder
     private RectTransform rectTransform;
     //A vector to hold the world coordinates of each corner of the text area placeholder
@@ -24,7 +19,6 @@ public class ImportExportManager : MonoBehaviour
     //Get the needed scripts
     void Awake()
     {
-        mapManager = mainObject.GetComponent<MapManager>();
         rectTransform = textAreaPlaceholder.GetComponent<RectTransform>();
     }
 
@@ -56,16 +50,16 @@ public class ImportExportManager : MonoBehaviour
 
         //If the export popup is being shown, export the map script and set it as the text area content
         if (gameObject.name == "Export" && gameObject.activeSelf)
-            textArea = mapManager.ToString();
+            textArea = CommonReferences.mapManager.ToString();
     }
 
     //Import the map text in the input field
     public void importTextField()
     {
         //Clear the existing map objects
-        mapManager.clearMap();
+        CommonReferences.mapManager.clearMap();
         //Import the map script in the text field
-        mapManager.loadMap(textArea);
+        CommonReferences.mapManager.loadMap(textArea);
         //Clear the textfield after the map is loaded
         textArea = "";
     }

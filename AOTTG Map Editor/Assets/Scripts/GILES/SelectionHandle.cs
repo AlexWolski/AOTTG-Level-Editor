@@ -6,8 +6,7 @@ namespace GILES
 {
     public class SelectionHandle : MonoBehaviour
     {
-        #region Member
-
+        #region Data Members
         private Transform _trs;
         private Transform trs { get { if (_trs == null) _trs = gameObject.GetComponent<Transform>(); return _trs; } }
         private Camera _cam;
@@ -22,26 +21,17 @@ namespace GILES
 
         private Material HandleOpaqueMaterial
         {
-            get
-            {
-                return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_HandleOpaque);
-            }
+            get { return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_HandleOpaque); }
         }
 
         private Material RotateLineMaterial
         {
-            get
-            {
-                return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_RotateHandle);
-            }
+            get { return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_RotateHandle); }
         }
 
         private Material HandleTransparentMaterial
         {
-            get
-            {
-                return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_HandleTransparent);
-            }
+            get { return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_HandleTransparent); }
         }
 
         private Mesh HandleLineMesh
@@ -70,12 +60,6 @@ namespace GILES
             }
         }
 
-        //A reference to the main object
-        [SerializeField]
-        private GameObject mainObject;
-        //A reference to the editorManager on the main object
-        private EditorManager editorManager;
-
         //The current tool. Default is translate tool
         public static Tool tool { get; private set; } = Tool.Translate;
         //The tool handle status for position, rotation, and scale
@@ -97,7 +81,8 @@ namespace GILES
         private int draggingAxes = 0;
         private pb_Transform handleOrigin = pb_Transform.identity;
 
-        public bool isHidden { get; private set; }
+        //Determines if the handle should be displayed and interactable
+        private bool hidden = false;
         public bool InUse() { return draggingHandle; }
 
         //The octant of the camera relative ot the tool handle
@@ -122,17 +107,21 @@ namespace GILES
 
         protected void Awake()
         {
+            //Hide the hanlde by default
+            hidden = true;
             _trs = null;
             _cam = null;
         }
 
-        void Start()
+        public void hide()
         {
-            //Get a reference to the editor manager on the main object
-            editorManager = mainObject.GetComponent<EditorManager>();
+            hidden = true;
+            draggingHandle = false;
+        }
 
-            //SetIsHidden(true);
-            SetIsHidden(false);
+        public void show()
+        {
+            hidden = false;
         }
 
         public void SetTRS(Vector3 position, Quaternion rotation, Vector3 scale)
@@ -193,26 +182,34 @@ namespace GILES
         //Using Update instead of LateUpdate so that the dragginHandle bool can update before ObjectSelection.cs call LateUpdate
         void Update()
         {
-            //Update the octant the camera is in relative to the tool handle
-            previousOctant = viewOctant;
-            viewOctant = getViewOctant();
+            //Don't display or interact with the handle if it is hidden
+            if (!hidden)
+            {
+                //Update the octant the camera is in relative to the tool handle
+                previousOctant = viewOctant;
+                viewOctant = getViewOctant();
 
-            //Rebuild the gizmo meshes and matricies when the camera moves
-            OnCameraMove();
+                //Rebuild the gizmo meshes and matricies when the camera moves
+                OnCameraMove();
 
-            //Don't check for handle interactions if the handle is hidden or the editor is not in edit mode
-            if (isHidden || editorManager.currentMode != EditorMode.Edit)
-                return;
+                //Don't check for handle interactions if the handle is hidden or the editor is not in edit mode
+                if (CommonReferences.editorManager.currentMode != EditorMode.Edit)
+                    return;
 
-            //If the mouse is pressed, check wif the handle was clicked
-            if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
-                OnMouseDown();
-            //If the mouse is released, finish interacting with the handle
-            if (Input.GetMouseButtonUp(0))
-                OnFinishHandleMovement();
-            //If the mouse is pressed and dragging the handle, interact with the handle
-            else if (draggingHandle && Input.GetMouseButton(0))
-                interactHandle();
+                //If the mouse is pressed, check wif the handle was clicked
+                if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
+                    OnMouseDown();
+                //If the mouse is released, finish interacting with the handle
+                if (Input.GetMouseButtonUp(0))
+                    OnFinishHandleMovement();
+                //If the mouse is pressed and dragging the handle, interact with the handle
+                else if (draggingHandle && Input.GetMouseButton(0))
+                    interactHandle();
+            }
+
+            //After checking for interactions, let the object selection script check for selections
+            //To-do: move this to an input manager class
+            ObjectSelection.updateSelection();
         }
 
         private void interactHandle()
@@ -377,6 +374,10 @@ namespace GILES
 
         void OnMouseDown()
         {
+            //Don't check for handle interactions if it is hidden
+            if (hidden)
+                return;
+
             Vector3 a, b;
             drag.offset = Vector3.zero;
             Axis plane;
@@ -630,7 +631,8 @@ namespace GILES
 
         void OnRenderObject()
         {
-            if (isHidden || Camera.current != cam)
+            //Don't render the handle if it is hidden or this is not the designated camera
+            if (hidden || Camera.current != cam)
                 return;
 
             switch (tool)
@@ -687,17 +689,6 @@ namespace GILES
         public Tool GetTool()
         {
             return tool;
-        }
-
-        public void SetIsHidden(bool isHidden)
-        {
-            draggingHandle = false;
-            this.isHidden = isHidden;
-        }
-
-        public bool GetIsHidden()
-        {
-            return this.isHidden;
         }
 
         #endregion

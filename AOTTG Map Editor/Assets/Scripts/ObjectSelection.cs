@@ -2,19 +2,9 @@
 using System.Collections.Generic;
 using GILES;
 
-public class ObjectSelection : MonoBehaviour
+public static class ObjectSelection
 {
     #region Data Members
-    //A reference to the main object
-    [SerializeField]
-    private GameObject mainObject;
-    //A reference to the editorManager on the main object
-    private static EditorManager editorManager;
-    //A reference to the tool handle
-    [SerializeField]
-    private GameObject toolHandle;
-    //A reference to the selectionHandle script on the tool handle
-    private static SelectionHandle handleUtility;
     //A list containing the objects that can be selected
     private static List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
@@ -23,176 +13,22 @@ public class ObjectSelection : MonoBehaviour
     private static Vector3 selectionAverage;
     //The sum of the points of all the selected objects for calculating the average
     private static Vector3 pointTotal;
-
-    //Get references from other scripts
-    void Start()
-    {
-        editorManager = mainObject.GetComponent<EditorManager>();
-        handleUtility = toolHandle.GetComponent<SelectionHandle>();
-    }
     #endregion
 
     #region Update
     //Check for object selections after the pb_SelectionHandle script checks for handle interaction
-    void LateUpdate()
+    public static void updateSelection()
     {
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
-        if (editorManager.currentMode == EditorMode.Edit && !handleUtility.draggingHandle)
+        if (CommonReferences.editorManager.currentMode == EditorMode.Edit && !CommonReferences.handleUtility.draggingHandle)
             checkSelect();
         //Edit the selected objects if they were edited through the tool handle
-        if(handleUtility.draggingHandle)
+        if(CommonReferences.handleUtility.draggingHandle)
             checkEdit();
     }
 
-    //Update the position, rotation, or scale of the object selections based on the tool handle
-    void checkEdit()
-    {
-        //Get the displacement vector of the tool handle
-        Vector3 displacement = handleUtility.getDisplacement();
-
-        //Don't edit the objects if the tool handle wasn't moved
-        if (displacement != Vector3.zero)
-        {
-            //Determine which tool was used and call the respective transform
-            switch (SelectionHandle.tool)
-            {
-                case Tool.Translate:
-                    TransformTools.TranslateSelection(ref selectedObjects, displacement);
-                    break;
-
-                case Tool.Rotate:
-                    //The angle and axis and to rotate around
-                    float angle = 0f;
-                    Vector3 rotationAxis;
-
-                    //The angle is the only non-zero component of the displacement
-                    for (int axis = 0; axis < 3; axis++)
-                        if (displacement[axis] != 0)
-                            angle = displacement[axis];
-
-                    //Find which axis to rotate around
-                    if(displacement.x != 0)
-                        rotationAxis = handleUtility.transform.right;
-                    else if (displacement.y != 0)
-                        rotationAxis = handleUtility.transform.up;
-                    else
-                        rotationAxis = handleUtility.transform.forward;
-
-                    //If only one object is selected, rotate around its local position
-                    if (selectedObjects.Count == 1)
-                        TransformTools.RotateSelection(ref selectedObjects, rotationAxis, angle);
-                    //Otherwise, rotate around the seleciton average
-                    else
-                        TransformTools.RotateSelection(ref selectedObjects, selectionAverage, rotationAxis, angle);
-
-                    break;
-
-                case Tool.Scale:
-                    TransformTools.ScaleSelection(ref selectedObjects, selectionAverage, displacement, false);
-                    break;
-            }
-
-            //Update the selection average
-            switch (SelectionHandle.tool)
-            {
-                case Tool.Translate:
-                    pointTotal += displacement * selectedObjects.Count;
-                    selectionAverage += displacement;
-                    break;
-            }
-        }
-    }
-    #endregion
-
-    #region Selection Average Methods
-    //Add a point to the total average
-    private void addAveragePoint(Vector3 point)
-    {
-        //Add the point to the total and update the average
-        pointTotal += point;
-        selectionAverage = pointTotal / selectedObjects.Count;
-        toolHandle.transform.position = selectionAverage;
-
-        //If the tool handle is not active, activate it
-        toolHandle.SetActive(true);
-    }
-
-    //Add all selected objects to the total average
-    private void addAverageAll()
-    {
-        //Reset the total
-        pointTotal = Vector3.zero;
-
-        //Count up the total of all the objects
-        foreach (GameObject mapObject in selectedObjects)
-            pointTotal += mapObject.transform.position;
-
-        //Average the points
-        selectionAverage = pointTotal / selectableObjects.Count;
-        toolHandle.transform.position = selectionAverage;
-
-        //If the tool handle is not active, activate it
-        toolHandle.SetActive(true);
-    }
-
-    //Remove a point from the total average
-    private void removeAveragePoint(Vector3 point)
-    {
-        //Subtract the point to the total and update the average
-        pointTotal -= point;
-
-        //If there are any objects selected, update the handle position
-        if (selectedObjects.Count != 0)
-        {
-            selectionAverage = pointTotal / selectedObjects.Count;
-            toolHandle.transform.position = selectionAverage;
-        }
-        //Otherwise, disable the tool handle
-        else
-            toolHandle.SetActive(false);
-    }
-
-    //Remove all selected objects from the total average
-    private void removeAverageAll()
-    {
-        //Reset the total and average
-        pointTotal = Vector3.zero;
-        selectionAverage = Vector3.zero;
-
-        //Hide the tool handle
-        toolHandle.SetActive(false);
-    }
-
-    //Return the selection average
-    public ref Vector3 getSelectionAverage()
-    {
-        return ref selectionAverage;
-    }
-    #endregion
-
-    #region Select Objects Methods
-    //Return the parent of the given object. If there is no parent, return the given object
-    private GameObject getParent(GameObject childObject)
-    {
-        //The parent object that gets returned
-        GameObject parentObject = childObject;
-        //The tag of the parent object
-        string parentTag = childObject.transform.parent.gameObject.tag;
-
-        //Keep going up the hierarchy until the parent is a map or group
-        while (parentTag != "Map" && parentTag != "Group")
-        {
-            //Move up the hierarchy
-            parentObject = parentObject.transform.parent.gameObject;
-            //Update the parent tag
-            parentTag = parentObject.transform.parent.gameObject.tag;
-        }
-
-        return parentObject;
-    }
-
     //Test if any objects were clicked
-    private void checkSelect()
+    private static void checkSelect()
     {
         //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
         if (Input.GetKeyDown(KeyCode.A))
@@ -240,14 +76,162 @@ public class ObjectSelection : MonoBehaviour
         }
     }
 
+
+    //Update the position, rotation, or scale of the object selections based on the tool handle
+    private static void checkEdit()
+    {
+        //Get the displacement vector of the tool handle
+        Vector3 displacement = CommonReferences.handleUtility.getDisplacement();
+
+        //Don't edit the objects if the tool handle wasn't moved
+        if (displacement != Vector3.zero)
+        {
+            //Determine which tool was used and call the respective transform
+            switch (SelectionHandle.tool)
+            {
+                case Tool.Translate:
+                    TransformTools.TranslateSelection(ref selectedObjects, displacement);
+                    break;
+
+                case Tool.Rotate:
+                    //The angle and axis and to rotate around
+                    float angle = 0f;
+                    Vector3 rotationAxis;
+
+                    //The angle is the only non-zero component of the displacement
+                    for (int axis = 0; axis < 3; axis++)
+                        if (displacement[axis] != 0)
+                            angle = displacement[axis];
+
+                    //Find which axis to rotate around
+                    if(displacement.x != 0)
+                        rotationAxis = CommonReferences.handleUtility.transform.right;
+                    else if (displacement.y != 0)
+                        rotationAxis = CommonReferences.handleUtility.transform.up;
+                    else
+                        rotationAxis = CommonReferences.handleUtility.transform.forward;
+
+                    //If only one object is selected, rotate around its local position
+                    if (selectedObjects.Count == 1)
+                        TransformTools.RotateSelection(ref selectedObjects, rotationAxis, angle);
+                    //Otherwise, rotate around the seleciton average
+                    else
+                        TransformTools.RotateSelection(ref selectedObjects, selectionAverage, rotationAxis, angle);
+
+                    break;
+
+                case Tool.Scale:
+                    TransformTools.ScaleSelection(ref selectedObjects, selectionAverage, displacement, false);
+                    break;
+            }
+
+            //Update the selection average
+            switch (SelectionHandle.tool)
+            {
+                case Tool.Translate:
+                    pointTotal += displacement * selectedObjects.Count;
+                    selectionAverage += displacement;
+                    break;
+            }
+        }
+    }
+    #endregion
+
+    #region Selection Average Methods
+    //Add a point to the total average
+    private static void addAveragePoint(Vector3 point)
+    {
+        //Add the point to the total and update the average
+        pointTotal += point;
+        selectionAverage = pointTotal / selectedObjects.Count;
+        CommonReferences.toolHandle.transform.position = selectionAverage;
+
+        //If the tool handle is not active, activate it
+        CommonReferences.handleUtility.show();
+    }
+
+    //Add all selected objects to the total average
+    private static void addAverageAll()
+    {
+        //Reset the total
+        pointTotal = Vector3.zero;
+
+        //Count up the total of all the objects
+        foreach (GameObject mapObject in selectedObjects)
+            pointTotal += mapObject.transform.position;
+
+        //Average the points
+        selectionAverage = pointTotal / selectableObjects.Count;
+        CommonReferences.toolHandle.transform.position = selectionAverage;
+
+        //If the tool handle is not active, activate it
+        CommonReferences.handleUtility.hide();
+    }
+
+    //Remove a point from the total average
+    private static void removeAveragePoint(Vector3 point)
+    {
+        //Subtract the point to the total and update the average
+        pointTotal -= point;
+
+        //If there are any objects selected, update the handle position
+        if (selectedObjects.Count != 0)
+        {
+            selectionAverage = pointTotal / selectedObjects.Count;
+            CommonReferences.toolHandle.transform.position = selectionAverage;
+        }
+        //Otherwise, disable the tool handle
+        else
+            CommonReferences.handleUtility.hide();
+    }
+
+    //Remove all selected objects from the total average
+    private static void removeAverageAll()
+    {
+        //Reset the total and average
+        pointTotal = Vector3.zero;
+        selectionAverage = Vector3.zero;
+
+        //Hide the tool handle
+        CommonReferences.handleUtility.hide();
+    }
+
+    //Return the selection average
+    public static ref Vector3 getSelectionAverage()
+    {
+        return ref selectionAverage;
+    }
+    #endregion
+
+    #region Select Objects Methods
+    //Return the parent of the given object. If there is no parent, return the given object
+    private static GameObject getParent(GameObject childObject)
+    {
+        //The parent object that gets returned
+        GameObject parentObject = childObject;
+        //The tag of the parent object
+        string parentTag = childObject.transform.parent.gameObject.tag;
+
+        //Keep going up the hierarchy until the parent is a map or group
+        while (parentTag != "Map" && parentTag != "Group")
+        {
+            //Move up the hierarchy
+            parentObject = parentObject.transform.parent.gameObject;
+            //Update the parent tag
+            parentTag = parentObject.transform.parent.gameObject.tag;
+        }
+
+        return parentObject;
+    }
+
     //Add the given object to the selectable objects list
-    public void addSelectable(GameObject objectToAdd)
+    public static void addSelectable(GameObject objectToAdd)
     {
         selectableObjects.Add(getParent(objectToAdd));
     }
 
     //Remove the given object from both the selectable and selected objects lists
-    public void removeSelectable(GameObject objectToAdd)
+    public static void removeSelectable(GameObject objectToAdd)
     {
         //If the object is selected, deselect it
         if (selectedObjects.Contains(objectToAdd))
@@ -257,7 +241,7 @@ public class ObjectSelection : MonoBehaviour
         selectableObjects.Remove(getParent(objectToAdd));
     }
 
-    public void selectObject(GameObject objectToSelect)
+    public static void selectObject(GameObject objectToSelect)
     {
         //Get the parent of the object
         GameObject parentObject = getParent(objectToSelect);
@@ -272,7 +256,7 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation();
     }
 
-    public void selectAll()
+    public static void selectAll()
     {
         //Select all objects by copying the selectedObjects list
         selectedObjects = new List<GameObject>(selectableObjects);
@@ -287,7 +271,7 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation(); ;
     }
 
-    public void deselectObject(GameObject objectToDeselect)
+    public static void deselectObject(GameObject objectToDeselect)
     {
         //Get the parent of the object
         GameObject parentObject = getParent(objectToDeselect);
@@ -302,7 +286,7 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation();
     }
 
-    public void deselectAll()
+    public static void deselectAll()
     {
         //Remove the outline on all selected objects
         foreach (GameObject selectedObject in selectedObjects)
@@ -318,7 +302,7 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Resets both the selected and selectable object lists
-    public void resetSelection()
+    public static void resetSelection()
     {
         selectedObjects = new List<GameObject>();
         selectableObjects = new List<GameObject>();
@@ -327,7 +311,7 @@ public class ObjectSelection : MonoBehaviour
 
     //Remove any selected objects from both the selected and selectable objects lists
     //Returns a the selected objects list. Caller is expected to reset it after use
-    public ref List<GameObject> removeSelected()
+    public static ref List<GameObject> removeSelected()
     {
         //If all of the objects are selected, reset just the selectable objects list
         if (selectedObjects.Count == selectableObjects.Count)
@@ -356,27 +340,27 @@ public class ObjectSelection : MonoBehaviour
 
     #region Tool Methods
     //Set the type of the tool handle
-    public void setTool(Tool toolType)
+    public static void setTool(Tool toolType)
     {
-        handleUtility.SetTool(toolType);
+        CommonReferences.handleUtility.SetTool(toolType);
         resetToolHandleRotation();
     }
 
     //Set the rotation of the tool handle based on how many objects are selected
-    public void resetToolHandleRotation()
+    public static void resetToolHandleRotation()
     {
         //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
         if ((SelectionHandle.tool == Tool.Rotate || SelectionHandle.tool == Tool.Scale) && selectedObjects.Count == 1)
-            handleUtility.setRotation(selectedObjects[0].transform.rotation);
+            CommonReferences.handleUtility.setRotation(selectedObjects[0].transform.rotation);
         //Otherwise reset the rotation
         else
-            handleUtility.setRotation(Quaternion.Euler(Vector3.up));
+            CommonReferences.handleUtility.setRotation(Quaternion.Euler(Vector3.up));
     }
     #endregion
 
     #region Outline Methods
     //Add a green outline around a GameObject
-    private void addOutline(GameObject objectToAddOutline)
+    private static void addOutline(GameObject objectToAddOutline)
     {
         //Get the outline script of the parent object
         Outline outlineScript = objectToAddOutline.GetComponent<Outline>();
@@ -392,7 +376,7 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Remove the green outline shader
-    private void removeOutline(GameObject objectToRemoveOutline)
+    private static void removeOutline(GameObject objectToRemoveOutline)
     {
         //Get the outline script of the parent object
         Outline outlineScript = objectToRemoveOutline.GetComponent<Outline>();
