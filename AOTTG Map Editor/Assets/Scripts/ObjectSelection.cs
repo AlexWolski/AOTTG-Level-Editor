@@ -20,10 +20,10 @@ public static class ObjectSelection
     public static void updateSelection()
     {
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
-        if (CommonReferences.editorManager.currentMode == EditorMode.Edit && !CommonReferences.handleUtility.draggingHandle)
+        if (CommonReferences.editorManager.currentMode == EditorMode.Edit && !CommonReferences.selectionHandle.InUse())
             checkSelect();
         //Edit the selected objects if they were edited through the tool handle
-        if(CommonReferences.handleUtility.draggingHandle)
+        if(CommonReferences.selectionHandle.InUse())
             checkEdit();
     }
 
@@ -81,7 +81,7 @@ public static class ObjectSelection
     private static void checkEdit()
     {
         //Get the displacement vector of the tool handle
-        Vector3 displacement = CommonReferences.handleUtility.getDisplacement();
+        Vector3 displacement = CommonReferences.selectionHandle.getDisplacement();
 
         //Don't edit the objects if the tool handle wasn't moved
         if (displacement != Vector3.zero)
@@ -105,11 +105,11 @@ public static class ObjectSelection
 
                     //Find which axis to rotate around
                     if(displacement.x != 0)
-                        rotationAxis = CommonReferences.handleUtility.transform.right;
+                        rotationAxis = CommonReferences.selectionHandle.transform.right;
                     else if (displacement.y != 0)
-                        rotationAxis = CommonReferences.handleUtility.transform.up;
+                        rotationAxis = CommonReferences.selectionHandle.transform.up;
                     else
-                        rotationAxis = CommonReferences.handleUtility.transform.forward;
+                        rotationAxis = CommonReferences.selectionHandle.transform.forward;
 
                     //If only one object is selected, rotate around its local position
                     if (selectedObjects.Count == 1)
@@ -147,7 +147,7 @@ public static class ObjectSelection
         CommonReferences.toolHandle.transform.position = selectionAverage;
 
         //If the tool handle is not active, activate it
-        CommonReferences.handleUtility.show();
+        CommonReferences.selectionHandle.show();
     }
 
     //Add all selected objects to the total average
@@ -165,7 +165,7 @@ public static class ObjectSelection
         CommonReferences.toolHandle.transform.position = selectionAverage;
 
         //If the tool handle is not active, activate it
-        CommonReferences.handleUtility.hide();
+        CommonReferences.selectionHandle.hide();
     }
 
     //Remove a point from the total average
@@ -182,7 +182,7 @@ public static class ObjectSelection
         }
         //Otherwise, disable the tool handle
         else
-            CommonReferences.handleUtility.hide();
+            CommonReferences.selectionHandle.hide();
     }
 
     //Remove all selected objects from the total average
@@ -193,7 +193,7 @@ public static class ObjectSelection
         selectionAverage = Vector3.zero;
 
         //Hide the tool handle
-        CommonReferences.handleUtility.hide();
+        CommonReferences.selectionHandle.hide();
     }
 
     //Return the selection average
@@ -342,7 +342,7 @@ public static class ObjectSelection
     //Set the type of the tool handle
     public static void setTool(Tool toolType)
     {
-        CommonReferences.handleUtility.SetTool(toolType);
+        CommonReferences.selectionHandle.SetTool(toolType);
         resetToolHandleRotation();
     }
 
@@ -351,10 +351,10 @@ public static class ObjectSelection
     {
         //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
         if ((SelectionHandle.tool == Tool.Rotate || SelectionHandle.tool == Tool.Scale) && selectedObjects.Count == 1)
-            CommonReferences.handleUtility.setRotation(selectedObjects[0].transform.rotation);
+            CommonReferences.selectionHandle.setRotation(selectedObjects[0].transform.rotation);
         //Otherwise reset the rotation
         else
-            CommonReferences.handleUtility.setRotation(Quaternion.Euler(Vector3.up));
+            CommonReferences.selectionHandle.setRotation(Quaternion.Euler(Vector3.up));
     }
     #endregion
 

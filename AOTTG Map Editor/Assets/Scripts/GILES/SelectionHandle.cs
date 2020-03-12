@@ -66,17 +66,18 @@ namespace GILES
         private Vector3 prevPosition = Vector3.zero;
         private Quaternion prevRotation = Quaternion.identity;
         private Vector3 scale = Vector3.one;
-        //Determines if the rotation handle was moved in the positive or negative direction
-        private float sign;
 
         private Mesh _coneRight, _coneUp, _coneForward;
 
         const float CAP_SIZE = .07f;
 
-        public float HandleSize = 90f;
+        [SerializeField]
+        private float HandleSize = 90f;
+        [SerializeField]
+        private float rotationSpeed = 3f;
 
         private Vector2 mouseOrigin = Vector2.zero;
-        public bool draggingHandle { get; private set; }
+        private bool draggingHandle;
         //In how many directions is the handle able to move
         private int draggingAxes = 0;
         private pb_Transform handleOrigin = pb_Transform.identity;
@@ -196,7 +197,7 @@ namespace GILES
                 if (CommonReferences.editorManager.currentMode != EditorMode.Edit)
                     return;
 
-                //If the mouse is pressed, check wif the handle was clicked
+                //If the mouse is pressed, check if the handle was clicked
                 if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
                     OnMouseDown();
                 //If the mouse is released, finish interacting with the handle
@@ -214,17 +215,17 @@ namespace GILES
 
         private void interactHandle()
         {
-            //Get the point on the movement plane the cursor is over
-            Vector3 planeHit = getMovementPlaneHit();
-            //The plane hit relative to the local coordinate system of the tool handle
-            Vector3 localPlaneHit;
-
             //Set the starting point of the drag to the position of the handle
             drag.origin = trs.position;
 
             switch (tool)
             {
                 case Tool.Translate:
+                    //Get the point on the movement plane the cursor is over
+                    Vector3 planeHit = getMovementPlaneHit();
+                    //The plane hit relative to the local coordinate system of the tool handle
+                    Vector3 localPlaneHit;
+
                     //Save the old position
                     prevPosition = trs.position;
 
@@ -250,36 +251,74 @@ namespace GILES
                     //Save the old rotation
                     prevRotation = trs.rotation;
 
-                    Vector2 delta = (Vector2)Input.mousePosition - mouseOrigin;
-                    mouseOrigin = Input.mousePosition;
-                    sign = pb_HandleUtility.CalcMouseDeltaSignWithAxes(cam, drag.origin, drag.worldAxis, drag.cross, delta);
-                    axisAngle += delta.magnitude * sign;
-                    trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;// trs.localRotation;
-                    break;
+                    //Get the displacement of the cursor on the screen
+                    Vector2 mouseDisplacement = (Vector2)Input.mousePosition - mouseOrigin;
+                    //Convert the mouse displacement to a vector in the local space of the handle
+                    Vector3 displacementVector = pb_HandleUtility.screenVectorToWorld(cam, mouseDisplacement);
+                    //The normal fo the plane currently being rotated around
+                    Vector3 dragPlaneNormal;
+                    //The displacement vector of the mouse movement projected onto the rotation plane
+                    Vector3 projectedVector;
 
-                case Tool.Scale:
-                    //Convert the plane hit to local coordinates
-                    localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
-
-                    float scaleFactor;
-
+                    //Find the normal of the plane being rotated around
                     if (drag.localAxis.x != 0)
-                        scaleFactor = localPlaneHit.x;
+                        dragPlaneNormal = trs.right;
                     else if (drag.localAxis.y != 0)
-                        scaleFactor = localPlaneHit.y;
+                        dragPlaneNormal = trs.up;
                     else
-                        scaleFactor = localPlaneHit.z;
+                        dragPlaneNormal = trs.forward;
 
-                    //If the entire object is being scaled, scale all three axis
-                    if (draggingAxes > 1)
-                        scale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
-                    //Otherwise scale the axis handle being iteracted with
-                    else
-                        scale = (drag.localAxis * scaleFactor) + Vector3.one;
+                    //Project the mouse displacement onto the displacement plane
+                    projectedVector = Vector3.ProjectOnPlane(displacementVector, dragPlaneNormal);
 
-                    //Add the default scale to the displacement to get the amount to scale the object
-                    RebuildGizmoMesh(Vector3.one + scale);
+                    if (projectedVector.magnitude > 0.5f)
+                        Debug.Log("Test");
+
+                    //Rotate the projected vector to align with the starting click angle
+                    projectedVector = Quaternion.AngleAxis(-startingClickAngle, dragPlaneNormal) * projectedVector;
+
+                    //The displacement of the angle
+                    float displacement = 0;
+
+                    //Sum the components of the projected vector to get the displacement
+                    for (int axis = 0; axis < 3; axis++)
+                        displacement += projectedVector[axis];
+
+                    //Add the displacement to the angle after scaling it by the rotation speed
+                    axisAngle += displacement / 10 * rotationSpeed;
+                    //Save the sign of the displacement
+                    sign = Mathf.Sign(displacement);
+
+                    //Rotate the tool handle
+                    trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;
+
+                    //Resest the mouse origin to get the right displacement next frame
+                    mouseOrigin = Input.mousePosition;
                     break;
+
+                //case Tool.Scale:
+                //    //Convert the plane hit to local coordinates
+                //    localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
+
+                //    float handleDisplacement;
+
+                //    if (drag.localAxis.x != 0)
+                //        handleDisplacement = localPlaneHit.x;
+                //    else if (drag.localAxis.y != 0)
+                //        handleDisplacement = localPlaneHit.y;
+                //    else
+                //        handleDisplacement = localPlaneHit.z;
+
+                //    //If the entire object is being scaled, scale all three axis
+                //    if (draggingAxes > 1)
+                //        scale = new Vector3(handleDisplacement, handleDisplacement, handleDisplacement);
+                //    //Otherwise scale the axis handle being iteracted with
+                //    else
+                //        scale = (drag.localAxis * handleDisplacement) + Vector3.one;
+
+                //    //Add the default scale to the displacement to get the amount to scale the object
+                //    RebuildGizmoMesh(scale);
+                //    break;
             }
 
             if (OnHandleMove != null)
@@ -342,23 +381,23 @@ namespace GILES
 
                 //If the drag axis is x or z and the x angle is 45 degrees away from default, use the y axis
                 if (drag.localAxis.y == 0 && (45f < camRot.x && camRot.x < 90f || 270f < camRot.x && camRot.x < 315f))
-                    movementPlane.SetNormalAndPosition(trs.up.normalized, trs.position);
+                    movementPlane.SetNormalAndPosition(trs.up, trs.position);
                 //If the drag axis is the y, use either the x or z plane based on the camera's angle
                 else if (drag.localAxis.y != 0)
                 {
                     if (45 < camRot.y && camRot.y < 135 ||
                         225 < camRot.y && camRot.y < 315)
-                        movementPlane.SetNormalAndPosition(trs.right.normalized, trs.position);
+                        movementPlane.SetNormalAndPosition(trs.right, trs.position);
                     else
-                        movementPlane.SetNormalAndPosition(trs.forward.normalized, trs.position);
+                        movementPlane.SetNormalAndPosition(trs.forward, trs.position);
                 }
                 //Otherwise use the plane of the axis being dragged
                 else
                 {
                     if (drag.localAxis.x != 0)
-                        movementPlane.SetNormalAndPosition(trs.forward.normalized, trs.position);
+                        movementPlane.SetNormalAndPosition(trs.forward, trs.position);
                     else
-                        movementPlane.SetNormalAndPosition(trs.right.normalized, trs.position);
+                        movementPlane.SetNormalAndPosition(trs.right, trs.position);
                 }
             }
 
@@ -370,7 +409,65 @@ namespace GILES
             return new Vector3();
         }
 
-        float axisAngle = 0f;
+        //The angle displacement of the rotation handle since the drag started
+        private float axisAngle = 0f;
+        //Determines if the latest rotation was positive or negative
+        private float sign;
+        //The angle formed by the vector starting at the handle origin and ending at the clicked point of the rotation handle
+        private float startingClickAngle;
+
+        //Find the angle around the axis being dragged of the given point
+        private float getPolarAngle(Vector3 point)
+        {
+            //Convert the point into a polar angle and return it
+            if (drag.localAxis.x != 0)
+                return Mathf.Atan2(point.y, point.z) * Mathf.Rad2Deg;
+            else if (drag.localAxis.y != 0)
+                return Mathf.Atan2(point.z, point.x) * Mathf.Rad2Deg;
+            else
+                return Mathf.Atan2(point.y, point.x) * Mathf.Rad2Deg;
+        }
+
+        //Find the angle formed by the  the rotation handle is clicked
+        private float getClickRotation()
+        {
+            //A plane representing the axis currently being dragged
+            Plane movementPlane = new Plane();
+            //The normal of the movement plane
+            Vector3 planeNormal;
+            //The point where the ray intersected the plane
+            Vector3 hitPoint;
+
+            if (drag.localAxis.x != 0)
+                planeNormal = trs.right;
+            else if(drag.localAxis.y != 0)
+                planeNormal = trs.up;
+            else
+                planeNormal = trs.forward;
+
+            //Create a ray originating from the camera and passing through the cursor
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            //The distance from the camera to the hit point
+            float distToHit;
+
+            //Set the movemnet plane based on the axis being dragged
+            movementPlane.SetNormalAndPosition(planeNormal, trs.position);
+
+            //Find the plane hit point
+            if (movementPlane.Raycast(ray, out distToHit))
+                hitPoint = ray.GetPoint(distToHit);
+            //If the pland and ray don't intersect, return
+            else
+                return 0f;
+
+            //Get the position of hit point relative to the tool handle
+            Vector3 relativePoint = hitPoint - trs.position;
+
+            //Convert the plane hit to an angle
+            float angle = getPolarAngle(relativePoint);
+
+            return angle;
+        }
 
         void OnMouseDown()
         {
@@ -381,8 +478,6 @@ namespace GILES
             Vector3 a, b;
             drag.offset = Vector3.zero;
             Axis plane;
-
-            axisAngle = 0f;
 
             draggingHandle = CheckHandleActivated(Input.mousePosition, out plane);
 
@@ -396,13 +491,6 @@ namespace GILES
 
             if (draggingHandle)
             {
-                //If the scale handle was just clicked, reset the handle size and prime it for scaling
-                if (tool == Tool.Scale)
-                {
-                    scale = Vector3.one;
-                    TransformTools.saveScaleTransforms();
-                }
-
                 Ray ray = cam.ScreenPointToRay(Input.mousePosition);
 
                 if ((plane & Axis.X) == Axis.X)
@@ -464,6 +552,16 @@ namespace GILES
 
                 if (OnHandleBegin != null)
                     OnHandleBegin(GetTransform());
+
+                //If the scale handle was just clicked, reset the handle size and prime it for scaling
+                if (tool == Tool.Scale)
+                    scale = Vector3.one;
+                //Reset the total displacement and save the angle of the point clicked on
+                else if (tool == Tool.Rotate)
+                {
+                    axisAngle = 0f;
+                    startingClickAngle = getClickRotation();
+                }
             }
         }
 
@@ -482,10 +580,6 @@ namespace GILES
         {
             yield return new WaitForEndOfFrame();
             draggingHandle = false;
-
-            //Release the stored transforms for scaling
-            if (tool == Tool.Scale)
-                TransformTools.releaseScaleTransforms();
         }
         #endregion
 

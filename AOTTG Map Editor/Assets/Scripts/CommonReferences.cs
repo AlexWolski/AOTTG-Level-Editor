@@ -12,7 +12,7 @@ public static class CommonReferences
     //The scripts attatched to those game objects
     public static EditorManager editorManager { get; private set; }
     public static MapManager mapManager { get; private set; }
-    public static SelectionHandle handleUtility { get; private set; }
+    public static SelectionHandle selectionHandle { get; private set; }
 
     //Get references to the gameobjects and their script components
     static CommonReferences()
@@ -22,6 +22,6 @@ public static class CommonReferences
 
         editorManager = mainObject.GetComponent<EditorManager>();
         mapManager = mainObject.GetComponent<MapManager>();
-        handleUtility = toolHandle.GetComponent<SelectionHandle>();
+        selectionHandle = toolHandle.GetComponent<SelectionHandle>();
     }
 }

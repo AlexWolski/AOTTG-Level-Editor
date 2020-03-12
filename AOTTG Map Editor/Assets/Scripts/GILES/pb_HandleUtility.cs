@@ -108,24 +108,14 @@ namespace GILES
 		}
 
 		/**
-		 * When dragging in 3d space, this returns the signed delta based on handle orientation.
+		 * Converts a displacement on the screen to a vector in world space
 		 */
-		public static float CalcMouseDeltaSignWithAxes(Camera cam, Vector3 origin, Vector3 upDir, Vector3 rightDir, Vector2 mouseDelta)
+		public static Vector3 screenVectorToWorld(Camera cam, Vector2 mouseDisplacement)
 		{
-			if( Mathf.Abs(mouseDelta.magnitude) < .0001f)
-				return 1f;
-
-			Vector2 or = cam.WorldToScreenPoint(origin);
-			Vector2 ud = cam.WorldToScreenPoint(origin + upDir);
-			Vector2 rd = cam.WorldToScreenPoint(origin + rightDir);
-
-			float mouseDotUp = Vector2.Dot(mouseDelta, ud - or);
-			float mouseDotRight = Vector2.Dot(mouseDelta, rd - or);
-
-			if( Mathf.Abs(mouseDotUp) > Mathf.Abs(mouseDotRight))
-				return Mathf.Sign(mouseDotUp);
-			else
-				return Mathf.Sign(mouseDotRight);
+			//Make a Vector3 representing the mouse movement in the local space of the camera
+			Vector3 localDisplacement = new Vector3(mouseDisplacement.x, mouseDisplacement.y, 0);
+			//Transform the displacement vector from the local camera space to world space
+			return cam.transform.TransformDirection(localDisplacement);
 		}
 
 		/**
