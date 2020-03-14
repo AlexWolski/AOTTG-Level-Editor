@@ -45,7 +45,7 @@ public static class ObjectSelection
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
             //If an object was clicked, select it
-            if (Physics.Raycast(ray, out hit, 1000.0f))
+            if (Physics.Raycast(ray, out hit, Mathf.Infinity))
             {
                 //Select the parent of the object
                 GameObject parentObject = getParent(hit.transform.gameObject);
@@ -165,7 +165,7 @@ public static class ObjectSelection
         CommonReferences.toolHandle.transform.position = selectionAverage;
 
         //If the tool handle is not active, activate it
-        CommonReferences.selectionHandle.hide();
+        CommonReferences.selectionHandle.show();
     }
 
     //Remove a point from the total average
@@ -268,7 +268,7 @@ public static class ObjectSelection
         //Update the tool handle position
         addAverageAll();
         //Reset the rotation on the tool handle
-        resetToolHandleRotation(); ;
+        resetToolHandleRotation();
     }
 
     public static void deselectObject(GameObject objectToDeselect)
