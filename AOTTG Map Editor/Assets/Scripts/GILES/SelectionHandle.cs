@@ -1,6 +1,6 @@
-﻿using UnityEngine;
+﻿using System;
 using System.Collections;
-using System.Collections.Generic;
+using UnityEngine;
 
 namespace GILES
 {
@@ -62,10 +62,22 @@ namespace GILES
 
         //The current tool. Default is translate tool
         public static Tool tool { get; private set; } = Tool.Translate;
-        //The tool handle status for position, rotation, and scale
+
+        ///Save the handle displacements for when they need to be returned
         private Vector3 prevPosition;
         private float rotationDisplacement;
         private Vector3 scale;
+
+        ///Persistient variables used by the rotation tool
+        //The angle displacement of the rotation handle since the drag started
+        private float axisAngle = 0f;
+        //Determines if the latest rotation was positive or negative
+        private float sign;
+        //The vector in screenspace representing the tangent line of the rotation handle that was clicked
+        private Vector2 clickTangent;
+
+        ///Persistient variables used by the translation tool
+        float cameraDist;
 
         private Mesh _coneRight, _coneUp, _coneForward;
 
@@ -78,6 +90,9 @@ namespace GILES
         private float rotationSpeed = 3f;
         [SerializeField]
         private float translationSpeed = 1f;
+        //The maximum distance away from the origin an object can be
+        [SerializeField]
+        private float maxDistance = 1000000000f;
 
         private Vector2 mouseOrigin = Vector2.zero;
         private bool draggingHandle;
@@ -229,16 +244,21 @@ namespace GILES
                 switch (tool)
                 {
                     case Tool.Translate:
-                        //Get the point on the movement plane the cursor is over
-                        Vector3 planeHit;
-
                         //Save the old position
                         prevPosition = trs.position;
 
                         //If the plane translate is selected, use the whole hit point as the position of the handle
                         if (draggingAxes > 1)
                         {
-                            planeHit = getMovementPlaneHit();
+                            //Get the position under the cursor but on the movement plane
+                            Vector3 planeHit = getMovementPlaneHit();
+
+                            //If the position is not valid, don't move the tool handle
+                            for (int axis = 0; axis < 3; axis++)
+                                if (float.IsNaN(planeHit[axis]))
+                                    return;
+
+                            //If the point is valid, move the tool handle to the point under the cursor
                             trs.position = planeHit - drag.offset;
                         }
                         //If only one axis is selected, use the component of the mosue displacement parallel to the drag axis
@@ -254,16 +274,30 @@ namespace GILES
                             Vector2 screenDisplacement = projectBontoA(mouseDisplacement, screenDragVector);
 
                             //Use the dot product between the drag vector and the screen displacement to get the sign of the translation
-                            float sign = Vector2.Dot(screenDragVector, screenDisplacement) > 0 ? 1f : -1f;
-                            //Get the distance between the camera and the tool handle
-                            float cameraDist = (cam.transform.position - trs.position).magnitude;
-
+                            float displacementSign = Vector2.Dot(screenDragVector, screenDisplacement) > 0 ? 1f : -1f;
+                            
                             //Multiply the drag axis by the displacement magnitude to get the vector to translate by
-                            Vector3 translationVector = drag.localAxis * screenDisplacement.magnitude * sign;
+                            Vector3 translationVector = drag.localAxis * screenDisplacement.magnitude * displacementSign;
                             //Scale the translation vector by the translation speed and distance to camera
                             translationVector *= translationSpeed * cameraDist / 1000;
+
                             //Translate the tool handle
                             trs.Translate(translationVector, Space.Self);
+
+                            //If any of the axes of the object went out of bounds, set it back to the maximum valid value
+                            for(int axis = 0; axis < 3; axis++)
+                            {
+                                if(Mathf.Abs(trs.position[axis]) > maxDistance)
+                                {
+                                    //Get the sign of the current position
+                                    float positionSign = Mathf.Sign(trs.position[axis]);
+
+                                    //Set the position to back in bounds
+                                    Vector3 fixedPosition = trs.position;
+                                    fixedPosition[axis] = maxDistance * positionSign;
+                                    trs.position = fixedPosition;
+                                }
+                            }
 
                             //Resest the mouse origin to get the right displacement next frame
                             mouseOrigin = Input.mousePosition;
@@ -355,57 +389,14 @@ namespace GILES
         {
             //Create a ray originating from the camera and passing through the cursor
             Ray ray = cam.ScreenPointToRay(Input.mousePosition);
-            //The distance between the origin of the ray and the intersection with the plane
-            float distToHit = 0f;
-
-            //A plane to interesct the ray casted from the camera. The plane must face the camera
-            Plane movementPlane = new Plane();
-
-            //If the handle is moving along two axes, use the dragging plane
-            if (draggingAxes >= 2)
-                movementPlane = drag.plane;
-            //Otherwise, determine the plane to use based on the camera angle
-            else
-            {
-                //Get the rotation of the camera in Euler angles relative to the handle rotation
-                Vector3 camRot = cam.transform.rotation.eulerAngles;
-
-                //If the drag axis is x or z and the x angle is 45 degrees away from default, use the y axis
-                if (drag.localAxis.y == 0 && (45f < camRot.x && camRot.x < 90f || 270f < camRot.x && camRot.x < 315f))
-                    movementPlane.SetNormalAndPosition(trs.up, trs.position);
-                //If the drag axis is the y, use either the x or z plane based on the camera's angle
-                else if (drag.localAxis.y != 0)
-                {
-                    if (45 < camRot.y && camRot.y < 135 ||
-                        225 < camRot.y && camRot.y < 315)
-                        movementPlane.SetNormalAndPosition(trs.right, trs.position);
-                    else
-                        movementPlane.SetNormalAndPosition(trs.forward, trs.position);
-                }
-                //Otherwise use the plane of the axis being dragged
-                else
-                {
-                    if (drag.localAxis.x != 0)
-                        movementPlane.SetNormalAndPosition(trs.forward, trs.position);
-                    else
-                        movementPlane.SetNormalAndPosition(trs.right, trs.position);
-                }
-            }
 
             //Find the position the cursor over on the corresponding plane
-            if (movementPlane.Raycast(ray, out distToHit))
+            if (drag.plane.Raycast(ray, out float distToHit))
                 return ray.GetPoint(distToHit);
 
-            //If the ray didn't hit anything, return an empty vector
-            return new Vector3();
+            //Otherwise return NAN to indicate a failure to get the point
+            return new Vector3(float.NaN, float.NaN, float.NaN);
         }
-
-        //The angle displacement of the rotation handle since the drag started
-        private float axisAngle = 0f;
-        //Determines if the latest rotation was positive or negative
-        private float sign;
-        //The vector in screenspace representing the tangent line of the rotation handle that was clicked
-        private Vector2 clickTangent;
 
         private Vector3 getClickVector()
         {
@@ -566,16 +557,23 @@ namespace GILES
                 if (OnHandleBegin != null)
                     OnHandleBegin(GetTransform());
 
-                //If the scale handle was just clicked, reset the handle size and prime it for scaling
-                if (tool == Tool.Scale)
+                
+                //Save the distance from the camera to the tool handle
+                if (tool == Tool.Translate)
                 {
-                    scale = Vector3.one;
+                    //Get the distance between the camera and the tool handle
+                    cameraDist = (cam.transform.position - trs.position).magnitude;
                 }
                 //Reset the total displacement and save the angle of the point clicked on
                 else if (tool == Tool.Rotate)
                 {
                     axisAngle = 0f;
                     clickTangent = getClickTangent();
+                }
+                //Reset the handle size and prime it for scaling
+                else
+                {
+                    scale = Vector3.one;
                 }
             }
         }
