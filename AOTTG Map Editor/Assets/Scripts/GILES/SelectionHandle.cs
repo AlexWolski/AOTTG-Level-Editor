@@ -422,16 +422,33 @@ namespace GILES
         //Find the vector from the handle origin to where the handle was clicked
         private Vector2 getClickTangent()
         {
-            //Get the 3D vector representing the point on the rotation handle that was clicked
-            Vector3 clickVector3 = getClickVector();
-            //Find the vector that is tangent to the rotation handle and in the movement plane
-            Vector3 tangentVector3 = getOrthInPlane(clickVector3);
-
-            //Convert both the handle position and tangent vector end postition to screen space
+            //Convert both the handle position to screen space
             Vector2 screenPosHandle = cam.WorldToScreenPoint(trs.position);
-            Vector2 screenPosTangent = cam.WorldToScreenPoint(trs.position + tangentVector3);
+            //The 3D vector tangent to the rotation handle at the click point
+            Vector3 tangentVector3;
 
-            //Get the tangent vector in screen space by subtracting the screen tangent vector by the screen handle position
+            //Get the vector starting at the hanlde origin and ending at the camera
+            Vector3 cameraVector = (cam.transform.position - transform.position).normalized;
+
+            //If the dragging plane is nearly orthogonal to the camera, calculate the tangent vector using the drag plane normal
+            //Temporary fix until parts of the rotation handle further from the camera aren't interactable
+            if (Mathf.Abs(Vector3.Dot(cameraVector, drag.worldAxis)) <= 0.05f)
+            {
+                //Use the vector orthogonal to both the camera vector and movement plane normal as the tangent vector
+                tangentVector3 = Vector3.Cross(drag.worldAxis, cameraVector);
+            }
+            //Otherwise calculate the tangent vector using the click vector
+            else
+            {
+                //Get the 3D vector representing the point on the rotation handle that was clicked
+                Vector3 clickVector3 = getClickVector();
+                //Find the vector that is tangent to the rotation handle and in the movement plane
+                tangentVector3 = getOrthInPlane(clickVector3);
+            }
+
+            //Calculate the position of the end of hte tangent vector in screen space
+            Vector2 screenPosTangent = cam.WorldToScreenPoint(trs.position + tangentVector3);
+            //Get the tangent vector in screen space by subtracting the screen tangent position by the screen handle position
             return screenPosTangent - screenPosHandle;
         }
 
