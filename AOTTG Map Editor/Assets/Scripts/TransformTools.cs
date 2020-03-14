@@ -29,29 +29,33 @@ public static class TransformTools
     //Scale a group of objects. The scale factor is applied to the object transform from when the scale first started
     public static void ScaleSelection(ref List<GameObject> objectsToScale, Vector3 pivot, Vector3 scaleFactor, bool lockPos)
     {
-        //    foreach (GameObject mapObject in objectsToScale)
-        //    {
-        //        //Scale the position and scale of the object
-        //        for (int axis = 0; axis < 3; axis++)
-        //        {
-        //            //Don't scale the axis if the scale factor is 1
-        //            if (scaleFactor[axis] == 1f)
-        //            {
-        //                newScale[axis] *= scaleFactor[axis];
+        foreach (GameObject mapObject in objectsToScale)
+        {
+            //Get the current scale and position of the object
+            Vector3 newScale = mapObject.transform.localScale;
+            Vector3 newPosition = mapObject.transform.position;
 
-        //                //If the position isn't locked, scale the position
-        //                if (!lockPos)
-        //                {
-        //                    //Subtract the pivot before scaling, then add it back
-        //                    newPosition[axis] = (newPosition[axis] - pivot[axis]) * scaleFactor[axis];
-        //                    newPosition[axis] += pivot[axis];
-        //                }
-        //            }
-        //        }
+            //Scale the position and scale of the object
+            for (int axis = 0; axis < 3; axis++)
+            {
+                //Don't scale the axis if the scale factor is 1
+                if (scaleFactor[axis] != 1f)
+                {
+                    newScale[axis] *= scaleFactor[axis];
 
-        //        //Apply the new scale and position
-        //        mapObject.transform.localScale = newScale;
-        //        mapObject.transform.position = newPosition;
-        //    }
+                    //If the position isn't locked, scale the position
+                    if (!lockPos)
+                    {
+                        //Subtract the pivot before scaling, then add it back
+                        newPosition[axis] = (newPosition[axis] - pivot[axis]) * scaleFactor[axis];
+                        newPosition[axis] += pivot[axis];
+                    }
+                }
+            }
+
+            //Apply the new scale and position
+            mapObject.transform.localScale = newScale;
+            mapObject.transform.position = newPosition;
+        }
     }
 }

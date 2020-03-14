@@ -65,9 +65,7 @@ public static class ObjectSelection
                     else
                     {
                         if (!selectedObjects.Contains(parentObject))
-                        {
                             selectObject(parentObject);
-                        }
                         else
                             deselectObject(parentObject);
                     }

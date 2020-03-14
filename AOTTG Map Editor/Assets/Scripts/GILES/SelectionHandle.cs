@@ -66,7 +66,10 @@ namespace GILES
         ///Save the handle displacements for when they need to be returned
         private Vector3 prevPosition;
         private float rotationDisplacement;
+        private Vector3 prevScale;
         private Vector3 scale;
+        private float prevCursorDist;
+        private float currCursorDist;
 
         ///Persistient variables used by the rotation tool
         //The angle displacement of the rotation handle since the drag started
@@ -90,6 +93,9 @@ namespace GILES
         private float rotationSpeed = 3f;
         [SerializeField]
         private float translationSpeed = 1f;
+        [SerializeField]
+        private float scaleSpeed = 1f;
+
         //The maximum distance away from the origin an object can be
         [SerializeField]
         private float maxDistance = 1000000000f;
@@ -238,15 +244,18 @@ namespace GILES
             //Get the displacement of the cursor on the screen
             Vector2 mouseDisplacement = (Vector2)Input.mousePosition - mouseOrigin;
 
+            //Reset the persistient variables of each tool
+            prevPosition = trs.position;
+            rotationDisplacement = 0f;
+            prevScale = scale;
+            prevCursorDist = currCursorDist;
+
             //Only rotate the hanlde if the mouse was moved
             if (mouseDisplacement.magnitude > 0f)
             {
                 switch (tool)
                 {
                     case Tool.Translate:
-                        //Save the old position
-                        prevPosition = trs.position;
-
                         //If the plane translate is selected, use the whole hit point as the position of the handle
                         if (draggingAxes > 1)
                         {
@@ -264,20 +273,8 @@ namespace GILES
                         //If only one axis is selected, use the component of the mosue displacement parallel to the drag axis
                         else
                         {
-                            //Convert the position of the handle click position to screen space
-                            Vector2 screenHandlePos = cam.WorldToScreenPoint(trs.position);
-                            //Convert the drag axis into screen space
-                            Vector2 screenDragAxis = cam.WorldToScreenPoint(trs.position + drag.worldAxis);
-                            //Get the drag axis vector in screen space by subtracting the drag axis tail point from the head point
-                            Vector2 screenDragVector = screenDragAxis - screenHandlePos;
-                            //Get the component of the mouse displacement parallel to the drag axis
-                            Vector2 screenDisplacement = projectBontoA(mouseDisplacement, screenDragVector);
-
-                            //Use the dot product between the drag vector and the screen displacement to get the sign of the translation
-                            float displacementSign = Vector2.Dot(screenDragVector, screenDisplacement) > 0 ? 1f : -1f;
-                            
-                            //Multiply the drag axis by the displacement magnitude to get the vector to translate by
-                            Vector3 translationVector = drag.localAxis * screenDisplacement.magnitude * displacementSign;
+                            //Get the displcement of the mouse in the handle's local space along the drag axis
+                            Vector3 translationVector = getDragDisplacement(mouseDisplacement);
                             //Scale the translation vector by the translation speed and distance to camera
                             translationVector *= translationSpeed * cameraDist / 1000;
 
@@ -298,9 +295,6 @@ namespace GILES
                                     trs.position = fixedPosition;
                                 }
                             }
-
-                            //Resest the mouse origin to get the right displacement next frame
-                            mouseOrigin = Input.mousePosition;
                         }
                         break;
 
@@ -319,41 +313,44 @@ namespace GILES
                         //Rotate the tool handle
                         trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;
 
-                        //Resest the mouse origin to get the right displacement next frame
-                        mouseOrigin = Input.mousePosition;
-
                         break;
 
-                        //case Tool.Scale:
-                        //    //Convert the plane hit to local coordinates
-                        //    localPlaneHit = trs.InverseTransformPoint(planeHit - drag.offset);
+                    default:
+                        //Stores the scale factor of each axis
+                        Vector3 scaleVector;
 
-                        //    float handleDisplacement;
+                        //If all axes are being dragged, scale based on the distance between the cursor and tool handle
+                        if (draggingAxes > 1)
+                        {
+                            //Get the distance in screen space between the tool handle and the cursor
+                            currCursorDist = getMouseHandleDist(Input.mousePosition);
+                            //Calculate the displacement of the distance since last frame
+                            float displacement = currCursorDist - prevCursorDist;
+                            //Multiply the drag axis by the displacement
+                            scaleVector = new Vector3(displacement, displacement, displacement);
+                        }
+                        //If only only axis is being dragged, only use the mouse displacement parallel to the axis being dragged
+                        else
+                            scaleVector = getDragDisplacement(mouseDisplacement);
 
-                        //    if (drag.localAxis.x != 0)
-                        //        handleDisplacement = localPlaneHit.x;
-                        //    else if (drag.localAxis.y != 0)
-                        //        handleDisplacement = localPlaneHit.y;
-                        //    else
-                        //        handleDisplacement = localPlaneHit.z;
+                        //Scale the vector by the translation speed and distance to camera
+                        scaleVector *= scaleSpeed / 100;
 
-                        //    //If the entire object is being scaled, scale all three axis
-                        //    if (draggingAxes > 1)
-                        //        scale = new Vector3(handleDisplacement, handleDisplacement, handleDisplacement);
-                        //    //Otherwise scale the axis handle being iteracted with
-                        //    else
-                        //        scale = (drag.localAxis * handleDisplacement) + Vector3.one;
+                        //Scale the axis of the scale vector by the scale displacement
+                        for (int axis = 0; axis < 3; axis++)
+                            if (scaleVector[axis] != 0)
+                                scale[axis] += scaleVector[axis];
 
-                        //    //Add the default scale to the displacement to get the amount to scale the object
-                        //    RebuildGizmoMesh(scale);
-                        //    break;
+                        break;
                 }
+
+                //Reset the mouse origin to get the right displacement next frame
+                mouseOrigin = Input.mousePosition;
             }
-            else
-            {
-                rotationDisplacement = 0f;
-                prevPosition = trs.position;
-            }
+
+            //If the current tool is the scale tool, rebuild the handle with the correct scale
+            if(tool == Tool.Scale)
+                RebuildGizmoMesh(scale);
 
             if (OnHandleMove != null)
                 OnHandleMove(GetTransform());
@@ -368,11 +365,16 @@ namespace GILES
             {
                 case Tool.Translate:
                     return trs.position - prevPosition;
-
                 case Tool.Rotate:
                     return drag.localAxis * rotationDisplacement;
+                //Calculte how much each axis was scaled since the last frame and return it
                 default:
-                    return scale;
+                    Vector3 scaleDisplacement = new Vector3();
+
+                    for (int axis = 0; axis < 3; axis++)
+                        scaleDisplacement[axis] = scale[axis] / prevScale[axis];
+
+                    return scaleDisplacement;
             }
         }
 
@@ -473,6 +475,36 @@ namespace GILES
             return scalar * A;
         }
 
+        //Use the displacement of the mouse in screen space to calculate the corresponding displacement
+        //in the local space of the tool handle along the drag axis
+        private Vector3 getDragDisplacement(Vector2 mouseDisplacement)
+        {
+            //Convert the position of the tool handle to screen space
+            Vector2 screenHandlePos = cam.WorldToScreenPoint(trs.position);
+            //Convert the drag axis to screen space
+            Vector2 screenDragAxis = cam.WorldToScreenPoint(trs.position + drag.worldAxis);
+
+            //Get the drag axis vector in screen space by subtracting the drag axis tail point from the head point
+            Vector2 screenDragVector = screenDragAxis - screenHandlePos;
+            //Get the component of the mouse displacement parallel to the drag axis
+            Vector2 screenDisplacement = projectBontoA(mouseDisplacement, screenDragVector);
+            //Use the dot product between the drag vector and the screen displacement to get the sign of the translation
+            float displacementSign = Vector2.Dot(screenDragVector, screenDisplacement) > 0 ? 1f : -1f;
+
+            //Multiply the drag axis by the displacement magnitude to get the vector to translate by and return the result
+            return drag.localAxis * screenDisplacement.magnitude * displacementSign;
+        }
+
+        //Return the distance between the tool handle and the mouse in screen space
+        private float getMouseHandleDist(Vector2 mouseDisplacement)
+        {
+            //Convert the position of the tool handle to screen space
+            Vector2 screenHandlePos = cam.WorldToScreenPoint(trs.position);
+
+            //Return the magnitude of the difference between the mouse and the handle position
+            return (mouseDisplacement - screenHandlePos).magnitude;
+        }
+
         void OnMouseDown()
         {
             //Don't check for handle interactions if it is hidden
@@ -561,19 +593,21 @@ namespace GILES
                 //Save the distance from the camera to the tool handle
                 if (tool == Tool.Translate)
                 {
-                    //Get the distance between the camera and the tool handle
                     cameraDist = (cam.transform.position - trs.position).magnitude;
                 }
+
                 //Reset the total displacement and save the angle of the point clicked on
-                else if (tool == Tool.Rotate)
+                if (tool == Tool.Rotate)
                 {
                     axisAngle = 0f;
                     clickTangent = getClickTangent();
                 }
                 //Reset the handle size and prime it for scaling
-                else
+                else 
                 {
+                    prevScale = Vector3.one;
                     scale = Vector3.one;
+                    currCursorDist = getMouseHandleDist(Input.mousePosition);
                 }
             }
         }
