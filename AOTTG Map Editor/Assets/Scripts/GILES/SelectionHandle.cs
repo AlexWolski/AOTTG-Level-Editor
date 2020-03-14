@@ -251,26 +251,29 @@ namespace GILES
                     //Get the displacement of the cursor on the screen
                     Vector2 mouseDisplacement = (Vector2)Input.mousePosition - mouseOrigin;
 
-                    //Project the mouse displacement onto the tangent vector to get the component tangent to the rotation handle
-                    Vector2 tangentDisplacement = projectBontoA(mouseDisplacement, clickTangent);
-                    //Use the dot product between the tangent displacement and click tangent to get the sign of the rotation
-                    sign = Vector2.Dot(tangentDisplacement, clickTangent) > 0 ? 1f : -1f;
+                    //Only rotate the hanlde if the mouse was moved
+                    if (mouseDisplacement.magnitude > 0f)
+                    {
+                        //Project the mouse displacement onto the tangent vector to get the component tangent to the rotation handle
+                        Vector2 tangentDisplacement = projectBontoA(mouseDisplacement, clickTangent);
+                        //Use the dot product between the tangent displacement and click tangent to get the sign of the rotation
+                        sign = Vector2.Dot(tangentDisplacement, clickTangent) > 0 ? 1f : -1f;
 
-                    //If the camera is on the wrong side of the movement plane, invert the displacement angle
-                    if (!drag.plane.GetSide(cam.transform.position))
-                        sign *= -1;
+                        //Use the magnitude of the displacement as the angle displacement
+                        float angleDisplacement = tangentDisplacement.magnitude * sign;
+                        //Add the displacement to the angle after scaling it by the rotation speed
+                        rotationDisplacement = angleDisplacement / 10 * rotationSpeed;
+                        axisAngle += rotationDisplacement;
 
-                    //Use the magnitude of the displacement as the angle displacement
-                    float angleDisplacement = tangentDisplacement.magnitude * sign;
-                    //Add the displacement to the angle after scaling it by the rotation speed
-                    rotationDisplacement = angleDisplacement / 10 * rotationSpeed;
-                    axisAngle += rotationDisplacement;
+                        //Rotate the tool handle
+                        trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;
 
-                    //Rotate the tool handle
-                    trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;
+                        //Resest the mouse origin to get the right displacement next frame
+                        mouseOrigin = Input.mousePosition;
+                    }
+                    else
+                        rotationDisplacement = 0f;
 
-                    //Resest the mouse origin to get the right displacement next frame
-                    mouseOrigin = Input.mousePosition;
                     break;
 
                 //case Tool.Scale:
@@ -381,26 +384,55 @@ namespace GILES
         private float axisAngle = 0f;
         //Determines if the latest rotation was positive or negative
         private float sign;
-        //A vector in screenspace starting at the hanlde origin and ending at the click location
-        private Vector2 clickVector;
-        //The vector in screenspace perpendicular to the click vector
+        //The vector in screenspace representing the tangent line of the rotation handle that was clicked
         private Vector2 clickTangent;
 
-        //Find the vector from the handle origin to where the handle was clicked
-        private Vector2 getClickVector()
+        private Vector3 getClickVector()
         {
-            //Get the location on the screen that was clicked
-            Vector2 clickPos = Input.mousePosition;
-            //Convert the position of the tool handle in world space into screen space
-            Vector2 handleOrigin = cam.WorldToScreenPoint(trs.position);
-            //Calculate the click vector by finding the click position relative to the handle origin
-            return clickPos - handleOrigin;
+            //A plane representing the axis currently being dragged
+            Plane movementPlane = new Plane();
+            //The point where the ray intersected the plane
+            Vector3 hitPoint;
+
+            //Create a ray originating from the camera and passing through the cursor
+            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            //The distance from the camera to the hit point
+            float distToHit;
+
+            //Set the movemnet plane based on the axis being dragged
+            movementPlane.SetNormalAndPosition(drag.worldAxis, trs.position);
+
+            //Find the plane hit point
+            if (movementPlane.Raycast(ray, out distToHit))
+                hitPoint = ray.GetPoint(distToHit);
+            //If the pland and ray don't intersect, return a zero vector
+            else
+                return Vector3.zero;
+
+            //Return the position of hit point relative to the tool handle
+            return hitPoint - trs.position;
         }
 
-        //Find the vector clockwise orthogonal to the given vector in 2D space
-        private Vector2 getOrth2D(Vector2 originalVector)
+        //Find the vector orthogonal to the given vector but in the same plane (counter-clockwise)
+        private Vector3 getOrthInPlane(Vector3 originalVector)
         {
-            return new Vector2(originalVector.y, -originalVector.x);
+            return Vector3.Cross(drag.worldAxis, originalVector);
+        }
+
+        //Find the vector from the handle origin to where the handle was clicked
+        private Vector2 getClickTangent()
+        {
+            //Get the 3D vector representing the point on the rotation handle that was clicked
+            Vector3 clickVector3 = getClickVector();
+            //Find the vector that is tangent to the rotation handle and in the movement plane
+            Vector3 tangentVector3 = getOrthInPlane(clickVector3);
+
+            //Convert both the handle position and tangent vector end postition to screen space
+            Vector2 screenPosHandle = cam.WorldToScreenPoint(trs.position);
+            Vector2 screenPosTangent = cam.WorldToScreenPoint(trs.position + tangentVector3);
+
+            //Get the tangent vector in screen space by subtracting the screen tangent vector by the screen handle position
+            return screenPosTangent - screenPosHandle;
         }
 
         //Calculate the projection of one 2D vector onto another
@@ -506,8 +538,7 @@ namespace GILES
                 else if (tool == Tool.Rotate)
                 {
                     axisAngle = 0f;
-                    clickVector = getClickVector();
-                    clickTangent = getOrth2D(clickVector);
+                    clickTangent = getClickTangent();
                 }
             }
         }
