@@ -18,10 +18,11 @@ public class EditorManager : MonoBehaviour
         StartCoroutine(AssetManager.LoadRCAssets());
     }
 
-    //If the x key is pressed, toggle between edit and fly mode
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.X))
+        //If the x key is pressed and the tool handle is not being dragged,
+        //toggle between edit and fly mode
+        if (Input.GetKeyDown(KeyCode.X) && !CommonReferences.selectionHandle.InUse())
         {
             if(currentMode == EditorMode.Fly)
             {

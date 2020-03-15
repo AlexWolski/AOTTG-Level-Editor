@@ -81,7 +81,7 @@ public class MapObject : MonoBehaviour
         propertyNumber = originalObject.propertyNumber;
         defaultScale = originalObject.defaultScale;
 
-        //Properties
+        //MapObject properties
         Type = originalObject.Type;
         FullTypeName = originalObject.FullTypeName;
         ObjectName = originalObject.ObjectName;
@@ -90,12 +90,11 @@ public class MapObject : MonoBehaviour
         EndlessSpawn = originalObject.EndlessSpawn;
         ColorEnabled = originalObject.ColorEnabled;
 
-        Texture = originalObject.Texture;
-        Tiling = originalObject.Tiling;
-        Color = originalObject.Color;
-        Scale = originalObject.Scale;
-        Position = originalObject.Position;
-        Rotation = originalObject.Rotation;
+        //GameObject properties
+        textureValue = originalObject.Texture;
+        tilingValue = originalObject.Tiling;
+        colorValue = originalObject.Color;
+        scaleFactor = originalObject.Scale;
     }
     #endregion
 

@@ -59,10 +59,15 @@ public class MapManager : MonoBehaviour
     //Copy a selection by cloning all of the selected objects and storing them
     private void copySelection()
     {
-        //Reset the old list of copied objects
-        copiedObjects = new List<GameObject>();
         //Get a reference to the list of selected objects
         ref List<GameObject> selectedObjects = ref CommonReferences.objectSelection.getSelection();
+
+        //If there aren't any objects to copy, return
+        if (selectedObjects.Count == 0)
+            return;
+
+        //Reset the old list of copied objects
+        copiedObjects = new List<GameObject>();
         //Temporary GameObject to disable cloned objects before storing them
         GameObject objectClone;
 
@@ -78,7 +83,7 @@ public class MapManager : MonoBehaviour
             mapObjectScript.copyValues(mapObject.GetComponent<MapObject>());
             //Add the object to the copied objects list
             copiedObjects.Add(objectClone);
-        }
+            }
     }
 
     //Paste the copied objects by instantiating them
