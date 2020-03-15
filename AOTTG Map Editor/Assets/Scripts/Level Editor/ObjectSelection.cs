@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 using GILES;
+using UnityEngine.EventSystems;
 
 public class ObjectSelection : MonoBehaviour
 {
@@ -37,8 +38,8 @@ public class ObjectSelection : MonoBehaviour
             else
                 selectAll();
         }
-        //If the mouse was clicked, check if any objects were selected
-        else if (Input.GetMouseButtonDown(0))
+        //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected
+        else if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject(-1))
         {
             RaycastHit hit;
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);

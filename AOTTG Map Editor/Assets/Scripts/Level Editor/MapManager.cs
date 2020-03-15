@@ -18,7 +18,7 @@ public class MapManager : MonoBehaviour
     private Shader transparentShader;
 
     //A hashtable mapping gameobjects to MapObject scripts
-    private Dictionary<GameObject, MapObject> objectScriptTable = new Dictionary<GameObject, MapObject>();
+    public Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
     //Determines if the small map bounds have been disabled or not
     private bool boundsDisabled;
     //A list of objects cloned from the copied selection
@@ -31,6 +31,7 @@ public class MapManager : MonoBehaviour
     {
         vertexColoredShader = Shader.Find("Vertex Colored");
         transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
+        objectScriptTable = new Dictionary<GameObject, MapObject>();
         StartCoroutine(testLoadMap());
     }
     #endregion

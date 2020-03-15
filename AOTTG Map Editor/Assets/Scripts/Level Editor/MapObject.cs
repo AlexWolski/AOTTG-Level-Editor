@@ -7,7 +7,8 @@ public class MapObject : MonoBehaviour
     //The underlying values for properties with complex setters
     //These extra fields are required due to a Unity bug
     private string textureValue;
-    private Vector3 scaleValue;
+    private Vector3 defaultScale;
+    private Vector3 scaleFactor;
     private Vector2 tilingValue;
     private Color colorValue;
 
@@ -55,8 +56,8 @@ public class MapObject : MonoBehaviour
     //Shorthand ways of accessing variables in the transform component
     public Vector3 Scale
     {
-        get { return scaleValue; }
-        set { scaleValue = value; setScale(value); }
+        get { return scaleFactor; }
+        set { scaleFactor = value; scaleByFactor(value); }
     }
 
     public Vector3 Position
@@ -88,10 +89,9 @@ public class MapObject : MonoBehaviour
     }
 
     //Change the scale factor of the length, width, or height of the object
-    private void setScale(Vector3 newScale)
+    public void scaleByFactor(Vector3 scaleFactor)
     {
-        Vector3 currentScale = gameObject.transform.localScale;
-        gameObject.transform.localScale = new Vector3(currentScale.x * newScale.x, currentScale.y * newScale.y, currentScale.z * newScale.z);
+        gameObject.transform.localScale = new Vector3(defaultScale.x * scaleFactor.x, defaultScale.y * scaleFactor.y, defaultScale.z * scaleFactor.z);
     }
 
     //Resize the texture on the object
@@ -237,6 +237,8 @@ public class MapObject : MonoBehaviour
         FullTypeName = properties[0];
         //Store the object name
         ObjectName = properties[1];
+        //Save the default scale of the object
+        defaultScale = transform.localScale;
 
         //If the object is a titan spawner, store the spawn timer and whether or not it spawns endlessly
         if (Type == objectType.photon && ObjectName.StartsWith("spawn"))
@@ -245,14 +247,14 @@ public class MapObject : MonoBehaviour
             EndlessSpawn = (Convert.ToInt32(properties[3]) != 0);
             indexOfPosition = 4;
         }
-        //If the object is a region, store the region name and scale
+        //If the object is a region, store the region name and scale the object
         else if (ObjectName.StartsWith("region"))
         {
             RegionName = properties[2];
             Scale = parseVector3(properties[3], properties[4], properties[5]);
             indexOfPosition = 6;
         }
-        //If the object has a texture, store the texture, scale, color, and tiling information
+        //If the object has a texture, store the texture, color, and tiling information and scale the object
         else if (Type == objectType.custom || propertyNumber >= 15 && (Type == objectType.@base || Type == objectType.photon))
         {
             Texture = properties[2];
@@ -275,7 +277,7 @@ public class MapObject : MonoBehaviour
             Tiling = parseVector2(properties[10], properties[11]);
             indexOfPosition = 12;
         }
-        //If the object has scale information just before the position and rotation, store the scale
+        //If the object has scale information just before the position and rotation, scale the object
         else if (Type == objectType.racing || Type == objectType.misc)
         {
             Scale = parseVector3(properties[2], properties[3], properties[4]);

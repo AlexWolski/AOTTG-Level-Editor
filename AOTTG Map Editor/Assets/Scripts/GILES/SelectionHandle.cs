@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.EventSystems;
 
 namespace GILES
 {
@@ -505,8 +506,8 @@ namespace GILES
 
         void checkInteract()
         {
-            //Don't check for handle interactions if it is hidden
-            if (hidden)
+            //Don't check for handle interactions if it is hidden or if the cursor is over the UI
+            if (hidden || EventSystem.current.IsPointerOverGameObject(-1))
                 return;
 
             Vector3 a, b;
