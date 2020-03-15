@@ -69,8 +69,14 @@ public class MapManager : MonoBehaviour
         //Clone each selected object and save it in the copied objects list
         foreach (GameObject mapObject in selectedObjects)
         {
+            //Instantiate and disable the copied objects
             objectClone = Instantiate(mapObject);
             objectClone.SetActive(false);
+            //Get a reference to the cloned object's MapObject script
+            MapObject mapObjectScript = objectClone.GetComponent<MapObject>();
+            //Copy the values of the original map object script
+            mapObjectScript.copyValues(mapObject.GetComponent<MapObject>());
+            //Add the object to the copied objects list
             copiedObjects.Add(objectClone);
         }
     }
@@ -83,12 +89,18 @@ public class MapManager : MonoBehaviour
         //Reset the current selection
         CommonReferences.objectSelection.deselectAll();
 
-        //Instantiate all of the copied objects and select them
+        //Loop through all of the copied objects
         foreach (GameObject mapObject in copiedObjects)
         {
+            //Instantiate and enable the cloned object
             objectClone = Instantiate(mapObject);
             objectClone.SetActive(true);
-            addObjectToMap(objectClone);
+            //Get a reference to the cloned object's MapObject script
+            MapObject mapObjectScript = objectClone.GetComponent<MapObject>();
+            //Copy the values of the original map object script
+            mapObjectScript.copyValues(mapObject.GetComponent<MapObject>());
+            //Add the object to the map and make it selectable
+            addObjectToMap(objectClone, mapObjectScript);
             CommonReferences.objectSelection.selectObject(objectClone);
         }
 
@@ -157,11 +169,12 @@ public class MapManager : MonoBehaviour
             try
             {
                 //Parse the object script and create a new map object
-                GameObject newMapObject = loadObject(parsedMap[i]);
+                MapObject mapObjectScript;
+                GameObject newMapObject = loadObject(parsedMap[i], out mapObjectScript);
 
                 //If the object is defined, add it to the map hierarchy and make it selectable
                 if(newMapObject)
-                    addObjectToMap(newMapObject);
+                    addObjectToMap(newMapObject, mapObjectScript);
             }
             catch(Exception e)
             {
@@ -173,12 +186,14 @@ public class MapManager : MonoBehaviour
     }
 
     //Add the given object to the map hierarchy and make it selectable
-    private void addObjectToMap(GameObject objectToAdd)
+    private void addObjectToMap(GameObject objectToAdd, MapObject objectScript)
     {
         //Make the new object a child of the map root.
         objectToAdd.transform.parent = mapRoot.transform;
         //Make the new object selectable
         CommonReferences.objectSelection.addSelectable(objectToAdd);
+        //Add the object and its MapObject script to the hashtable
+        objectScriptTable.Add(objectToAdd, objectScript);
     }
 
     //Remove the given object to the map hierarchy and make object selection script
@@ -193,14 +208,12 @@ public class MapManager : MonoBehaviour
     }
 
     //Parse the given object script and instantiate a new GameObject with the data
-    private GameObject loadObject(string objectScript)
+    private GameObject loadObject(string objectScript, out MapObject mapObjectScript)
     {
         //Seperate the object script by comma
         string[] parsedObject = objectScript.Split(',');
         //The GameObject loaded from RCAssets corresponding to the object name
         GameObject newObject = null;
-        //The MapObject script that will be attatched to the new GameObject
-        MapObject mapObject;
         //The type of the object
         objectType type;
 
@@ -211,6 +224,7 @@ public class MapManager : MonoBehaviour
             {
                 boundsDisabled = true;
                 disableMapBounds();
+                mapObjectScript = null;
                 return null;
             }
 
@@ -224,25 +238,25 @@ public class MapManager : MonoBehaviour
             //Use the object name to load the asset
             newObject = createMapObject(type, parsedObject[1]);
             //Get the MapObject script attached to the new GameObject
-            mapObject = newObject.GetComponent<MapObject>();
+            mapObjectScript = newObject.GetComponent<MapObject>();
 
             //Use the parsedObject array to set the reset of the properties of the object
-            mapObject.loadProperties(parsedObject);
+            mapObjectScript.loadProperties(parsedObject);
 
             //Check if the object is a region
             if (type == objectType.misc && parsedObject[1] == "region")
             {
                 //Give the region a default rotation
-                mapObject.Rotation = Quaternion.identity;
+                mapObjectScript.Rotation = Quaternion.identity;
 
                 //intantiate a billboard and set it as a child of the region
-                GameObject billboard = (GameObject)Instantiate(billboardPrefab);
-                billboard.GetComponent<TextMesh>().text = mapObject.RegionName;
+                GameObject billboard = Instantiate(billboardPrefab);
+                billboard.GetComponent<TextMesh>().text = mapObjectScript.RegionName;
                 billboard.transform.parent = newObject.transform;
             }
 
             //Replace the broken shader on the object with a working version
-            if (mapObject.Type == objectType.misc ||
+            if (mapObjectScript.Type == objectType.misc ||
                 newObject.name.StartsWith("start") || newObject.name.StartsWith("end") ||
                 newObject.name.StartsWith("kill") || newObject.name.StartsWith("checkpoint"))
             {
@@ -335,8 +349,6 @@ public class MapManager : MonoBehaviour
         MapObject mapObjectScript = newObject.AddComponent<MapObject>();
         //Set the type of the mapObject
         mapObjectScript.Type = type;
-        //Add the object and its MapObject script to the hashtable
-        objectScriptTable.Add(newObject, mapObjectScript);
 
         //Return the new object 
         return newObject;

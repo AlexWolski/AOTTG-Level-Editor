@@ -7,13 +7,13 @@ public class MapObject : MonoBehaviour
     //The underlying values for properties with complex setters
     //These extra fields are required due to a Unity bug
     private string textureValue;
-    private Vector3 defaultScale;
-    private Vector3 scaleFactor;
     private Vector2 tilingValue;
     private Color colorValue;
+    private Vector3 defaultScale;
+    private Vector3 scaleFactor;
 
     //The number of properties the object has
-    int propertyNumber = 0;
+    private int propertyNumber = 0;
     #endregion
 
     #region Properties
@@ -63,13 +63,39 @@ public class MapObject : MonoBehaviour
     public Vector3 Position
     {
         get { return transform.position; }
-        set { setPosition(value); }
+        set { gameObject.transform.position = value; }
     }
 
     public Quaternion Rotation
     {
         get { return transform.rotation; }
-        set { setRotation(value); }
+        set { gameObject.transform.rotation = value; }
+    }
+    #endregion
+
+    #region Initialization
+    //Copy the values from the given object
+    public void copyValues(MapObject originalObject)
+    {
+        //Hidden data members
+        propertyNumber = originalObject.propertyNumber;
+        defaultScale = originalObject.defaultScale;
+
+        //Properties
+        Type = originalObject.Type;
+        FullTypeName = originalObject.FullTypeName;
+        ObjectName = originalObject.ObjectName;
+        RegionName = originalObject.RegionName;
+        SpawnTimer = originalObject.SpawnTimer;
+        EndlessSpawn = originalObject.EndlessSpawn;
+        ColorEnabled = originalObject.ColorEnabled;
+
+        Texture = originalObject.Texture;
+        Tiling = originalObject.Tiling;
+        Color = originalObject.Color;
+        Scale = originalObject.Scale;
+        Position = originalObject.Position;
+        Rotation = originalObject.Rotation;
     }
     #endregion
 
@@ -119,18 +145,6 @@ public class MapObject : MonoBehaviour
             //Apply the colors
             mesh.colors = colorArray;
         }
-    }
-
-    //Position the object
-    private void setPosition(Vector3 newPosition)
-    {
-        gameObject.transform.position = newPosition;
-    }
-
-    //Set the rotation of the object
-    private void setRotation(Quaternion newAngle)
-    {
-        gameObject.transform.rotation = newAngle;
     }
     #endregion
 
