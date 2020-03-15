@@ -1,10 +1,9 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using GILES;
 
-public class ToolButtonManager : MonoBehaviour
+public class ToolButtonManager : MonoBehaviour,
+    IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 {
     //A list of the states the button can be in
     private enum buttonState
@@ -37,8 +36,6 @@ public class ToolButtonManager : MonoBehaviour
     private static ToolButtonManager pressedButton;
     //The button that is currently selected
     private static ToolButtonManager selectedButton;
-    //The object that listens for event updates
-    private static EventTrigger eventTrigger;
 
     //Initialize data members and set up the triggers
     void Awake()
@@ -51,11 +48,6 @@ public class ToolButtonManager : MonoBehaviour
             unselect();
 
         mouseDown = false;
-        eventTrigger = GetComponent<EventTrigger>();
-        eventTrigger.AddEventTrigger(this.OnMouseEnter, EventTriggerType.PointerEnter);
-        eventTrigger.AddEventTrigger(this.OnMouseExit, EventTriggerType.PointerExit);
-        eventTrigger.AddEventTrigger(this.OnMouseDown, EventTriggerType.PointerDown);
-        eventTrigger.AddEventTrigger(this.OnMouseUp, EventTriggerType.PointerUp);
     }
 
     //Check if the shortcut key was pressed
@@ -85,21 +77,21 @@ public class ToolButtonManager : MonoBehaviour
     }
 
     //If this button was last pressed and the mouse moves over it, change to the pressed image
-    private void OnMouseEnter(BaseEventData data)
+    public void OnPointerEnter(PointerEventData data)
     {
         if (pressedButton == this && mouseDown && currentState == buttonState.unselected)
-            OnMouseDown(data);
+            OnPointerDown(data);
     }
 
     //If the button was pressed and the cursor moves off of the button, chagne to the unselected image
-    private void OnMouseExit(BaseEventData data)
+    public void OnPointerExit(PointerEventData data)
     {
         if (currentState == buttonState.pressed)
             unselect();
     }
 
     //If the mouse is pressed down on the button and its not selected, chagne to the pressed image
-    private void OnMouseDown(BaseEventData data)
+    public void OnPointerDown(PointerEventData data)
     {
         mouseDown = true;
 
@@ -112,7 +104,7 @@ public class ToolButtonManager : MonoBehaviour
     }
 
     //If this button is clicked, select it and unselect all other buttons
-    private void OnMouseUp(BaseEventData data)
+    public void OnPointerUp(PointerEventData data)
     {
         mouseDown = false;
 
@@ -125,8 +117,8 @@ public class ToolButtonManager : MonoBehaviour
     }
 
     //The action triggered by the button press
-    private void action()
+    public void action()
     {
-        ObjectSelection.setTool(toolType);
+        CommonReferences.objectSelection.setTool(toolType);
     }
 }

@@ -36,7 +36,7 @@ public class MapManager : MonoBehaviour
     #endregion
 
     #region Update
-    private void Update()
+    void LateUpdate()
     {
         //If the game is in edit mode, check for keyboard shortcut inputs
         if (CommonReferences.editorManager.currentMode == EditorMode.Edit)
@@ -61,7 +61,7 @@ public class MapManager : MonoBehaviour
         //Reset the old list of copied objects
         copiedObjects = new List<GameObject>();
         //Get a reference to the list of selected objects
-        ref List<GameObject> selectedObjects = ref ObjectSelection.getSelection();
+        ref List<GameObject> selectedObjects = ref CommonReferences.objectSelection.getSelection();
         //Temporary GameObject to disable cloned objects before storing them
         GameObject objectClone;
 
@@ -80,7 +80,7 @@ public class MapManager : MonoBehaviour
         //Temporary GameObject to enable cloned objects before storing them
         GameObject objectClone;
         //Reset the current selection
-        ObjectSelection.deselectAll();
+        CommonReferences.objectSelection.deselectAll();
 
         //Instantiate all of the copied objects and select them
         foreach (GameObject mapObject in copiedObjects)
@@ -88,11 +88,11 @@ public class MapManager : MonoBehaviour
             objectClone = Instantiate(mapObject);
             objectClone.SetActive(true);
             addObjectToMap(objectClone);
-            ObjectSelection.selectObject(objectClone);
+            CommonReferences.objectSelection.selectObject(objectClone);
         }
 
         //Once the selection is pasted, change the tool type to translate
-        ObjectSelection.setTool(Tool.Translate);
+        CommonReferences.objectSelection.setTool(Tool.Translate);
     }
 
     //Delete the selected objects
@@ -100,7 +100,7 @@ public class MapManager : MonoBehaviour
     private void deleteSelection()
     {
         //Get a reference to the selected objects list
-        ref List<GameObject> selectedObjects = ref ObjectSelection.removeSelected();
+        ref List<GameObject> selectedObjects = ref CommonReferences.objectSelection.removeSelected();
 
         //Remove each selected object from the script table and destroy the object
         foreach (GameObject mapObject in selectedObjects)
@@ -129,7 +129,7 @@ public class MapManager : MonoBehaviour
     public void clearMap()
     {
         //Remove all deleted objects from the selection lists
-        ObjectSelection.resetSelection();
+        CommonReferences.objectSelection.resetSelection();
         //Reset the hash table for MapObject scripts
         objectScriptTable = new Dictionary<GameObject, MapObject>();
         //Reset the boundaries disabled flag
@@ -177,14 +177,14 @@ public class MapManager : MonoBehaviour
         //Make the new object a child of the map root.
         objectToAdd.transform.parent = mapRoot.transform;
         //Make the new object selectable
-        ObjectSelection.addSelectable(objectToAdd);
+        CommonReferences.objectSelection.addSelectable(objectToAdd);
     }
 
     //Remove the given object to the map hierarchy and make object selection script
     private void removeObjectFromMap(GameObject objectToRemove)
     {
         //Remove the object from the object selection script
-        ObjectSelection.removeSelectable(objectToRemove);
+        CommonReferences.objectSelection.removeSelectable(objectToRemove);
         //Remove the object from the script hashtable
         objectScriptTable.Remove(objectToRemove);
         //Delete the object itself

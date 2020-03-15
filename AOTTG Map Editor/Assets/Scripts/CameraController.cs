@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
@@ -11,14 +9,14 @@ public class CameraController : MonoBehaviour
     private EditorManager editorManager;
     //The three speeds the camera can move at
     [SerializeField]
-    private float fastSpeed;
+    private float fastSpeed = 300f;
     [SerializeField]
-    private float normalSpeed;
+    private float normalSpeed = 100f;
     [SerializeField]
-    private float slowSpeed;
+    private float slowSpeed = 30f;
     //The speed the camera rotates at
     [SerializeField]
-    private float rotateSpeed;
+    private float rotateSpeed = 100f;
 
     //Disable the fog on distant objects
     void OnPreRender()

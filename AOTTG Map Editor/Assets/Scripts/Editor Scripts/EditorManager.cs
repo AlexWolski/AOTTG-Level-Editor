@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using UnityEngine;
+﻿using UnityEngine;
 
 public class EditorManager : MonoBehaviour
 {
@@ -14,9 +12,10 @@ public class EditorManager : MonoBehaviour
     }
 
     //Load the assets from RC mod and set the window settings
+    [System.Obsolete]
     void Start()
     {
-        base.StartCoroutine(AssetManager.LoadRCAssets());
+        StartCoroutine(AssetManager.LoadRCAssets());
     }
 
     //If the x key is pressed, toggle between edit and fly mode
@@ -27,13 +26,21 @@ public class EditorManager : MonoBehaviour
             if(currentMode == EditorMode.Fly)
             {
                 currentMode = EditorMode.Edit;
-                Screen.lockCursor = false;
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
             }
             else if(currentMode == EditorMode.Edit)
             {
                 currentMode = EditorMode.Fly;
-                Screen.lockCursor = true;
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
             }
         }
+    }
+
+    private void LateUpdate()
+    {
+        CommonReferences.selectionHandle.lateUpdate();
+        CommonReferences.objectSelection.lateUpdate();
     }
 }

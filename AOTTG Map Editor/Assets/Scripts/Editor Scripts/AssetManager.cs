@@ -1,12 +1,14 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.Networking;
 
-public class AssetManager : MonoBehaviour
+public static class AssetManager
 {
     //The unity3d file that contains the assets from RC mod
     private static AssetBundle RCAssets;
 
     //Load the RC mod assets from RCAssets.unity3d
+    [System.Obsolete]
     public static IEnumerator LoadRCAssets()
     {
         //Reference to the file. Compatible with windows and Mac.
@@ -33,7 +35,7 @@ public class AssetManager : MonoBehaviour
     public static GameObject instantiateRcObject(string objectName)
     {
         //Instantiate the object
-        GameObject newObject = Instantiate((GameObject)RCAssets.LoadAsset(objectName));
+        GameObject newObject = Object.Instantiate((GameObject)RCAssets.LoadAsset(objectName));
 
         //If the gameobject has a mesh, add the outline script
         if (newObject.GetComponent<Renderer>() != null)

@@ -1,10 +1,10 @@
 ﻿using UnityEngine;
-using System.Collections;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using UnityEngine.Events;
 
-public class GenericButtonManager : MonoBehaviour
+public class GenericButtonManager : MonoBehaviour,
+    IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
 {
     //A list of the states the button can be in
     private enum buttonState
@@ -28,21 +28,13 @@ public class GenericButtonManager : MonoBehaviour
     private static bool mouseDown;
     //The button script that is currently pressed down
     private static GenericButtonManager pressedButton;
-    //The object that listens for event updates
-    private static EventTrigger eventTrigger;
 
     //Initialize data members and set up the triggers
     void Awake()
     {
         //The button is unselected by default
         currentState = buttonState.unpressed;
-
         mouseDown = false;
-        eventTrigger = GetComponent<EventTrigger>();
-        eventTrigger.AddEventTrigger(this.OnMouseEnter, EventTriggerType.PointerEnter);
-        eventTrigger.AddEventTrigger(this.OnMouseExit, EventTriggerType.PointerExit);
-        eventTrigger.AddEventTrigger(this.OnMouseDown, EventTriggerType.PointerDown);
-        eventTrigger.AddEventTrigger(this.OnMouseUp, EventTriggerType.PointerUp);
     }
 
     //Change the image and state to pressed
@@ -60,21 +52,21 @@ public class GenericButtonManager : MonoBehaviour
     }
 
     //If this button was last pressed and the mouse moves over it, change to the pressed image
-    private void OnMouseEnter(BaseEventData data)
+    public void OnPointerEnter(PointerEventData data)
     {
         if (pressedButton == this && mouseDown && currentState == buttonState.unpressed)
-            OnMouseDown(data);
+            OnPointerDown(data);
     }
 
     //If the button was pressed and the cursor moves off of the button, chagne to the unpressed image
-    private void OnMouseExit(BaseEventData data)
+    public void OnPointerExit(PointerEventData data)
     {
         if (currentState == buttonState.pressed)
             unpress();
     }
 
     //If the mouse is pressed down on the button and its not selected, chagne to the pressed image
-    private void OnMouseDown(BaseEventData data)
+    public void OnPointerDown(PointerEventData data)
     {
         mouseDown = true;
 
@@ -87,7 +79,7 @@ public class GenericButtonManager : MonoBehaviour
     }
 
     //If this button is clicked, unpress the button and invoke the 'on click' function
-    private void OnMouseUp(BaseEventData data)
+    public void OnPointerUp(PointerEventData data)
     {
         mouseDown = false;
 

@@ -1,6 +1,6 @@
-﻿using System;
-using System.Collections;
+﻿using System.Collections;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace GILES
 {
@@ -16,8 +16,10 @@ namespace GILES
 
         static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
 
-        public Mesh ConeMesh;   // Used as translation handle cone caps.
-        public Mesh CubeMesh;   // Used for scale handle
+        [SerializeField]
+        private Mesh ConeMesh;   // Used as translation handle cone caps.
+        [SerializeField]
+        private Mesh CubeMesh;   // Used for scale handle
 
         private Material HandleOpaqueMaterial
         {
@@ -63,7 +65,7 @@ namespace GILES
         //The current tool. Default is translate tool
         public static Tool tool { get; private set; } = Tool.Translate;
 
-        ///Save the handle displacements for when they need to be returned
+        //Save the handle displacements for when they need to be returned
         private Vector3 prevPosition;
         private float rotationDisplacement;
         private Vector3 prevScale;
@@ -177,8 +179,7 @@ namespace GILES
         }
         #endregion
 
-        #region Update
-
+        #region
         class DragOrientation
         {
             public Vector3 origin;
@@ -186,8 +187,6 @@ namespace GILES
             public Vector3 localAxis;
             //The arbitrary axis the handle is being dragged along in world coordinates
             public Vector3 worldAxis;
-            public Vector3 mouse;
-            public Vector3 cross;
             public Vector3 offset;
             public Plane plane;
 
@@ -195,17 +194,16 @@ namespace GILES
             {
                 origin = Vector3.zero;
                 worldAxis = Vector3.zero;
-                mouse = Vector3.zero;
-                cross = Vector3.zero;
                 offset = Vector3.zero;
                 plane = new Plane(Vector3.up, Vector3.zero);
             }
         }
 
         DragOrientation drag = new DragOrientation();
+        #endregion Drag Class
 
-        //Using Update instead of LateUpdate so that the dragginHandle bool can update before ObjectSelection.cs call LateUpdate
-        void Update()
+        #region Update
+        public void lateUpdate()
         {
             //Don't display or interact with the handle if it is hidden
             if (!hidden)
@@ -223,7 +221,7 @@ namespace GILES
 
                 //If the mouse is pressed, check if the handle was clicked
                 if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
-                    OnMouseDown();
+                    checkInteract();
                 //If the mouse is released, finish interacting with the handle
                 if (Input.GetMouseButtonUp(0))
                     OnFinishHandleMovement();
@@ -231,10 +229,6 @@ namespace GILES
                 else if (draggingHandle && Input.GetMouseButton(0))
                     interactHandle();
             }
-
-            //After checking for interactions, let the object selection script check for selections
-            //To-do: move this to an input manager class
-            ObjectSelection.updateSelection();
         }
 
         private void interactHandle()
@@ -358,24 +352,28 @@ namespace GILES
             RebuildGizmoMatrix();
         }
 
-        //Return the displacement of the tool handle
-        public Vector3 getDisplacement()
+        //Return the difference between the current handle position and the previous position
+        public Vector3 getPosDisplacement()
         {
-            switch (tool)
-            {
-                case Tool.Translate:
-                    return trs.position - prevPosition;
-                case Tool.Rotate:
-                    return drag.localAxis * rotationDisplacement;
-                //Calculte how much each axis was scaled since the last frame and return it
-                default:
-                    Vector3 scaleDisplacement = new Vector3();
+            return trs.position - prevPosition;
+        }
 
-                    for (int axis = 0; axis < 3; axis++)
-                        scaleDisplacement[axis] = scale[axis] / prevScale[axis];
+        //Return the angle the handle was rotated and the axis it was rotated around
+        public float getRotDisplacement(out Vector3 rotationAxis)
+        {
+            rotationAxis = drag.worldAxis;
+            return rotationDisplacement;
+        }
 
-                    return scaleDisplacement;
-            }
+        //Calculte how much each axis was scaled since the last frame and return it
+        public Vector3 getScaleDisplacement()
+        {
+            Vector3 scaleDisplacement = new Vector3();
+
+            for (int axis = 0; axis < 3; axis++)
+                scaleDisplacement[axis] = scale[axis] / prevScale[axis];
+
+            return scaleDisplacement;
         }
 
         //Public getters and setters for the variables of the handle transform component
@@ -505,7 +503,7 @@ namespace GILES
             return (mouseDisplacement - screenHandlePos).magnitude;
         }
 
-        void OnMouseDown()
+        void checkInteract()
         {
             //Don't check for handle interactions if it is hidden
             if (hidden)
@@ -565,25 +563,13 @@ namespace GILES
                 {
                     if (pb_HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
                         drag.offset = a - trs.position;
-
-                    float hit = 0f;
-
-                    if (drag.plane.Raycast(ray, out hit))
-                    {
-                        drag.mouse = (ray.GetPoint(hit) - trs.position).normalized;
-                        drag.cross = Vector3.Cross(drag.worldAxis, drag.mouse);
-                    }
                 }
                 else
                 {
                     float hit = 0f;
 
                     if (drag.plane.Raycast(ray, out hit))
-                    {
                         drag.offset = ray.GetPoint(hit) - trs.position;
-                        drag.mouse = (ray.GetPoint(hit) - trs.position).normalized;
-                        drag.cross = Vector3.Cross(drag.worldAxis, drag.mouse);
-                    }
                 }
 
                 if (OnHandleBegin != null)
@@ -595,7 +581,6 @@ namespace GILES
                 {
                     cameraDist = (cam.transform.position - trs.position).magnitude;
                 }
-
                 //Reset the total displacement and save the angle of the point clicked on
                 if (tool == Tool.Rotate)
                 {
@@ -631,12 +616,6 @@ namespace GILES
         #endregion
 
         #region Interface
-
-        Vector2 screenToGUIPoint(Vector2 v)
-        {
-            v.y = Screen.height - v.y;
-            return v;
-        }
 
         public pb_Transform GetTransform()
         {
