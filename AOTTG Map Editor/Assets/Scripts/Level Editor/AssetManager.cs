@@ -1,11 +1,15 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityEngine.Networking;
+using System.Collections.Generic;
 
 public static class AssetManager
 {
     //The unity3d file that contains the assets from RC mod
     private static AssetBundle RCAssets;
+    //The locations of the prefabs and materials in the resources folder
+    private readonly static string prefabFolder = "Prefabs/RC Assets/";
+    private readonly static string materialFolder = "Materials/RC Assets/";
 
     //Load the RC mod assets from RCAssets.unity3d
     [System.Obsolete]
@@ -29,6 +33,20 @@ public static class AssetManager
                 Debug.Log("RC Assets File Location: " + url);
             }
         }
+    }
+
+    public static Texture[] loadAllTextures()
+    {
+        Texture[] textures = RCAssets.LoadAllAssets<Texture>();
+
+        return textures;
+    }
+
+    public static Material[] loadAllMaterials()
+    {
+        Material[] materials = RCAssets.LoadAllAssets<Material>();
+
+        return materials;
     }
 
     //Instantiate the GameObject wtih the given name
@@ -68,6 +86,6 @@ public static class AssetManager
     //Load a material
     public static Material loadRcMaterial(string materialName)
     {
-        return (Material)RCAssets.LoadAsset(materialName);
+        return Resources.Load<Material>(materialFolder + materialName);
     }
 }
