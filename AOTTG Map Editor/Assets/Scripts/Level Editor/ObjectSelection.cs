@@ -238,14 +238,18 @@ public class ObjectSelection : MonoBehaviour
         //Select all objects by copying the selectedObjects list
         selectedObjects = new List<GameObject>(selectableObjects);
 
-        //Add the outline to all of the objects
-        foreach (GameObject selectedObject in selectedObjects)
-            addOutline(selectedObject);
+        //Check if any objects are selected
+        if (selectableObjects.Count != 0)
+        {
+            //Add the outline to all of the objects
+            foreach (GameObject selectedObject in selectedObjects)
+                addOutline(selectedObject);
 
-        //Update the tool handle position
-        addAverageAll();
-        //Reset the rotation on the tool handle
-        resetToolHandleRotation();
+            //Update the tool handle position
+            addAverageAll();
+            //Reset the rotation on the tool handle
+            resetToolHandleRotation();
+        }
     }
 
     public void deselectObject(GameObject objectToDeselect)

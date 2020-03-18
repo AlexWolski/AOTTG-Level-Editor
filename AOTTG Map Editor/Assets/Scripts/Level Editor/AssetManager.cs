@@ -10,18 +10,11 @@ public static class AssetManager
     //The locations of the prefabs and materials in the resources folder
     private readonly static string prefabFolder = "Prefabs/RC Assets/";
     private readonly static string materialFolder = "Materials/RC Assets/";
-    //The two shaders applied to the RC objects
-    private static Shader vertexColoredShader;
-    private static Shader transparentShader;
 
     //Load the RC mod assets from RCAssets.unity3d
     [System.Obsolete]
     public static IEnumerator LoadRCAssets()
     {
-        //Load the needed shaders
-        vertexColoredShader = Shader.Find("Vertex Colored");
-        transparentShader = Shader.Find("Legacy Shaders/Transparent/Diffuse");
-
         //Reference to the file. Compatible with windows and Mac.
         string url = "File:///" + Application.dataPath + "/RCAssets.unity3d";
 
@@ -44,16 +37,17 @@ public static class AssetManager
 
     public static Texture[] loadAllTextures()
     {
-        Texture[] textures = RCAssets.LoadAllAssets<Texture>();
-
-        return textures;
+        return RCAssets.LoadAllAssets<Texture>();
     }
 
     public static Material[] loadAllMaterials()
     {
-        Material[] materials = RCAssets.LoadAllAssets<Material>();
+        return RCAssets.LoadAllAssets<Material>();
+    }
 
-        return materials;
+    public static GameObject[] loadAllGameObjects()
+    {
+        return RCAssets.LoadAllAssets<GameObject>();
     }
 
     //Instantiate the GameObject wtih the given name
@@ -84,7 +78,7 @@ public static class AssetManager
             meshCollider.isTrigger = false;
         }
 
-        //Add a Map Object tag to the 
+        //Add a Map Object tag to the object
         newObject.tag = "Map Object";
 
         return newObject;
