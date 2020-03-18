@@ -15,7 +15,7 @@ public class EditorManager : MonoBehaviour
     [System.Obsolete]
     void Start()
     {
-        StartCoroutine(AssetManager.LoadRCAssets());
+        //StartCoroutine(AssetManager.LoadRCAssets());
     }
 
     void Update()

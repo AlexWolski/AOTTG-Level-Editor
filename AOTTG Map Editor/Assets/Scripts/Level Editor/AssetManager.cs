@@ -54,7 +54,7 @@ public static class AssetManager
     public static GameObject instantiateRcObject(string objectName)
     {
         //Instantiate the object
-        GameObject newObject = Object.Instantiate((GameObject)RCAssets.LoadAsset(objectName));
+        GameObject newObject = Object.Instantiate(Resources.Load<GameObject>(prefabFolder + objectName));
 
         //If the gameobject has a mesh, add the outline script
         if (newObject.GetComponent<Renderer>() != null)
@@ -69,13 +69,6 @@ public static class AssetManager
                 child.gameObject.AddComponent<Outline>();
                 child.gameObject.tag = "Selectable Object";
             }
-        }
-
-        //Find all mesh colliders in the object's children and alter the settings for the newer version of Unity
-        foreach (MeshCollider meshCollider in newObject.GetComponentsInChildren<MeshCollider>())
-        {
-            meshCollider.convex = false;
-            meshCollider.isTrigger = false;
         }
 
         //Add a Map Object tag to the object

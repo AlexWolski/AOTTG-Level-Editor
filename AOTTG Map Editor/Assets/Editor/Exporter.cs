@@ -1,9 +1,6 @@
-﻿using System.Collections;
-using System.Collections.Generic;
-using System.IO;
+﻿using System.IO;
 using UnityEditor;
 using UnityEngine;
-using UnityEngine.Experimental.Rendering;
 using UnityFBXExporter;
 
 public static class Exporter
@@ -37,23 +34,6 @@ public static class Exporter
             //Export the texture of that material
             if (currMaterial.mainTexture != null)
                 exportTexture(currMaterial.mainTexture, newFolder + "/");
-        }
-    }
-
-    public static void instantiateAllMapObjects()
-    {
-        GameObject[] gameObjects = AssetManager.loadAllGameObjects();
-
-        foreach (GameObject currObject in gameObjects)
-        {
-            //The new directory to store the material and texture
-            string newFolder = fbxPath;
-
-            //Create a directory for the texture
-            Directory.CreateDirectory(newFolder);
-            //Export the game object
-            exportMapObject(currObject, newFolder);
-            //Export the mesh of the gameobject
         }
     }
 
@@ -126,6 +106,6 @@ public static class Exporter
         else
             fileName = gameObject.name + ".fbx";
 
-        //FBXExporter.ExportGameObjToFBX(gameObject, path + fileName, true, true);
+        FBXExporter.ExportGameObjToFBX(gameObject, path + fileName, true, true);
     }
 }
