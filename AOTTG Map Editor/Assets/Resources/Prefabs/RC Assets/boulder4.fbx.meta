@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: d34df5587ce98274ca6d2c6a44df03f9
+guid: 30c070e2b2d44444383c980af3801d2a
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: stalagmite01
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: stalagmite01
+  - first:
+      21: 2100000
+    second: rock4tex
+  - first:
+      23: 2300000
+    second: stalagmite01
+  - first:
+      33: 3300000
+    second: stalagmite01
+  - first:
+      43: 4300000
+    second: stalagmite01
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
+      name: rock4tex
     second: {fileID: 2100000, guid: 95d1e7edc3afb7549af9924fe06b790a, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

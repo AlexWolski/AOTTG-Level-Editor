@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: f9391d4b5f25d11428cb0603135bc4e7
+guid: d1a4622575f7f66469e3aedd41f93d9e
 ModelImporter:
   serializedVersion: 26
   internalIDToNameTable: []
@@ -7,11 +7,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 4b5c572789555074696592578083cbb8, type: 2}
+      name: bark
+    second: {fileID: 2100000, guid: a091d6f5826d8bf4eb9188ea368748cc, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: leaf2tex
+    second: {fileID: 2100000, guid: a5a774a330c0d9b4eb972e2cb5011a22, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:

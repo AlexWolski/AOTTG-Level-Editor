@@ -7,11 +7,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: a68ea38d4f125ab478f3c421867b10d5, type: 2}
+      name: gatemat
+    second: {fileID: 2100000, guid: 60c207d136af97d459909fab0186479e, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: wallmat
+    second: {fileID: 2100000, guid: 5af8fb05eebc4af439a8a1b921d64214, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:

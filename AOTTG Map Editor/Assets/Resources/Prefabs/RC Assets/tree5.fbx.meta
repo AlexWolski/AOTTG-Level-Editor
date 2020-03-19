@@ -1,5 +1,5 @@
 fileFormatVersion: 2
-guid: f96d4e3c88d8a7346b3e7cef785fc13f
+guid: 1d15a65da8940fd459a485c3b5cb4c18
 ModelImporter:
   serializedVersion: 26
   internalIDToNameTable: []
@@ -7,11 +7,16 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 0d0bddf332ae37c41bb4e46fc090046c, type: 2}
+      name: shu ye+
+    second: {fileID: 2100000, guid: 9b704e8c938d31b4a9c8231c9a182d58, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: tree4tex
+    second: {fileID: 2100000, guid: 4ce2c4ce6062c1d4a9d109686c589679, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:

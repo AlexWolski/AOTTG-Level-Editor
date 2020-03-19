@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 899330fce6cd0044b95f2b104e727471
+guid: b0da598af4b254c45abc0a861828c7e8
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: stalactite01
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: stalactite01
+  - first:
+      21: 2100000
+    second: cave2tex
+  - first:
+      23: 2300000
+    second: stalactite01
+  - first:
+      33: 3300000
+    second: stalactite01
+  - first:
+      43: 4300000
+    second: stalactite01
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
+      name: cave2tex
     second: {fileID: 2100000, guid: 1517f1ec5e4c27645842762e3499d68d, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

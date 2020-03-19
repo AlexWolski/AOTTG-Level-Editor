@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: f71af336669aaf246aad9e45f21a9029
+guid: 02386e29459280745a9c065b72b9ae32
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: stalactite01
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: stalactite01
+  - first:
+      21: 2100000
+    second: Default-Material
+  - first:
+      23: 2300000
+    second: stalactite01
+  - first:
+      33: 3300000
+    second: stalactite01
+  - first:
+      43: 4300000
+    second: stalactite01
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 1517f1ec5e4c27645842762e3499d68d, type: 2}
+      name: Default-Material
+    second: {fileID: 2100000, guid: 277764f0f388b8a4eacef334659466b4, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

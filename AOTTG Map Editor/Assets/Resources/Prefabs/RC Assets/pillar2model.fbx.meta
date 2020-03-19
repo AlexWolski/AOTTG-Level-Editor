@@ -1,17 +1,116 @@
 fileFormatVersion: 2
-guid: 50b83764a7dd85d4d95a5d71164a3e1d
+guid: e413f58a9832d5744a67e75e7bd465eb
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: OldColumn01_part_01
+  - first:
+      1: 100002
+    second: OldColumn01_part_02
+  - first:
+      1: 100004
+    second: OldColumn01_part_03
+  - first:
+      1: 100006
+    second: OldColumn02
+  - first:
+      1: 100008
+    second: OldColumn03
+  - first:
+      1: 100010
+    second: OldColumn04
+  - first:
+      1: 100012
+    second: //RootNode
+  - first:
+      4: 400000
+    second: OldColumn01_part_01
+  - first:
+      4: 400002
+    second: OldColumn01_part_02
+  - first:
+      4: 400004
+    second: OldColumn01_part_03
+  - first:
+      4: 400006
+    second: OldColumn02
+  - first:
+      4: 400008
+    second: OldColumn03
+  - first:
+      4: 400010
+    second: OldColumn04
+  - first:
+      4: 400012
+    second: //RootNode
+  - first:
+      21: 2100000
+    second: Default-Material
+  - first:
+      23: 2300000
+    second: OldColumn01_part_01
+  - first:
+      23: 2300002
+    second: OldColumn01_part_02
+  - first:
+      23: 2300004
+    second: OldColumn01_part_03
+  - first:
+      23: 2300006
+    second: OldColumn02
+  - first:
+      23: 2300008
+    second: OldColumn03
+  - first:
+      23: 2300010
+    second: OldColumn04
+  - first:
+      33: 3300000
+    second: OldColumn01_part_01
+  - first:
+      33: 3300002
+    second: OldColumn01_part_02
+  - first:
+      33: 3300004
+    second: OldColumn01_part_03
+  - first:
+      33: 3300006
+    second: OldColumn02
+  - first:
+      33: 3300008
+    second: OldColumn03
+  - first:
+      33: 3300010
+    second: OldColumn04
+  - first:
+      43: 4300000
+    second: OldColumn01_part_01
+  - first:
+      43: 4300002
+    second: OldColumn01_part_02
+  - first:
+      43: 4300004
+    second: OldColumn01_part_03
+  - first:
+      43: 4300006
+    second: OldColumn02
+  - first:
+      43: 4300008
+    second: OldColumn03
+  - first:
+      43: 4300010
+    second: OldColumn04
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 08ce119182eec4f47a50558bde39a7f4, type: 2}
+      name: Default-Material
+    second: {fileID: 2100000, guid: 897f1040541fc2446a26fcbee06443b3, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +168,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

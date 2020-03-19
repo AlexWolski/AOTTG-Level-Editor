@@ -1,17 +1,74 @@
 fileFormatVersion: 2
-guid: 0521754c770d4664e9ed8f596c047ef5
+guid: bccbc09b7f2daa84380e716ceca291ac
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: BallPoint
+  - first:
+      1: 100002
+    second: Barrel
+  - first:
+      1: 100004
+    second: Base
+  - first:
+      1: 100006
+    second: //RootNode
+  - first:
+      1: 100008
+    second: FiringPoint
+  - first:
+      1: 100010
+    second: PlayerPoint
+  - first:
+      4: 400000
+    second: BallPoint
+  - first:
+      4: 400002
+    second: Barrel
+  - first:
+      4: 400004
+    second: Base
+  - first:
+      4: 400006
+    second: //RootNode
+  - first:
+      4: 400008
+    second: FiringPoint
+  - first:
+      4: 400010
+    second: PlayerPoint
+  - first:
+      21: 2100000
+    second: cannongroundtex
+  - first:
+      23: 2300000
+    second: Barrel
+  - first:
+      23: 2300002
+    second: Base
+  - first:
+      33: 3300000
+    second: Barrel
+  - first:
+      33: 3300002
+    second: Base
+  - first:
+      43: 4300000
+    second: Base
+  - first:
+      43: 4300002
+    second: Barrel
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 797a40620152d4f4bb507bcd4090b157, type: 2}
+      name: cannongroundtex
+    second: {fileID: 2100000, guid: 47755bb8fd2e31e47a4e265a6dd7a038, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +126,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 6e5d076b8f8c53a44844c246f9bdcc9f
+guid: 4f3baef2488305c419af95a6898c4eb4
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: Skeleton
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: Skeleton
+  - first:
+      21: 2100000
+    second: WoodPlanksBeamed0010_S
+  - first:
+      23: 2300000
+    second: //RootNode
+  - first:
+      33: 3300000
+    second: //RootNode
+  - first:
+      43: 4300000
+    second: house2(Clone)
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
+      name: WoodPlanksBeamed0010_S
     second: {fileID: 2100000, guid: 39b6e63e29d62f34db99893e84fa584b, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

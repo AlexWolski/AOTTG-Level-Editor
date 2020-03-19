@@ -7,11 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 3d75e33f913d00440949553153203f9a, type: 2}
+      name: HousesONE
+    second: {fileID: 2100000, guid: 5fb8b6d06ad6d9c41926b6ee02110af4, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:

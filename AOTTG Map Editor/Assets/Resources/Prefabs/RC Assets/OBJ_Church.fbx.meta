@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 8379f72f46317794d9c9c51d873ee619
+guid: 1532add86c6dddf46b938899ef1bd5fb
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: Box03
+  - first:
+      1: 100002
+    second: //RootNode
+  - first:
+      4: 400000
+    second: Box03
+  - first:
+      4: 400002
+    second: //RootNode
+  - first:
+      21: 2100000
+    second: Default-Material
+  - first:
+      23: 2300000
+    second: Box03
+  - first:
+      33: 3300000
+    second: Box03
+  - first:
+      43: 4300000
+    second: Box03
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 9ef738c474434034083f1284fa55c5d6, type: 2}
+      name: Default-Material
+    second: {fileID: 2100000, guid: 9713e4ef8282f3443aa3d49e9adcc5eb, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

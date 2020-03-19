@@ -1,12 +1,33 @@
 fileFormatVersion: 2
-guid: 69d55a4642c544746a29f2c3a615077b
+guid: 51e9b10093398ec45a4a85eeaeeac809
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: backgroundImage
+  - first:
+      1: 100004
+    second: Image
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: backgroundImage
+  - first:
+      4: 400004
+    second: Image
+  - first:
+      20: 2000000
+    second: //RootNode
   externalObjects: {}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -64,7 +85,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

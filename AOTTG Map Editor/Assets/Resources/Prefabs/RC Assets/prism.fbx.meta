@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 7b1e218448494044da4cd3c1a9658a0b
+guid: b110a84278032454b803c2302c0afe33
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: Prism001
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: Prism001
+  - first:
+      21: 2100000
+    second: empty
+  - first:
+      23: 2300000
+    second: Prism001
+  - first:
+      33: 3300000
+    second: Prism001
+  - first:
+      43: 4300000
+    second: Prism001
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
+      name: empty
     second: {fileID: 2100000, guid: c34ec7064fca57f408f66f6a964d4f4e, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

@@ -1,17 +1,49 @@
 fileFormatVersion: 2
-guid: 2402b985bf051304e941d3c6abbc02aa
+guid: d4464123bc2bce04bb4bc6e30e8a6d05
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: house9sub
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: house9sub
+  - first:
+      21: 2100000
+    second: house9mat2
+  - first:
+      21: 2100002
+    second: house8mat1
+  - first:
+      23: 2300000
+    second: house9sub
+  - first:
+      33: 3300000
+    second: house9sub
+  - first:
+      43: 4300000
+    second: house9sub
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 02b7f60ddd9086645ad570d10e587248, type: 2}
+      name: house8mat1
+    second: {fileID: 2100000, guid: 6c16a34a1537c464bab239a5d036efd1, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: house9mat2
+    second: {fileID: 2100000, guid: f39b8e81c62e46645923d7a462f5093e, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +101,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

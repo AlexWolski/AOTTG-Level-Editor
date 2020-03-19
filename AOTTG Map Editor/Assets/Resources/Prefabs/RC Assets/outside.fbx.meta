@@ -1,12 +1,54 @@
 fileFormatVersion: 2
-guid: cf95c908d7d630b4c8cadb215698424a
+guid: 705a12b2a8691874c8035d3a3dfcef11
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: outsideBarrier1
+  - first:
+      1: 100004
+    second: outsideBarrier2
+  - first:
+      1: 100006
+    second: outsideBarrier3
+  - first:
+      1: 100008
+    second: outsideBarrier4
+  - first:
+      1: 100010
+    second: outsideBarrier5
+  - first:
+      1: 100012
+    second: outsideBarrier6
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: outsideBarrier1
+  - first:
+      4: 400004
+    second: outsideBarrier2
+  - first:
+      4: 400006
+    second: outsideBarrier3
+  - first:
+      4: 400008
+    second: outsideBarrier4
+  - first:
+      4: 400010
+    second: outsideBarrier5
+  - first:
+      4: 400012
+    second: outsideBarrier6
   externalObjects: {}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -64,7 +106,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

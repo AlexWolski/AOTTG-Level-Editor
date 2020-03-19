@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 37bc46f94c4711b4fad64e9795843e81
+guid: ff40becaabfa73645baee0389268634e
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: Pyramid001
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: Pyramid001
+  - first:
+      21: 2100000
+    second: killMaterial
+  - first:
+      23: 2300000
+    second: Pyramid001
+  - first:
+      33: 3300000
+    second: Pyramid001
+  - first:
+      43: 4300000
+    second: Pyramid001
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
+      name: killMaterial
     second: {fileID: 2100000, guid: 96fe3fa197deac34f883a5c967b5e381, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

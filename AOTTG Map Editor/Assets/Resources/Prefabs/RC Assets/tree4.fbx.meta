@@ -7,11 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 8a0f294a730ab2a4eba614faa7a8766a, type: 2}
+      name: tree4tex
+    second: {fileID: 2100000, guid: 4ce2c4ce6062c1d4a9d109686c589679, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:

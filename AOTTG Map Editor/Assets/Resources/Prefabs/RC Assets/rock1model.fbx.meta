@@ -7,11 +7,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 7658c3adca6191a429c1e6ada6e47be2, type: 2}
+      name: Default-Material
+    second: {fileID: 2100000, guid: f37785ec981ee5d4abc9b8891ed4da37, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:

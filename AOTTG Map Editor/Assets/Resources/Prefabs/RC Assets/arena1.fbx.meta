@@ -1,17 +1,117 @@
 fileFormatVersion: 2
-guid: a2a11a11cbc512349bc108cd28f44c1f
+guid: 9dfe5e8665d444444b01ed67be62dfa1
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: Cube.002_Cube.022_Pillars
+  - first:
+      1: 100004
+    second: Cube.002_Cube.022_Pillars_OutsidePillars.png
+  - first:
+      1: 100006
+    second: Cube.007_Cube.014_Things
+  - first:
+      1: 100008
+    second: Cube_Cube_Things_Floor.png
+  - first:
+      1: 100010
+    second: Plane_Plane_Floor
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: Cube.002_Cube.022_Pillars
+  - first:
+      4: 400004
+    second: Cube.002_Cube.022_Pillars_OutsidePillars.png
+  - first:
+      4: 400006
+    second: Cube.007_Cube.014_Things
+  - first:
+      4: 400008
+    second: Cube_Cube_Things_Floor.png
+  - first:
+      4: 400010
+    second: Plane_Plane_Floor
+  - first:
+      21: 2100000
+    second: OutsidePillars
+  - first:
+      21: 2100002
+    second: House
+  - first:
+      21: 2100004
+    second: Floor
+  - first:
+      23: 2300000
+    second: Cube.002_Cube.022_Pillars
+  - first:
+      23: 2300002
+    second: Cube.002_Cube.022_Pillars_OutsidePillars.png
+  - first:
+      23: 2300004
+    second: Cube.007_Cube.014_Things
+  - first:
+      23: 2300006
+    second: Cube_Cube_Things_Floor.png
+  - first:
+      23: 2300008
+    second: Plane_Plane_Floor
+  - first:
+      33: 3300000
+    second: Cube.002_Cube.022_Pillars
+  - first:
+      33: 3300002
+    second: Cube.002_Cube.022_Pillars_OutsidePillars.png
+  - first:
+      33: 3300004
+    second: Cube.007_Cube.014_Things
+  - first:
+      33: 3300006
+    second: Cube_Cube_Things_Floor.png
+  - first:
+      33: 3300008
+    second: Plane_Plane_Floor
+  - first:
+      43: 4300000
+    second: Cube.002_Cube.022_Pillars
+  - first:
+      43: 4300002
+    second: Cube.002_Cube.022_Pillars_OutsidePillars.png
+  - first:
+      43: 4300004
+    second: Cube.007_Cube.014_Things
+  - first:
+      43: 4300006
+    second: Cube_Cube_Things_Floor.png
+  - first:
+      43: 4300008
+    second: Plane_Plane_Floor
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 0a67035eb18f74446905f96a6ce41114, type: 2}
+      name: Floor
+    second: {fileID: 2100000, guid: f48df2668d8e7bd49bca025d18512ec7, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: House
+    second: {fileID: 2100000, guid: 8632f95cbcee9594aac1149e85543350, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: OutsidePillars
+    second: {fileID: 2100000, guid: bc937f038912e4c47a1d376e96de8b66, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +169,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

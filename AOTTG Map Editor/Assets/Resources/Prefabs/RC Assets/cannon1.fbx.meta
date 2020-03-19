@@ -1,17 +1,206 @@
 fileFormatVersion: 2
-guid: 1903628a369acd64682784a5e9c909fa
+guid: fcb1dbe4446ceb243a3e4b316c2fe42e
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: group21_group22_group23_polySurface3
+  - first:
+      1: 100004
+    second: group21_group22_group24_polySurface3
+  - first:
+      1: 100006
+    second: group21_group22_pCylinder11
+  - first:
+      1: 100008
+    second: group21_group22_pCylinder12
+  - first:
+      1: 100010
+    second: group21_group22_pCylinder14
+  - first:
+      1: 100012
+    second: group21_group22_polySurface12
+  - first:
+      1: 100014
+    second: group21_group22_polySurface14
+  - first:
+      1: 100016
+    second: group21_group22_polySurface1_group23
+  - first:
+      1: 100018
+    second: group21_group22_polySurface1_group24
+  - first:
+      1: 100020
+    second: group21_group22_polySurface5
+  - first:
+      1: 100022
+    second: group21_group22_polySurface8
+  - first:
+      1: 100024
+    second: group21_pCylinder3_group22
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: group21_group22_group23_polySurface3
+  - first:
+      4: 400004
+    second: group21_group22_group24_polySurface3
+  - first:
+      4: 400006
+    second: group21_group22_pCylinder11
+  - first:
+      4: 400008
+    second: group21_group22_pCylinder12
+  - first:
+      4: 400010
+    second: group21_group22_pCylinder14
+  - first:
+      4: 400012
+    second: group21_group22_polySurface12
+  - first:
+      4: 400014
+    second: group21_group22_polySurface14
+  - first:
+      4: 400016
+    second: group21_group22_polySurface1_group23
+  - first:
+      4: 400018
+    second: group21_group22_polySurface1_group24
+  - first:
+      4: 400020
+    second: group21_group22_polySurface5
+  - first:
+      4: 400022
+    second: group21_group22_polySurface8
+  - first:
+      4: 400024
+    second: group21_pCylinder3_group22
+  - first:
+      21: 2100000
+    second: medievalartilleryassets_texture-psd
+  - first:
+      23: 2300000
+    second: group21_group22_group23_polySurface3
+  - first:
+      23: 2300002
+    second: group21_group22_group24_polySurface3
+  - first:
+      23: 2300004
+    second: group21_group22_pCylinder11
+  - first:
+      23: 2300006
+    second: group21_group22_pCylinder12
+  - first:
+      23: 2300008
+    second: group21_group22_pCylinder14
+  - first:
+      23: 2300010
+    second: group21_group22_polySurface12
+  - first:
+      23: 2300012
+    second: group21_group22_polySurface14
+  - first:
+      23: 2300014
+    second: group21_group22_polySurface1_group23
+  - first:
+      23: 2300016
+    second: group21_group22_polySurface1_group24
+  - first:
+      23: 2300018
+    second: group21_group22_polySurface5
+  - first:
+      23: 2300020
+    second: group21_group22_polySurface8
+  - first:
+      23: 2300022
+    second: group21_pCylinder3_group22
+  - first:
+      33: 3300000
+    second: group21_group22_group23_polySurface3
+  - first:
+      33: 3300002
+    second: group21_group22_group24_polySurface3
+  - first:
+      33: 3300004
+    second: group21_group22_pCylinder11
+  - first:
+      33: 3300006
+    second: group21_group22_pCylinder12
+  - first:
+      33: 3300008
+    second: group21_group22_pCylinder14
+  - first:
+      33: 3300010
+    second: group21_group22_polySurface12
+  - first:
+      33: 3300012
+    second: group21_group22_polySurface14
+  - first:
+      33: 3300014
+    second: group21_group22_polySurface1_group23
+  - first:
+      33: 3300016
+    second: group21_group22_polySurface1_group24
+  - first:
+      33: 3300018
+    second: group21_group22_polySurface5
+  - first:
+      33: 3300020
+    second: group21_group22_polySurface8
+  - first:
+      33: 3300022
+    second: group21_pCylinder3_group22
+  - first:
+      43: 4300000
+    second: group21_group22_group23_polySurface3
+  - first:
+      43: 4300002
+    second: group21_group22_group24_polySurface3
+  - first:
+      43: 4300004
+    second: group21_group22_pCylinder11
+  - first:
+      43: 4300006
+    second: group21_group22_pCylinder12
+  - first:
+      43: 4300008
+    second: group21_group22_pCylinder14
+  - first:
+      43: 4300010
+    second: group21_group22_polySurface1_group23
+  - first:
+      43: 4300012
+    second: group21_group22_polySurface1_group24
+  - first:
+      43: 4300014
+    second: group21_group22_polySurface5
+  - first:
+      43: 4300016
+    second: group21_group22_polySurface8
+  - first:
+      43: 4300018
+    second: group21_group22_polySurface12
+  - first:
+      43: 4300020
+    second: group21_group22_polySurface14
+  - first:
+      43: 4300022
+    second: group21_pCylinder3_group22
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 1cd3e65796d228543a2b44b6023e28f3, type: 2}
+      name: medievalartilleryassets_texture-psd
+    second: {fileID: 2100000, guid: 6aa74e805287a1b4e9471187a156d0b5, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +258,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

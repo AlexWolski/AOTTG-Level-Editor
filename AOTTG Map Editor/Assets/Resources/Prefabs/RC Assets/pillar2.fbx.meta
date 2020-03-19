@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 9b04da358048f894288fd2ee980c8d89
+guid: 63a92af35a5f7124abdc464ef5a52e4c
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: pillar2sub
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: pillar2sub
+  - first:
+      21: 2100000
+    second: pillar2tex
+  - first:
+      23: 2300000
+    second: pillar2sub
+  - first:
+      33: 3300000
+    second: pillar2sub
+  - first:
+      43: 4300000
+    second: pillar2sub
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
+      name: pillar2tex
     second: {fileID: 2100000, guid: 2beee18eddf5a61428103de2b4e6c0e5, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

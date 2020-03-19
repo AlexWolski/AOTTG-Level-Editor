@@ -1,17 +1,56 @@
 fileFormatVersion: 2
-guid: 25745bd8de6be5b478ae27bba9c73750
+guid: c3ae933e62e33104883d8c25367766a1
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: Barrel
+  - first:
+      1: 100002
+    second: Base
+  - first:
+      1: 100004
+    second: //RootNode
+  - first:
+      4: 400000
+    second: Barrel
+  - first:
+      4: 400002
+    second: Base
+  - first:
+      4: 400004
+    second: //RootNode
+  - first:
+      21: 2100000
+    second: cannonwallmat
+  - first:
+      23: 2300000
+    second: Barrel
+  - first:
+      23: 2300002
+    second: Base
+  - first:
+      33: 3300000
+    second: Barrel
+  - first:
+      33: 3300002
+    second: Base
+  - first:
+      43: 4300000
+    second: Base
+  - first:
+      43: 4300002
+    second: Barrel
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 60de2a30226e8ad48b4140303e780271, type: 2}
+      name: cannonwallmat
+    second: {fileID: 2100000, guid: c0041487649d3a243828e08086f9a68b, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +108,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

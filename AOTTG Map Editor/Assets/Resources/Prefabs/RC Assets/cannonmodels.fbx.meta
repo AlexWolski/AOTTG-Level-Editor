@@ -1,17 +1,86 @@
 fileFormatVersion: 2
-guid: 918d1708611a3d54ca752285593bb6c4
+guid: 130fd1a9ba697ca48acd65dffb7fa4ce
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: BarrelA
+  - first:
+      1: 100002
+    second: BarrelB
+  - first:
+      1: 100004
+    second: CannonA
+  - first:
+      1: 100006
+    second: CannonB
+  - first:
+      1: 100008
+    second: //RootNode
+  - first:
+      4: 400000
+    second: BarrelA
+  - first:
+      4: 400002
+    second: BarrelB
+  - first:
+      4: 400004
+    second: CannonA
+  - first:
+      4: 400006
+    second: CannonB
+  - first:
+      4: 400008
+    second: //RootNode
+  - first:
+      21: 2100000
+    second: Default-Material
+  - first:
+      23: 2300000
+    second: BarrelA
+  - first:
+      23: 2300002
+    second: BarrelB
+  - first:
+      23: 2300004
+    second: CannonA
+  - first:
+      23: 2300006
+    second: CannonB
+  - first:
+      33: 3300000
+    second: BarrelA
+  - first:
+      33: 3300002
+    second: BarrelB
+  - first:
+      33: 3300004
+    second: CannonA
+  - first:
+      33: 3300006
+    second: CannonB
+  - first:
+      43: 4300000
+    second: BarrelA
+  - first:
+      43: 4300002
+    second: BarrelB
+  - first:
+      43: 4300004
+    second: CannonA
+  - first:
+      43: 4300006
+    second: CannonB
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: d13c5b7a51441c045bb3934fa3eebe11, type: 2}
+      name: Default-Material
+    second: {fileID: 2100000, guid: 9713e4ef8282f3443aa3d49e9adcc5eb, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +138,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []

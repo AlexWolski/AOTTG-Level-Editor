@@ -1,17 +1,41 @@
 fileFormatVersion: 2
-guid: 1bf56b590e250a14289233cd714ca125
+guid: 053b2fd042fb50c48bd4be0e5b9f4edc
 ModelImporter:
   serializedVersion: 26
-  internalIDToNameTable: []
+  internalIDToNameTable:
+  - first:
+      1: 100000
+    second: //RootNode
+  - first:
+      1: 100002
+    second: stone_lp
+  - first:
+      4: 400000
+    second: //RootNode
+  - first:
+      4: 400002
+    second: stone_lp
+  - first:
+      21: 2100000
+    second: rock1tex
+  - first:
+      23: 2300000
+    second: stone_lp
+  - first:
+      33: 3300000
+    second: stone_lp
+  - first:
+      43: 4300000
+    second: stone_lp
   externalObjects:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
-      name: No Name
-    second: {fileID: 2100000, guid: 7658c3adca6191a429c1e6ada6e47be2, type: 2}
+      name: rock1tex
+    second: {fileID: 2100000, guid: f634dc98f681ac04ba268906c51aab0d, type: 2}
   materials:
     importMaterials: 1
-    materialName: 1
+    materialName: 0
     materialSearch: 1
     materialLocation: 1
   animations:
@@ -69,7 +93,7 @@ ModelImporter:
     normalImportMode: 0
     tangentImportMode: 3
     normalCalculationMode: 4
-    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 0
+    legacyComputeAllNormalsFromSmoothingGroupsWhenMeshHasBlendShapes: 1
     blendShapeNormalImportMode: 1
     normalSmoothingSource: 0
   referencedClips: []
