@@ -5,6 +5,7 @@ public class MapObject : MonoBehaviour
 {
     #region Data Members
     //The underlying values for properties and default values from the fbx prefab
+    private string[] defaultMatNames;
     private string materialValue;
     private Vector2 tilingValue;
     private Color colorValue;
@@ -103,12 +104,41 @@ public class MapObject : MonoBehaviour
     //Apply the given material as the new material of the object
     private void setMaterial(string newMaterial)
     {
-        //Apply the material to all of the children of the object
-        foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
+        //Check if the new material is the default materials applied to the prefab
+        if (newMaterial == "default")
         {
-            //Don't apply the default material and don't apply the material to the particle system of supply stations
-            if (!(newMaterial == "default" || renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
-                renderer.material = AssetManager.loadRcMaterial(newMaterial);
+            //If the default materials haven't been set yet, the currently applied materials are the defaults
+            if (defaultMatNames == null)
+            {
+                //Get a list of the default renderers attached to the game object
+                Renderer[] defaultRenderers = GetComponentsInChildren<Renderer>();
+                //Create a string array for the material names
+                defaultMatNames = new string[defaultRenderers.Length];
+
+                //Iterate through the renderers and save all of the material names
+                for (int i = 0; i < defaultRenderers.Length; i++)
+                    defaultMatNames[i] = defaultRenderers[i].material.name;
+            }
+            //If the default materials weren't set, apply the saved default materials
+            else
+            {
+                //Get a list of the renderers currently attached to the game object
+                Renderer[] renderers = GetComponentsInChildren<Renderer>();
+
+                //Instantiate all of the default materials and assign them to the renderers
+                for (int i = 0; i < renderers.Length; i++)
+                    renderers[i].material = AssetManager.loadRcMaterial(defaultMatNames[i]);
+            }
+        }
+        //Otherwise Apply the material to all of the children of the object
+        else
+        {
+            foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
+            {
+                //Don't apply the default material and don't apply the material to the particle system of supply stations
+                if (!(renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
+                    renderer.material = AssetManager.loadRcMaterial(newMaterial);
+            }
         }
     }
 
@@ -121,6 +151,10 @@ public class MapObject : MonoBehaviour
     //Resize the texture on the object
     private void setTiling(Vector2 newTiling)
     {
+        //If the material is the default on the gameobject, don't scale the texture
+        if (materialValue == "default")
+            return;
+
         //Apply the texture resizing to all of the children of the object
         foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
             renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * newTiling.x, renderer.material.mainTextureScale.y * newTiling.y);
