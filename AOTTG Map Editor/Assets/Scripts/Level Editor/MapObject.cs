@@ -4,9 +4,8 @@ using System;
 public class MapObject : MonoBehaviour
 {
     #region Data Members
-    //The underlying values for properties with complex setters
-    //These extra fields are required due to a Unity bug
-    private string textureValue;
+    //The underlying values for properties and default values from the fbx prefab
+    private string materialValue;
     private Vector2 tilingValue;
     private Color colorValue;
     private Vector3 defaultScale;
@@ -32,11 +31,11 @@ public class MapObject : MonoBehaviour
     //Determines if colored materials are enabled
     public bool ColorEnabled { get; set; }
 
-    //The name of the texture applied to the object
-    public string Texture
+    //The name of the material applied to the object
+    public string Material
     {
-        get { return textureValue; }
-        set { textureValue = value; setTexture(value); }
+        get { return materialValue; }
+        set { materialValue = value; setMaterial(value); }
     }
 
     //How many times the texture will repeat in the x and y directions
@@ -78,8 +77,8 @@ public class MapObject : MonoBehaviour
     public void copyValues(MapObject originalObject)
     {
         //Hidden data members
-        propertyNumber = originalObject.propertyNumber;
         defaultScale = originalObject.defaultScale;
+        propertyNumber = originalObject.propertyNumber;
 
         //MapObject properties
         Type = originalObject.Type;
@@ -91,7 +90,7 @@ public class MapObject : MonoBehaviour
         ColorEnabled = originalObject.ColorEnabled;
 
         //GameObject properties
-        textureValue = originalObject.Texture;
+        materialValue = originalObject.Material;
         tilingValue = originalObject.Tiling;
         colorValue = originalObject.Color;
         scaleFactor = originalObject.Scale;
@@ -101,15 +100,15 @@ public class MapObject : MonoBehaviour
     #region Setters
     //Setters for implementing more complicated varaibles
 
-    //Apply the given texture as the new material of the object
-    private void setTexture(string newTexture)
+    //Apply the given material as the new material of the object
+    private void setMaterial(string newMaterial)
     {
         //Apply the material to all of the children of the object
         foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
         {
-            //Don't apply the default texture and don't apply the material to the particle system of supply stations
-            if (!(newTexture == "default" || renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
-                renderer.material = AssetManager.loadRcMaterial(newTexture);
+            //Don't apply the default material and don't apply the material to the particle system of supply stations
+            if (!(newMaterial == "default" || renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
+                renderer.material = AssetManager.loadRcMaterial(newMaterial);
         }
     }
 
@@ -127,7 +126,7 @@ public class MapObject : MonoBehaviour
             renderer.material.mainTextureScale = new Vector2(renderer.material.mainTextureScale.x * newTiling.x, renderer.material.mainTextureScale.y * newTiling.y);
     }
 
-    //Change the color of the texture on the object
+    //Change the color of the material on the object
     private void setColor(Color newColor)
     {
         //Iterate through all of the filters in the object
@@ -267,19 +266,19 @@ public class MapObject : MonoBehaviour
             Scale = parseVector3(properties[3], properties[4], properties[5]);
             indexOfPosition = 6;
         }
-        //If the object has a texture, store the texture, color, and tiling information and scale the object
+        //If the object has a material, store the material, color, and tiling information and scale the object
         else if (Type == objectType.custom || propertyNumber >= 15 && (Type == objectType.@base || Type == objectType.photon))
         {
-            Texture = properties[2];
+            Material = properties[2];
             Scale = parseVector3(properties[3], properties[4], properties[5]);
             ColorEnabled = (Convert.ToInt32(properties[6]) != 0);
 
             //If the color is enabled, parse the color and set it
             if (ColorEnabled)
             {
-                //If the transparent texture is applied, parse the opacity and use it. Otherwise default to fully opaque
-                if (Texture.StartsWith("transparent"))
-                    Color = parseColor(properties[7], properties[8], properties[9], Texture.Substring(11));
+                //If the transparent material is applied, parse the opacity and use it. Otherwise default to fully opaque
+                if (Material.StartsWith("transparent"))
+                    Color = parseColor(properties[7], properties[8], properties[9], Material.Substring(11));
                 else
                     Color = parseColor(properties[7], properties[8], properties[9], "1");
             }
@@ -318,7 +317,7 @@ public class MapObject : MonoBehaviour
         else if (ObjectName.StartsWith("region"))
             objectScript += "," + RegionName + "," + vector3ToString(Scale);
         else if (Type == objectType.custom || propertyNumber >= 15 && (Type == objectType.@base || Type == objectType.photon))
-            objectScript += "," + Texture + "," + vector3ToString(Scale) + "," + boolToString(ColorEnabled) + "," + colorToString(Color) + "," + vector2ToString(Tiling);
+            objectScript += "," + Material + "," + vector3ToString(Scale) + "," + boolToString(ColorEnabled) + "," + colorToString(Color) + "," + vector2ToString(Tiling);
         else if (Type == objectType.racing || Type == objectType.misc)
             objectScript += "," + vector3ToString(Scale);
 

@@ -1,4 +1,4 @@
-﻿Shader "Vertex Colored" {
+﻿Shader "RC/Vertex Colored" {
 	Properties{
 	 _Color("Main Color", Color) = (1,1,1,1)
 	 _Shininess("Shininess", Range(0.01,1)) = 0.7
