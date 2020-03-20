@@ -6,8 +6,8 @@ using System.Collections.Generic;
 public static class AssetManager
 {
     //The locations of the prefabs and materials in the resources folder
-    private readonly static string prefabFolder = "Prefabs/RC Assets/";
-    private readonly static string materialFolder = "Materials/RC Assets/";
+    private readonly static string prefabFolder = "Prefabs/RC Objects/";
+    private readonly static string materialFolder = "Materials/RC Materials/";
 
     //Instantiate the GameObject wtih the given name
     public static GameObject instantiateRcObject(string objectName)
