@@ -1,34 +1,54 @@
 ﻿using UnityEngine;
+using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using GILES;
-using UnityEngine.EventSystems;
 
+//A singleton class for managing the currently selected objects
 public class ObjectSelection : MonoBehaviour
 {
     #region Data Members
+    //A self-reference to the singleton instance of this script
+    public static ObjectSelection Instance { get; private set; }
+
     //A list containing the objects that can be selected
-    private List<GameObject> selectableObjects = new List<GameObject>();
+    private static List<GameObject> selectableObjects = new List<GameObject>();
     //A list containing the objects currently selected
-    private List<GameObject> selectedObjects = new List<GameObject>();
+    private static List<GameObject> selectedObjects = new List<GameObject>();
     //The average point of all the selected objects
-    private Vector3 selectionAverage;
+    private static Vector3 selectionAverage;
     //The sum of the points of all the selected objects for calculating the average
-    private Vector3 pointTotal;
+    private static Vector3 pointTotal;
+    #endregion
+
+    #region Instantiation
+    //Set this script as the only instance of the ObjectSelection script
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
     #endregion
 
     #region Update
     public void lateUpdate()
     {
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
-        if (CommonReferences.editorManager.currentMode == EditorMode.Edit && !CommonReferences.selectionHandle.InUse())
+        if (EditorManager.currentMode == EditorMode.Edit && !SelectionHandle.InUse())
             checkSelect();
         //Edit the selected objects if they were edited through the tool handle
-        if(CommonReferences.selectionHandle.InUse())
+        if(SelectionHandle.InUse())
             checkEdit();
     }
 
     //Test if any objects were clicked
-    private void checkSelect()
+    private static void checkSelect()
     {
         //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
         if (Input.GetKeyDown(KeyCode.A))
@@ -81,14 +101,14 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Update the position, rotation, or scale of the object selections based on the tool handle
-    private void checkEdit()
+    private static void checkEdit()
     {
         //Determine which tool was used and call the respective transform
         switch (SelectionHandle.tool)
         {
             case Tool.Translate:
                 //Get the position displacement and translate the selected objects
-                Vector3 posDisplacement = CommonReferences.selectionHandle.getPosDisplacement();
+                Vector3 posDisplacement = SelectionHandle.getPosDisplacement();
                 TransformTools.TranslateSelection(ref selectedObjects, posDisplacement);
 
                 //Update the selection average
@@ -99,7 +119,7 @@ public class ObjectSelection : MonoBehaviour
             case Tool.Rotate:
                 //Get the angle and axis and to rotate around
                 Vector3 rotationAxis;
-                float angle = CommonReferences.selectionHandle.getRotDisplacement(out rotationAxis);
+                float angle = SelectionHandle.getRotDisplacement(out rotationAxis);
 
                 //Rotate the selected objects around the seleciton average
                 TransformTools.RotateSelection(ref selectedObjects, selectionAverage, rotationAxis, angle);
@@ -107,7 +127,7 @@ public class ObjectSelection : MonoBehaviour
 
             case Tool.Scale:
                 //Get the scale displacement and scale the selected objects
-                Vector3 scaleDisplacement = CommonReferences.selectionHandle.getScaleDisplacement();
+                Vector3 scaleDisplacement = SelectionHandle.getScaleDisplacement();
                 TransformTools.ScaleSelection(ref selectedObjects, selectionAverage, scaleDisplacement, false);
                 break;
         }
@@ -116,19 +136,19 @@ public class ObjectSelection : MonoBehaviour
 
     #region Selection Average Methods
     //Add a point to the total average
-    private void addAveragePoint(Vector3 point)
+    private static void addAveragePoint(Vector3 point)
     {
         //Add the point to the total and update the average
         pointTotal += point;
         selectionAverage = pointTotal / selectedObjects.Count;
-        CommonReferences.selectionHandleObject.transform.position = selectionAverage;
+        SelectionHandle.setPosition(selectionAverage);
 
         //If the tool handle is not active, activate it
-        CommonReferences.selectionHandle.show();
+        SelectionHandle.show();
     }
 
     //Add all selected objects to the total average
-    private void addAverageAll()
+    private static void addAverageAll()
     {
         //Reset the total
         pointTotal = Vector3.zero;
@@ -139,14 +159,14 @@ public class ObjectSelection : MonoBehaviour
 
         //Average the points
         selectionAverage = pointTotal / selectableObjects.Count;
-        CommonReferences.selectionHandleObject.transform.position = selectionAverage;
+        SelectionHandle.setPosition(selectionAverage);
 
         //If the tool handle is not active, activate it
-        CommonReferences.selectionHandle.show();
+        SelectionHandle.show();
     }
 
     //Remove a point from the total average
-    private void removeAveragePoint(Vector3 point)
+    private static void removeAveragePoint(Vector3 point)
     {
         //Subtract the point to the total and update the average
         pointTotal -= point;
@@ -155,26 +175,26 @@ public class ObjectSelection : MonoBehaviour
         if (selectedObjects.Count != 0)
         {
             selectionAverage = pointTotal / selectedObjects.Count;
-            CommonReferences.selectionHandleObject.transform.position = selectionAverage;
+            SelectionHandle.setPosition(selectionAverage);
         }
         //Otherwise, disable the tool handle
         else
-            CommonReferences.selectionHandle.hide();
+            SelectionHandle.hide();
     }
 
     //Remove all selected objects from the total average
-    private void removeAverageAll()
+    private static void removeAverageAll()
     {
         //Reset the total and average
         pointTotal = Vector3.zero;
         selectionAverage = Vector3.zero;
 
         //Hide the tool handle
-        CommonReferences.selectionHandle.hide();
+        SelectionHandle.hide();
     }
 
     //Return the selection average
-    public ref Vector3 getSelectionAverage()
+    public static ref Vector3 getSelectionAverage()
     {
         return ref selectionAverage;
     }
@@ -182,7 +202,7 @@ public class ObjectSelection : MonoBehaviour
 
     #region Select Objects Methods
     //Return the parent of the given object. If there is no parent, return the given object
-    private GameObject getParent(GameObject childObject)
+    private static GameObject getParent(GameObject childObject)
     {
         //The parent object that gets returned
         GameObject parentObject = childObject;
@@ -202,13 +222,13 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Add the given object to the selectable objects list
-    public void addSelectable(GameObject objectToAdd)
+    public static void addSelectable(GameObject objectToAdd)
     {
         selectableObjects.Add(getParent(objectToAdd));
     }
 
     //Remove the given object from both the selectable and selected objects lists
-    public void removeSelectable(GameObject objectToAdd)
+    public static void removeSelectable(GameObject objectToAdd)
     {
         //If the object is selected, deselect it
         if (selectedObjects.Contains(objectToAdd))
@@ -218,7 +238,7 @@ public class ObjectSelection : MonoBehaviour
         selectableObjects.Remove(getParent(objectToAdd));
     }
 
-    public void selectObject(GameObject objectToSelect)
+    public static void selectObject(GameObject objectToSelect)
     {
         //Get the parent of the object
         GameObject parentObject = getParent(objectToSelect);
@@ -233,7 +253,7 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation();
     }
 
-    public void selectAll()
+    public static void selectAll()
     {
         //Select all objects by copying the selectedObjects list
         selectedObjects = new List<GameObject>(selectableObjects);
@@ -252,7 +272,7 @@ public class ObjectSelection : MonoBehaviour
         }
     }
 
-    public void deselectObject(GameObject objectToDeselect)
+    public static void deselectObject(GameObject objectToDeselect)
     {
         //Get the parent of the object
         GameObject parentObject = getParent(objectToDeselect);
@@ -267,7 +287,7 @@ public class ObjectSelection : MonoBehaviour
         resetToolHandleRotation();
     }
 
-    public void deselectAll()
+    public static void deselectAll()
     {
         //Remove the outline on all selected objects
         foreach (GameObject selectedObject in selectedObjects)
@@ -283,7 +303,7 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Resets both the selected and selectable object lists
-    public void resetSelection()
+    public static void resetSelection()
     {
         selectedObjects = new List<GameObject>();
         selectableObjects = new List<GameObject>();
@@ -292,7 +312,7 @@ public class ObjectSelection : MonoBehaviour
 
     //Remove any selected objects from both the selected and selectable objects lists
     //Returns a the selected objects list. Caller is expected to reset it after use
-    public ref List<GameObject> removeSelected()
+    public static ref List<GameObject> removeSelected()
     {
         //If all of the objects are selected, reset just the selectable objects list
         if (selectedObjects.Count == selectableObjects.Count)
@@ -313,7 +333,7 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Return a reference to the seleceted objects
-    public ref List<GameObject> getSelection()
+    public static ref List<GameObject> getSelection()
     {
         return ref selectedObjects;
     }
@@ -321,27 +341,27 @@ public class ObjectSelection : MonoBehaviour
 
     #region Tool Methods
     //Set the type of the tool handle
-    public void setTool(Tool toolType)
+    public static void setTool(Tool toolType)
     {
-        CommonReferences.selectionHandle.SetTool(toolType);
+        SelectionHandle.SetTool(toolType);
         resetToolHandleRotation();
     }
 
     //Set the rotation of the tool handle based on how many objects are selected
-    public void resetToolHandleRotation()
+    public static void resetToolHandleRotation()
     {
         //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
         if ((SelectionHandle.tool == Tool.Rotate || SelectionHandle.tool == Tool.Scale) && selectedObjects.Count == 1)
-            CommonReferences.selectionHandle.setRotation(selectedObjects[0].transform.rotation);
+            SelectionHandle.setRotation(selectedObjects[0].transform.rotation);
         //Otherwise reset the rotation
         else
-            CommonReferences.selectionHandle.setRotation(Quaternion.Euler(Vector3.up));
+            SelectionHandle.setRotation(Quaternion.Euler(Vector3.up));
     }
     #endregion
 
     #region Outline Methods
     //Add a green outline around a GameObject
-    private void addOutline(GameObject objectToAddOutline)
+    private static void addOutline(GameObject objectToAddOutline)
     {
         //Get the outline script of the parent object
         Outline outlineScript = objectToAddOutline.GetComponent<Outline>();
@@ -357,7 +377,7 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Remove the green outline shader
-    private void removeOutline(GameObject objectToRemoveOutline)
+    private static void removeOutline(GameObject objectToRemoveOutline)
     {
         //Get the outline script of the parent object
         Outline outlineScript = objectToRemoveOutline.GetComponent<Outline>();

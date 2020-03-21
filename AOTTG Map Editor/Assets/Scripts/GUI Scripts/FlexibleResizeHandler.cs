@@ -1,6 +1,7 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using GILES;
 
 public enum HandlerType
 {
@@ -39,7 +40,7 @@ public class FlexibleResizeHandler : MonoBehaviour,
     public void OnPointerEnter(PointerEventData data)
     {
         //Don't enter dragging mode if the tool handle is being dragged
-        if (!CommonReferences.selectionHandle.InUse())
+        if (!SelectionHandle.InUse())
         {
             Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
             resizeBoxHover = true;

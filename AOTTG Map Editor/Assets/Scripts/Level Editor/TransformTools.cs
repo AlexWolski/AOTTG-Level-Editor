@@ -32,7 +32,7 @@ public static class TransformTools
         foreach (GameObject mapObject in objectsToScale)
         {
             //Get the current scale and position of the object
-            Vector3 newScale = CommonReferences.mapManager.objectScriptTable[mapObject].Scale;
+            Vector3 newScale = MapManager.objectScriptTable[mapObject].Scale;
             Vector3 newPosition = mapObject.transform.position;
 
             //Scale the position and scale of the object
@@ -54,7 +54,7 @@ public static class TransformTools
             }
 
             //Apply the new scale and position
-            CommonReferences.mapManager.objectScriptTable[mapObject].Scale = newScale;
+            MapManager.objectScriptTable[mapObject].Scale = newScale;
             mapObject.transform.position = newPosition;
         }
     }

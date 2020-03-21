@@ -1,28 +1,40 @@
 ﻿using UnityEngine;
+using GILES;
 
+//A singleton class for managing the current mode
 public class EditorManager : MonoBehaviour
 {
-    //Determines if the user is in fly more or edit mode. Default mode is edit
-    public EditorMode currentMode;
+    //A self-reference to the singleton instance of this script
+    public static EditorManager Instance { get; private set; }
+    //Determines if the user is in fly more or edit mode
+    public static EditorMode currentMode { get; set; }
 
     void Awake()
     {
+        //Set this script as the only instance of the EditorManger script
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+
+        //Set the screen resolution
         Screen.fullScreen = false;
         Screen.SetResolution(800, 600, false);
-    }
 
-    //Load the assets from RC mod and set the window settings
-    [System.Obsolete]
-    void Start()
-    {
-        //StartCoroutine(AssetManager.LoadRCAssets());
+        //The editor is in edit mode by default
+        currentMode = EditorMode.Edit;
     }
 
     void Update()
     {
         //If the x key is pressed and the tool handle is not being dragged,
         //toggle between edit and fly mode
-        if (Input.GetKeyDown(KeyCode.X) && !CommonReferences.selectionHandle.InUse())
+        if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.InUse())
         {
             if(currentMode == EditorMode.Fly)
             {
@@ -41,7 +53,7 @@ public class EditorManager : MonoBehaviour
 
     private void LateUpdate()
     {
-        CommonReferences.selectionHandle.lateUpdate();
-        CommonReferences.objectSelection.lateUpdate();
+        SelectionHandle.Instance.lateUpdate();
+        ObjectSelection.Instance.lateUpdate();
     }
 }

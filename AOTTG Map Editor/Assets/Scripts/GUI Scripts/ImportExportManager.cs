@@ -50,16 +50,16 @@ public class ImportExportManager : MonoBehaviour
 
         //If the export popup is being shown, export the map script and set it as the text area content
         if (gameObject.name == "Export" && gameObject.activeSelf)
-            textArea = CommonReferences.mapManager.ToString();
+            textArea = MapManager.Instance.ToString();
     }
 
     //Import the map text in the input field
     public void importTextField()
     {
         //Clear the existing map objects
-        CommonReferences.mapManager.clearMap();
+        MapManager.clearMap();
         //Import the map script in the text field
-        CommonReferences.mapManager.loadMap(textArea);
+        MapManager.loadMap(textArea);
         //Clear the textfield after the map is loaded
         textArea = "";
     }

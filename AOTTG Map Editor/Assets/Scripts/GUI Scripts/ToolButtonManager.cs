@@ -53,7 +53,7 @@ public class ToolButtonManager : MonoBehaviour,
     //Check if the shortcut key was pressed
     private void Update()
     {
-        if (CommonReferences.editorManager.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
+        if (EditorManager.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
         {
             selectedButton.unselect();
             select();
@@ -119,6 +119,6 @@ public class ToolButtonManager : MonoBehaviour,
     //The action triggered by the button press
     public void action()
     {
-        CommonReferences.objectSelection.setTool(toolType);
+        ObjectSelection.setTool(toolType);
     }
 }

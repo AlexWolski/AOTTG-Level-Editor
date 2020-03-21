@@ -2,11 +2,6 @@
 
 public class CameraController : MonoBehaviour
 {
-    //A reference to the main object
-    [SerializeField]
-    private  GameObject mainObject;
-    //A reference to the editorManager
-    private EditorManager editorManager;
     //The three speeds the camera can move at
     [SerializeField]
     private float fastSpeed = 300f;
@@ -24,16 +19,10 @@ public class CameraController : MonoBehaviour
         RenderSettings.fog = false;
     }
 
-    void Start()
-    {
-        //Get the EditorManager from the main object
-        editorManager = mainObject.GetComponent<EditorManager>();
-    }
-
     //If the editor is in fly mode, translate and rotate the camera
     void LateUpdate()
     {
-        if(editorManager.currentMode == EditorMode.Fly)
+        if(EditorManager.currentMode == EditorMode.Fly)
         {
             translateCamera();
             rotateCamera();
