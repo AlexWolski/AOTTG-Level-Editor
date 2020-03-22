@@ -1,5 +1,8 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
+//Used for manipulating the cursor position (Windows)
+using System.Runtime.InteropServices;
+using System.Drawing;
 
 namespace GILES
 {
@@ -34,6 +37,9 @@ namespace GILES
         //The width around the tool handle that can be interacted with
         [SerializeField]
         const int handleInteractWidth = 10;
+        //The padding around the edges of the window past which the mouse will be moved back into the window
+        [SerializeField]
+        const int windowPadding = 5;
 
         private static Mesh HandleLineMesh
         {
@@ -72,6 +78,15 @@ namespace GILES
         private static float prevCursorDist;
         private static float currCursorDist;
 
+        //The current position of the mouse. Used instead of Input.mousePosition because it can be modified
+        private static Vector2 currentMousePosition;
+        //Used to keep track of the displacement of the mouse between frames
+        private static Vector2 prevMousePosition = Vector2.zero;
+        //The distance the mouse moved between the previous and the current frame
+        private static Vector2 mouseDisplacement = Vector2.zero;
+        //The amount to offset the onscreen cursor to get the hypothetical unconstrained position. Used in the plane drag and scale all tools
+        private static Vector2 mouseOffest = Vector2.zero;
+
         ///Persistient variables used by the rotation tool
         //The angle displacement of the rotation handle since the drag started
         private static float axisAngle = 0f;
@@ -82,7 +97,6 @@ namespace GILES
 
         ///Persistient variables used by the translation tool
         public static float cameraDist;
-
         public const float CAP_SIZE = .07f;
 
         [SerializeField]
@@ -99,7 +113,7 @@ namespace GILES
         [SerializeField]
         private static float maxDistance = 1000000000f;
 
-        private static Vector2 mouseOrigin = Vector2.zero;
+        //Determines if the handle is being interacted with or not
         private static bool draggingHandle;
         //In how many directions is the handle able to move
         private static int draggingAxes = 0;
@@ -190,7 +204,15 @@ namespace GILES
         }
         #endregion
 
-        #region
+        #region Imported Functions
+        //Import external windows functions for gettting and setting the cursor position
+        [DllImport("user32.dll")]
+        public static extern bool GetCursorPos(out Point pos);
+        [DllImport("user32.dll")]
+        public static extern bool SetCursorPos(int X, int Y);
+        #endregion
+
+        #region Drag Orientation Class
         private class DragOrientation
         {
             public Vector3 origin;
@@ -230,6 +252,16 @@ namespace GILES
                 if (EditorManager.currentMode != EditorMode.Edit)
                     return;
 
+                //Save the current mouse position
+                currentMousePosition = Input.mousePosition;
+                //Calculate the mouse displacement
+                mouseDisplacement = currentMousePosition - prevMousePosition;
+                //Save the posision of the mouse for the next frame
+                prevMousePosition = currentMousePosition;
+
+                //While the tool handle is being dragged, make sure the mouse stays within the window bounds
+                if (InUse() && !Input.GetMouseButtonUp(0))
+                    constrainMouse();
                 //If the mouse is pressed, check if the handle was clicked
                 if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
                     checkInteract();
@@ -242,12 +274,49 @@ namespace GILES
             }
         }
 
+        //If the mouse moves too close to the edges of the window, move it to the opposite side
+        private void constrainMouse()
+        {
+            //Get the position of the cursor relative to the window
+            Point mousePosition = new Point((int)currentMousePosition.x, (int)currentMousePosition.y);
+            //The amount the cursor needs to be moved to keep it inside the window
+            Vector2 positionOffset = Vector2.zero;
+
+            //Check if the mouse is out of the window horizontally
+            if (mousePosition.X < windowPadding)
+                positionOffset.x = Screen.width - (2 * windowPadding) - positionOffset.x;
+            else if (mousePosition.X > Screen.width - windowPadding)
+                positionOffset.x = -Screen.width + (2 * windowPadding) + positionOffset.x;
+
+            //Check if the mouse is out of window vertically
+            if (mousePosition.Y < windowPadding)
+                positionOffset.y = Screen.height - (2 * windowPadding) - positionOffset.y;
+            else if (mousePosition.Y > Screen.height - windowPadding)
+                positionOffset.y = -Screen.height + (2 * windowPadding) + positionOffset.y;
+
+            //If the mouse needs to be moved, set its position and calculate the mouse displcement
+            if (positionOffset.x != 0 || positionOffset.y != 0)
+            {
+                //The location of the cursor relative to the screen
+                Point cursorLocation;
+
+                //Get the the cursor location relative to the screen, add the offset, and set the new mouse position
+                GetCursorPos(out cursorLocation);
+                SetCursorPos(cursorLocation.X + (int)positionOffset.x, cursorLocation.Y - (int)positionOffset.y);
+
+                //Add the offset to the mouse position so that the mouse displacement doesn't include the mouse repositioning
+                currentMousePosition += positionOffset;
+                prevMousePosition = currentMousePosition;
+
+                //Store the total offset between the onscreen cursor and the hypothetical unconstrained cursor
+                mouseOffest -= positionOffset;
+            }
+        }
+
         private void interactHandle()
         {
             //Set the starting point of the drag to the position of the handle
             drag.origin = trs.position;
-            //Get the displacement of the cursor on the screen
-            Vector2 mouseDisplacement = (Vector2)Input.mousePosition - mouseOrigin;
 
             //Reset the persistient variables of each tool
             prevPosition = trs.position;
@@ -320,6 +389,7 @@ namespace GILES
 
                         break;
 
+                    //If the tool isn't translate or rotate, it has to be scale
                     default:
                         //Stores the scale factor of each axis
                         Vector3 scaleVector;
@@ -328,7 +398,7 @@ namespace GILES
                         if (draggingAxes > 1)
                         {
                             //Get the distance in screen space between the tool handle and the cursor
-                            currCursorDist = getMouseHandleDist(Input.mousePosition);
+                            currCursorDist = getMouseHandleDist(currentMousePosition + mouseOffest);
                             //Calculate the displacement of the distance since last frame
                             float displacement = currCursorDist - prevCursorDist;
                             //Multiply the drag axis by the displacement
@@ -348,15 +418,13 @@ namespace GILES
 
                         break;
                 }
-
-                //Reset the mouse origin to get the right displacement next frame
-                mouseOrigin = Input.mousePosition;
             }
 
             //If the current tool is the scale tool, rebuild the handle with the correct scale
             if(tool == Tool.Scale)
                 RebuildGizmoMesh(scale);
 
+            //Notify all listners that the handle was moved
             OnHandleMove?.Invoke();
 
             RebuildGizmoMatrix();
@@ -398,7 +466,7 @@ namespace GILES
         private static Vector3 getMovementPlaneHit()
         {
             //Create a ray originating from the camera and passing through the cursor
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = cam.ScreenPointToRay(currentMousePosition + mouseOffest);
 
             //Find the position the cursor over on the corresponding plane
             if (drag.plane.Raycast(ray, out float distToHit))
@@ -416,7 +484,7 @@ namespace GILES
             Vector3 hitPoint;
 
             //Create a ray originating from the camera and passing through the cursor
-            Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+            Ray ray = cam.ScreenPointToRay(currentMousePosition);
             //The distance from the camera to the hit point
             float distToHit;
 
@@ -519,89 +587,97 @@ namespace GILES
             if (hidden || EventSystem.current.IsPointerOverGameObject(-1))
                 return;
 
-            Vector3 a, b;
-            drag.offset = Vector3.zero;
+            //The axis or axes along which the tool handle is being dragged
             Axis plane;
 
-            draggingHandle = CheckHandleActivated(Input.mousePosition, out plane);
+            //Check if the tool handle was clicked
+            draggingHandle = CheckHandleActivated(currentMousePosition, out plane);
 
-            mouseOrigin = Input.mousePosition;
-            handleOrigin.SetTRS(trs);
+            //If the tool handle wasn't clicked, don't start the interaction
+            if (!draggingHandle)
+                return;
 
             //Reset the axes being dragged
             drag.worldAxis = Vector3.zero;
             drag.localAxis = Vector3.zero;
             draggingAxes = 0;
 
-            if (draggingHandle)
+            //Set the relevant variables based on the drag plane
+            setDragData(plane);
+
+            //Save the distance from the camera to the tool handle
+            if (tool == Tool.Translate)
             {
-                Ray ray = cam.ScreenPointToRay(Input.mousePosition);
+                cameraDist = (cam.transform.position - trs.position).magnitude;
+            }
+            //Reset the total displacement and save the angle of the point clicked on
+            if (tool == Tool.Rotate)
+            {
+                axisAngle = 0f;
+                clickTangent = getClickTangent();
+            }
+            //Reset the handle size and prime it for scaling
+            else 
+            {
+                prevScale = Vector3.one;
+                scale = Vector3.one;
+                currCursorDist = getMouseHandleDist(currentMousePosition);
+            }
 
-                if ((plane & Axis.X) == Axis.X)
-                {
-                    draggingAxes++;
-                    drag.worldAxis = trs.right.normalized;
-                    drag.localAxis = Vector3.right;
-                    drag.plane.SetNormalAndPosition(trs.right.normalized, trs.position);
-                }
+            //Notify all listners that the tool handle was activated
+            OnHandleBegin?.Invoke();
+        }
 
-                if ((plane & Axis.Y) == Axis.Y)
-                {
-                    draggingAxes++;
-                    if (draggingAxes > 1)
-                        drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.up).normalized, trs.position);
-                    else
-                        drag.plane.SetNormalAndPosition(trs.up.normalized, trs.position);
+        //Sets the appropriate variables according to which axes are being dragged
+        private static void setDragData(Axis plane)
+        {
+            Vector3 a, b;
+            drag.offset = Vector3.zero;
 
-                    drag.worldAxis += trs.up.normalized;
-                    drag.localAxis += Vector3.up;
-                }
+            Ray ray = cam.ScreenPointToRay(currentMousePosition);
 
-                if ((plane & Axis.Z) == Axis.Z)
-                {
-                    draggingAxes++;
-                    if (draggingAxes > 1)
-                        drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.forward).normalized, trs.position);
-                    else
-                        drag.plane.SetNormalAndPosition(trs.forward.normalized, trs.position);
+            if ((plane & Axis.X) == Axis.X)
+            {
+                draggingAxes++;
+                drag.worldAxis = trs.right.normalized;
+                drag.localAxis = Vector3.right;
+                drag.plane.SetNormalAndPosition(trs.right.normalized, trs.position);
+            }
 
-                    drag.worldAxis += trs.forward.normalized;
-                    drag.localAxis += Vector3.forward;
-                }
+            if ((plane & Axis.Y) == Axis.Y)
+            {
+                draggingAxes++;
 
-                if (draggingAxes < 2)
-                {
-                    if (HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
-                        drag.offset = a - trs.position;
-                }
+                if (draggingAxes > 1)
+                    drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.up).normalized, trs.position);
                 else
-                {
-                    float hit = 0f;
+                    drag.plane.SetNormalAndPosition(trs.up.normalized, trs.position);
 
-                    if (drag.plane.Raycast(ray, out hit))
-                        drag.offset = ray.GetPoint(hit) - trs.position;
-                }
+                drag.worldAxis += trs.up.normalized;
+                drag.localAxis += Vector3.up;
+            }
 
-                OnHandleBegin?.Invoke();
+            if ((plane & Axis.Z) == Axis.Z)
+            {
+                draggingAxes++;
+                if (draggingAxes > 1)
+                    drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.forward).normalized, trs.position);
+                else
+                    drag.plane.SetNormalAndPosition(trs.forward.normalized, trs.position);
 
-                //Save the distance from the camera to the tool handle
-                if (tool == Tool.Translate)
-                {
-                    cameraDist = (cam.transform.position - trs.position).magnitude;
-                }
-                //Reset the total displacement and save the angle of the point clicked on
-                if (tool == Tool.Rotate)
-                {
-                    axisAngle = 0f;
-                    clickTangent = getClickTangent();
-                }
-                //Reset the handle size and prime it for scaling
-                else 
-                {
-                    prevScale = Vector3.one;
-                    scale = Vector3.one;
-                    currCursorDist = getMouseHandleDist(Input.mousePosition);
-                }
+                drag.worldAxis += trs.forward.normalized;
+                drag.localAxis += Vector3.forward;
+            }
+
+            if (draggingAxes < 2)
+            {
+                if (HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
+                    drag.offset = a - trs.position;
+            }
+            else
+            {
+                if (drag.plane.Raycast(ray, out float hit))
+                    drag.offset = ray.GetPoint(hit) - trs.position;
             }
         }
 
@@ -610,10 +686,12 @@ namespace GILES
             RebuildGizmoMesh(Vector3.one);
             RebuildGizmoMatrix();
 
-            OnHandleFinish?.Invoke();
-
             draggingHandle = false;
-            //StartCoroutine(SetDraggingFalse());
+            //Reset the offset between the onscreen mouse position and its hypotheical unclamped position
+            mouseOffest = Vector2.zero;
+
+            //Notify all listners that the handle is no longer being interacted with
+            OnHandleFinish?.Invoke();
         }
 
         #endregion
