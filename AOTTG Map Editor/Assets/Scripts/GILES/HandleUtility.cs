@@ -8,16 +8,21 @@ namespace GILES
 	/**
 	 * Collection of static methods commonly used when working with scene handles.
 	 */
-	public class pb_HandleUtility
+	public class HandleUtility
 	{
-        //A reference to the pb_SelectionHandle script attatched to the tool handle
-        SelectionHandle selectionHandle;
+		//The the octant that the point is in relative to the given origin
+		public static Vector3 getViewOctant(Vector3 point, Vector3 origin)
+		{
+			//Get the point's position relative to the origin
+			Vector3 octant = point - origin;
 
-        //Find and store a reference to the seleciton handle script on start
-        pb_HandleUtility()
-        {
-            selectionHandle = GameObject.Find("Tool Handle").GetComponent<SelectionHandle>();
-        }
+			//Store the sign of each component
+			for (int i = 0; i< 3; i++)
+				octant[i] = -Mathf.Sign(octant[i]);
+
+			//Return a representation of the octant
+			return octant;
+		}
 
         /**
 		 * Returns the nearest point on each line to the other line.
@@ -95,18 +100,6 @@ namespace GILES
 			}
 		}
 
-		private static Vector3 Mask(Vector3 vec)
-		{
-			return new Vector3(	vec.x > 0f ? 1f : -1f,
-								vec.y > 0f ? 1f : -1f,
-								vec.z > 0f ? 1f : -1f);
-		}
-
-		private static float Mask(float val)
-		{
-			return val > 0f ? 1f : -1f;
-		}
-
 		/**
 		 * Converts a displacement on the screen to a vector in world space
 		 */
@@ -142,7 +135,7 @@ namespace GILES
 		{
 			Camera cam = Camera.main;
 			if(!cam) return 1f;
-			Transform t = cam.transform;
+            Transform t = cam.transform;
 			float z = Vector3.Dot(position-t.position, cam.transform.forward);
 			Vector3 lhs = cam.WorldToScreenPoint(t.position + (t.forward * z));
 			Vector3 rhs = cam.WorldToScreenPoint(t.position + (t.right + t.forward * z));
@@ -171,7 +164,7 @@ namespace GILES
 			GameObject obj = null;
 			Bounds bounds = new Bounds(Vector3.zero, Vector3.one);
 
-			pb_RaycastHit hit;
+			RaycastHitData hit;
 
 			foreach(GameObject go in objects)
 			{
@@ -213,7 +206,7 @@ namespace GILES
 			return obj;
 		}
 
-		public static bool MeshRaycast(Mesh mesh, Ray ray, out pb_RaycastHit hit)
+		public static bool MeshRaycast(Mesh mesh, Ray ray, out RaycastHitData hit)
 		{
 			Vector3[] vertices = mesh.vertices;
 			int[] triangles = mesh.triangles;
@@ -228,9 +221,9 @@ namespace GILES
 				b = vertices[triangles[i+1]];
 				c = vertices[triangles[i+2]];
 
-				if(pb_Geometry.RayIntersectsTriangle(ray, a, b, c, Culling.Front, out dist, out point))
+				if(Geometry.RayIntersectsTriangle(ray, a, b, c, Culling.Front, out dist, out point))
 				{
-					hit = new pb_RaycastHit();
+					hit = new RaycastHitData();
 					hit.point = point;
 					hit.distance = Vector3.Distance(hit.point, ray.origin);
 					hit.normal = Vector3.Cross(b-a, c-a);

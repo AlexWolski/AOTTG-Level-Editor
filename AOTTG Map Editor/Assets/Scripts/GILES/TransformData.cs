@@ -4,7 +4,7 @@ using System.Runtime.Serialization;
 namespace GILES
 {
 	[System.Serializable]
-	public class pb_Transform : System.IEquatable<pb_Transform>, ISerializable
+	public class TransformData : System.IEquatable<TransformData>, ISerializable
 	{
 		// If the matrix needs rebuilt, this will be true.  Used to delay expensive
 		// matrix construction til necessary (since t/r/s can change a lot before a
@@ -21,9 +21,9 @@ namespace GILES
 		public Quaternion rotation 		{ get { return _rotation; } set { dirty = true; _rotation = value; } }
 		public Vector3 scale 			{ get { return _scale; } set { dirty = true; _scale = value; } }
 
-		public static readonly pb_Transform identity = new pb_Transform(Vector3.zero, Quaternion.identity, Vector3.one);
+		public static readonly TransformData identity = new TransformData(Vector3.zero, Quaternion.identity, Vector3.one);
 
-		public pb_Transform()
+		public TransformData()
 		{
 			this.position = Vector3.zero;
 			this.rotation = Quaternion.identity;
@@ -32,7 +32,7 @@ namespace GILES
 			this.dirty = false;
 		}
 
-		public pb_Transform(Vector3 position, Quaternion rotation, Vector3 scale)
+		public TransformData(Vector3 position, Quaternion rotation, Vector3 scale)
 		{
 			this.position 	= position;
 			this.rotation 	= rotation;
@@ -42,7 +42,7 @@ namespace GILES
 			this.dirty 	= false;
 		}
 
-		public pb_Transform(Transform transform)
+		public TransformData(Transform transform)
 		{
 			this.position 	= transform.position;
 			this.rotation 	= transform.localRotation;
@@ -52,7 +52,7 @@ namespace GILES
 			this.dirty 	= false;
 		}
 
-		public pb_Transform(pb_Transform transform)
+		public TransformData(TransformData transform)
 		{
 			this.position 	= transform.position;
 			this.rotation 	= transform.rotation;
@@ -69,7 +69,7 @@ namespace GILES
 			info.AddValue("scale", (Vector3)_scale, typeof(Vector3));
 		}
 
-		public pb_Transform(SerializationInfo info, StreamingContext context)
+		public TransformData(SerializationInfo info, StreamingContext context)
 		{
 			this._position = (Vector3) info.GetValue("position", typeof(Vector3));
 			this._rotation = (Quaternion) info.GetValue("rotation", typeof(Quaternion));
@@ -100,7 +100,7 @@ namespace GILES
 					Mathf.Abs(lhs.w - rhs.w) < Mathf.Epsilon;
 		}
 
-		public bool Equals(pb_Transform rhs)
+		public bool Equals(TransformData rhs)
 		{
 			return 	Approx(this.position, rhs.position) &&
 					Approx(this.rotation, rhs.rotation) &&
@@ -109,7 +109,7 @@ namespace GILES
 
 		public override bool Equals(System.Object rhs)
 		{
-			return rhs is pb_Transform && this.Equals( (pb_Transform) rhs );
+			return rhs is TransformData && this.Equals( (TransformData) rhs );
 		}
 
 		public override int GetHashCode()
@@ -131,9 +131,9 @@ namespace GILES
 			}
 		}
 
-		public static pb_Transform operator - (pb_Transform lhs, pb_Transform rhs)
+		public static TransformData operator - (TransformData lhs, TransformData rhs)
 		{
-			pb_Transform t = new pb_Transform();
+			TransformData t = new TransformData();
 
 			t.position = lhs.position - rhs.position;
 			t.rotation = Quaternion.Inverse(rhs.rotation) * lhs.rotation;
@@ -144,9 +144,9 @@ namespace GILES
 			return t;
 		}
 
-		public static pb_Transform operator + (pb_Transform lhs, pb_Transform rhs)
+		public static TransformData operator + (TransformData lhs, TransformData rhs)
 		{
-			pb_Transform t = new pb_Transform();
+			TransformData t = new TransformData();
 
 			t.position = lhs.position + rhs.position;
 			t.rotation = lhs.rotation * rhs.rotation;
@@ -157,9 +157,9 @@ namespace GILES
 			return t;
 		}
 
-		public static pb_Transform operator + (Transform lhs, pb_Transform rhs)
+		public static TransformData operator + (Transform lhs, TransformData rhs)
 		{
-			pb_Transform t = new pb_Transform();
+			TransformData t = new TransformData();
 
 			t.position = lhs.position + rhs.position;
 			t.rotation = lhs.localRotation * rhs.rotation;
@@ -170,12 +170,12 @@ namespace GILES
 			return t;
 		}
 
-		public static bool operator == (pb_Transform lhs, pb_Transform rhs)
+		public static bool operator == (TransformData lhs, TransformData rhs)
 		{
 			return System.Object.ReferenceEquals(lhs, rhs) || lhs.Equals(rhs);
 		}
 
-		public static bool operator != (pb_Transform lhs, pb_Transform rhs)
+		public static bool operator != (TransformData lhs, TransformData rhs)
 		{
 			return !(lhs == rhs);
 		}

@@ -6,11 +6,8 @@ namespace GILES
 	/**
 	 * Static methods to build meshes necessary for the handle gizmos.
 	 */
-	public static class pb_HandleMesh
+	public static class HandleMesh
 	{
-        //A reference to the pb_SelectionHandle script attatched to the tool handle
-        static SelectionHandle selectionHandle;
-
         static readonly Color red = new Color(.85f, .256f, .16f, 0f);
 		static readonly Color green = new Color(.2f, .9f, .2f, 0f);
 		static readonly Color blue = new Color(.26f, .56f, .85f, 0f);

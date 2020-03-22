@@ -21,9 +21,9 @@ public class ObjectSelection : MonoBehaviour
     #endregion
 
     #region Instantiation
-    //Set this script as the only instance of the ObjectSelection script
     void Awake()
     {
+        //Set this script as the only instance of the ObjectSelection script
         if (Instance == null)
         {
             Instance = this;
@@ -33,6 +33,9 @@ public class ObjectSelection : MonoBehaviour
         {
             Destroy(gameObject);
         }
+
+        //Add the editSelection function as a listner to the OnHandleMove event
+        SelectionHandle.OnHandleMove += editSelection;
     }
     #endregion
 
@@ -42,9 +45,6 @@ public class ObjectSelection : MonoBehaviour
         //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
         if (EditorManager.currentMode == EditorMode.Edit && !SelectionHandle.InUse())
             checkSelect();
-        //Edit the selected objects if they were edited through the tool handle
-        if(SelectionHandle.InUse())
-            checkEdit();
     }
 
     //Test if any objects were clicked
@@ -101,7 +101,7 @@ public class ObjectSelection : MonoBehaviour
     }
 
     //Update the position, rotation, or scale of the object selections based on the tool handle
-    private static void checkEdit()
+    private static void editSelection()
     {
         //Determine which tool was used and call the respective transform
         switch (SelectionHandle.tool)

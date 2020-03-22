@@ -1,5 +1,4 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace GILES
@@ -15,9 +14,7 @@ namespace GILES
         private static Camera _cam;
         private static Camera cam { get { if (_cam == null) _cam = Camera.main; return _cam; } }
 
-        const int MAX_DISTANCE_TO_HANDLE = 10;
-
-        static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
+        private static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
 
         //Used as translation handle cone caps.
         [SerializeField]
@@ -26,20 +23,17 @@ namespace GILES
         [SerializeField]
         private Mesh CubeMesh;
 
-        private static Material HandleOpaqueMaterial
-        {
-            get { return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_HandleOpaque); }
-        }
+        //Materials used for the tool handle gizmo
+        [SerializeField]
+        private Material HandleOpaqueMaterial;
+        [SerializeField]
+        private Material RotateLineMaterial;
+        [SerializeField]
+        private Material HandleTransparentMaterial;
 
-        private static Material RotateLineMaterial
-        {
-            get { return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_RotateHandle); }
-        }
-
-        private static Material HandleTransparentMaterial
-        {
-            get { return pb_BuiltinResource.GetMaterial(pb_BuiltinResource.mat_HandleTransparent); }
-        }
+        //The width around the tool handle that can be interacted with
+        [SerializeField]
+        const int handleInteractWidth = 10;
 
         private static Mesh HandleLineMesh
         {
@@ -89,19 +83,17 @@ namespace GILES
         ///Persistient variables used by the translation tool
         public static float cameraDist;
 
-        private static Mesh _coneRight, _coneUp, _coneForward;
-
         public const float CAP_SIZE = .07f;
 
         [SerializeField]
-        private static float HandleSize = 90f;
+        private float HandleSize = 90f;
         //Adjusts the speed of handle movement when rotating or translating 
         [SerializeField]
-        private static float rotationSpeed = 3f;
+        private float rotationSpeed = 3f;
         [SerializeField]
-        private static float translationSpeed = 1f;
+        private float translationSpeed = 1f;
         [SerializeField]
-        private static float scaleSpeed = 1f;
+        private float scaleSpeed = 1f;
 
         //The maximum distance away from the origin an object can be
         [SerializeField]
@@ -111,7 +103,7 @@ namespace GILES
         private static bool draggingHandle;
         //In how many directions is the handle able to move
         private static int draggingAxes = 0;
-        private static pb_Transform handleOrigin = pb_Transform.identity;
+        private static TransformData handleOrigin = TransformData.identity;
 
         //Determines if the handle should be displayed and interactable
         private static bool hidden = false;
@@ -127,7 +119,7 @@ namespace GILES
         {
             //If the tool is not being dragged, use the current octant
             if (!draggingHandle)
-                return EditorMath.getOctant(trs.position, cam.transform.position);
+                return HandleUtility.getViewOctant(trs.position, cam.transform.position);
 
             //If it is being dragged, use the octant the camera was in before the drag
             return previousOctant;
@@ -182,10 +174,10 @@ namespace GILES
 
         #region Delegate
 
-        public delegate void OnHandleMoveEvent(pb_Transform transform);
+        public delegate void OnHandleMoveEvent();
         public static event OnHandleMoveEvent OnHandleMove;
 
-        public delegate void OnHandleBeginEvent(pb_Transform transform);
+        public delegate void OnHandleBeginEvent();
         public static event OnHandleBeginEvent OnHandleBegin;
 
         public delegate void OnHandleFinishEvent();
@@ -365,8 +357,7 @@ namespace GILES
             if(tool == Tool.Scale)
                 RebuildGizmoMesh(scale);
 
-            if (OnHandleMove != null)
-                OnHandleMove(GetTransform());
+            OnHandleMove?.Invoke();
 
             RebuildGizmoMatrix();
         }
@@ -580,7 +571,7 @@ namespace GILES
 
                 if (draggingAxes < 2)
                 {
-                    if (pb_HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
+                    if (HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
                         drag.offset = a - trs.position;
                 }
                 else
@@ -591,10 +582,8 @@ namespace GILES
                         drag.offset = ray.GetPoint(hit) - trs.position;
                 }
 
-                if (OnHandleBegin != null)
-                    OnHandleBegin(GetTransform());
+                OnHandleBegin?.Invoke();
 
-                
                 //Save the distance from the camera to the tool handle
                 if (tool == Tool.Translate)
                 {
@@ -627,21 +616,13 @@ namespace GILES
             //StartCoroutine(SetDraggingFalse());
         }
 
-        //private static IEnumerator SetDraggingFalse()
-        //{
-        //    yield return new WaitForEndOfFrame();
-        //    draggingHandle = false;
-        //}
         #endregion
 
         #region Interface
 
-        public static pb_Transform GetTransform()
+        public static TransformData GetTransform()
         {
-            return new pb_Transform(
-                trs.position,
-                trs.rotation,
-                scale);
+            return new TransformData(trs.position, trs.rotation, scale);
         }
 
         private static bool CheckHandleActivated(Vector2 mousePosition, out Axis plane)
@@ -650,55 +631,50 @@ namespace GILES
 
             if (tool == Tool.Translate || tool == Tool.Scale)
             {
-                float sceneHandleSize = pb_HandleUtility.GetHandleSize(trs.position);
+                float sceneHandleSize = HandleUtility.GetHandleSize(trs.position);
 
                 // cen
                 Vector2 cen = cam.WorldToScreenPoint(trs.position);
-
                 // up
-                Vector2 up = cam.WorldToScreenPoint((trs.position + (trs.up + trs.up * CAP_SIZE * 4f) * (sceneHandleSize * HandleSize)));
-
+                Vector2 up = cam.WorldToScreenPoint((trs.position + (trs.up + trs.up * CAP_SIZE * 4f) * (sceneHandleSize * Instance.HandleSize)));
                 // right
-                Vector2 right = cam.WorldToScreenPoint((trs.position + (trs.right + trs.right * CAP_SIZE * 4f) * (sceneHandleSize * HandleSize)));
-
+                Vector2 right = cam.WorldToScreenPoint((trs.position + (trs.right + trs.right * CAP_SIZE * 4f) * (sceneHandleSize * Instance.HandleSize)));
                 // forward
-                Vector2 forward = cam.WorldToScreenPoint((trs.position + (trs.forward + trs.forward * CAP_SIZE * 4f) * (sceneHandleSize * HandleSize)));
-
+                Vector2 forward = cam.WorldToScreenPoint((trs.position + (trs.forward + trs.forward * CAP_SIZE * 4f) * (sceneHandleSize * Instance.HandleSize)));
                 // First check if the plane boxes have been activated
                 Vector2 p_right = (cen + ((right - cen) * viewOctant.x) * HANDLE_BOX_SIZE);
                 Vector2 p_up = (cen + ((up - cen) * viewOctant.y) * HANDLE_BOX_SIZE);
                 Vector2 p_forward = (cen + ((forward - cen) * viewOctant.z) * HANDLE_BOX_SIZE);
 
-                // x plane
-                if (pb_HandleUtility.PointInPolygon(new Vector2[] {
-            cen, p_up,
-            p_up, (p_up+p_forward) - cen,
-            (p_up+p_forward) - cen, p_forward,
-            p_forward, cen
-            }, mousePosition))
+                //x plane
+                if (HandleUtility.PointInPolygon(new Vector2[] { cen, p_up, p_up, (p_up+p_forward) - cen,
+                                                                (p_up + p_forward) - cen, p_forward, p_forward, cen },
+                                                                mousePosition))
+                {
                     plane = Axis.Y | Axis.Z;
-                // y plane
-                else if (pb_HandleUtility.PointInPolygon(new Vector2[] {
-            cen, p_right,
-            p_right, (p_right+p_forward)-cen,
-            (p_right+p_forward)-cen, p_forward,
-            p_forward, cen
-            }, mousePosition))
+                }
+                //y plane
+                else if (HandleUtility.PointInPolygon(new Vector2[] { cen, p_right, p_right, (p_right+p_forward)-cen,
+                                                                    (p_right + p_forward)-cen, p_forward, p_forward, cen },
+                                                                    mousePosition))
+                {
                     plane = Axis.X | Axis.Z;
-                // z plane
-                else if (pb_HandleUtility.PointInPolygon(new Vector2[] {
-            cen, p_up,
-            p_up, (p_up + p_right) - cen,
-            (p_up + p_right) - cen, p_right,
-            p_right, cen
-            }, mousePosition))
+                }
+                //z plane
+                else if (HandleUtility.PointInPolygon(new Vector2[] { cen, p_up, p_up, (p_up + p_right) - cen,
+                                                                    (p_up + p_right) - cen, p_right, p_right, cen },
+                                                                    mousePosition))
+                {
                     plane = Axis.X | Axis.Y;
-                else
-                if (pb_HandleUtility.DistancePointLineSegment(mousePosition, cen, up) < MAX_DISTANCE_TO_HANDLE)
+                }
+                //x axis
+                else if (HandleUtility.DistancePointLineSegment(mousePosition, cen, up) < handleInteractWidth)
                     plane = Axis.Y;
-                else if (pb_HandleUtility.DistancePointLineSegment(mousePosition, cen, right) < MAX_DISTANCE_TO_HANDLE)
+                //y axis
+                else if (HandleUtility.DistancePointLineSegment(mousePosition, cen, right) < handleInteractWidth)
                     plane = Axis.X;
-                else if (pb_HandleUtility.DistancePointLineSegment(mousePosition, cen, forward) < MAX_DISTANCE_TO_HANDLE)
+                //z axis
+                else if (HandleUtility.DistancePointLineSegment(mousePosition, cen, forward) < handleInteractWidth)
                     plane = Axis.Z;
                 else
                     return false;
@@ -707,7 +683,7 @@ namespace GILES
             }
             else
             {
-                Vector3[][] vertices = pb_HandleMesh.GetRotationVertices(16, 1f);
+                Vector3[][] vertices = HandleMesh.GetRotationVertices(16, 1f);
 
                 float best = Mathf.Infinity;
 
@@ -723,9 +699,9 @@ namespace GILES
                         prev = cur;
                         cur = cam.WorldToScreenPoint(handleMatrix.MultiplyPoint3x4(vertices[i][n + 1]));
 
-                        float dist = pb_HandleUtility.DistancePointLineSegment(mousePosition, prev, cur);
+                        float dist = HandleUtility.DistancePointLineSegment(mousePosition, prev, cur);
 
-                        if (dist < best && dist < MAX_DISTANCE_TO_HANDLE)
+                        if (dist < best && dist < handleInteractWidth)
                         {
                             Vector3 viewDir = (handleMatrix.MultiplyPoint3x4((vertices[i][n] + vertices[i][n + 1]) * .5f) - cam.transform.position).normalized;
                             Vector3 nrm = trs.TransformDirection(vertices[i][n]).normalized;
@@ -753,7 +729,7 @@ namespace GILES
                     }
                 }
 
-                if (best < MAX_DISTANCE_TO_HANDLE + .1f)
+                if (best < handleInteractWidth + .1f)
                 {
                     return true;
                 }
@@ -795,8 +771,8 @@ namespace GILES
 
         private static void RebuildGizmoMatrix()
         {
-            float handleSize = pb_HandleUtility.GetHandleSize(trs.position);
-            Matrix4x4 scale = Matrix4x4.Scale(Vector3.one * handleSize * HandleSize);
+            float handleSize = HandleUtility.GetHandleSize(trs.position);
+            Matrix4x4 scale = Matrix4x4.Scale(Vector3.one * handleSize * Instance.HandleSize);
 
             handleMatrix = trs.localToWorldMatrix * scale;
         }
@@ -839,11 +815,11 @@ namespace GILES
             {
                 case Tool.Translate:
                 case Tool.Scale:
-                    pb_HandleMesh.CreatePositionLineMesh(ref mesh, trs, scale, viewOctant, cam, HANDLE_BOX_SIZE);
+                    HandleMesh.CreatePositionLineMesh(ref mesh, trs, scale, viewOctant, cam, HANDLE_BOX_SIZE);
                     break;
                 
                 case Tool.Rotate:
-                    pb_HandleMesh.CreateRotateMesh(ref mesh, 48, 1f);
+                    HandleMesh.CreateRotateMesh(ref mesh, 48, 1f);
                     break;
 
                 default:
@@ -854,9 +830,9 @@ namespace GILES
         private static void CreateHandleTriangleMesh(ref Mesh mesh, Vector3 scale)
         {
             if (tool == Tool.Translate)
-                pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, Instance.ConeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
+                HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, Instance.ConeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
             else if (tool == Tool.Scale)
-                pb_HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, Instance.CubeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
+                HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, Instance.CubeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
         }
 
         #endregion

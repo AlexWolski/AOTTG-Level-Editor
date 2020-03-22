@@ -5,7 +5,7 @@ namespace GILES
 	/**
 	 * Static class with commonly used geometry functions.
 	 */
-	public static class pb_Geometry
+	public static class Geometry
 	{
 		/**
 		 * Returns true if a raycast intersects a triangle.
