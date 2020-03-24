@@ -168,9 +168,10 @@ public class MapManager : MonoBehaviour
     //Parse the given map script and load the map
     public static void loadMap(string mapScript)
     {
-        //Remove all of the new lines in the script
+        //Remove all of the new lines and spaces in the script
         mapScript = mapScript.Replace("\n", "");
         mapScript = mapScript.Replace("\r", "");
+        mapScript = mapScript.Replace(" ", "");
 
         //Seperate the map by semicolon
         string[] parsedMap = mapScript.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
@@ -180,6 +181,10 @@ public class MapManager : MonoBehaviour
         {
             try
             {
+                //If the object script starts with '//' ignore it
+                if (parsedMap[i].StartsWith("//"))
+                    break;
+
                 //Parse the object script and create a new map object
                 MapObject mapObjectScript;
                 GameObject newMapObject = loadObject(parsedMap[i], out mapObjectScript);

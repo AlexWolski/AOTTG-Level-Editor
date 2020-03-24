@@ -289,6 +289,10 @@ public class ObjectSelection : MonoBehaviour
 
     public static void deselectAll()
     {
+        //If there are no selected objects, return from the function
+        if (selectedObjects.Count == 0)
+            return;
+
         //Remove the outline on all selected objects
         foreach (GameObject selectedObject in selectedObjects)
             removeOutline(selectedObject);

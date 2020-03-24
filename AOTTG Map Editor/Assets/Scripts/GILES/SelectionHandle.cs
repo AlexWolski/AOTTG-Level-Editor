@@ -117,6 +117,7 @@ namespace GILES
         private static bool draggingHandle;
         //In how many directions is the handle able to move
         private static int draggingAxes = 0;
+        //The transform of the rotation hanlde used when using the rotate tool
         private static TransformData handleOrigin = TransformData.identity;
 
         //Determines if the handle should be displayed and interactable
@@ -596,6 +597,9 @@ namespace GILES
             //If the tool handle wasn't clicked, don't start the interaction
             if (!draggingHandle)
                 return;
+
+            //Save the current transform of the tool handle
+            handleOrigin.SetTRS(trs);
 
             //Reset the axes being dragged
             drag.worldAxis = Vector3.zero;
