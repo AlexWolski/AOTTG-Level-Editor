@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using System.Collections.Generic;
 
 public class ToolButtonManager : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
@@ -37,9 +38,15 @@ public class ToolButtonManager : MonoBehaviour,
     //The button that is currently selected
     private static ToolButtonManager selectedButton;
 
+    //A dictionary mapping the different tools to their respective button scripts
+    private static Dictionary<Tool, ToolButtonManager> toolTable = new Dictionary<Tool, ToolButtonManager>();
+
     //Initialize data members and set up the triggers
     void Awake()
     {
+        //Add this button management script to the static table
+        toolTable.Add(toolType, this);
+
         //If this button is the one to be selected by default, select it
         if (currentState == buttonState.selected)
             select();
@@ -57,16 +64,18 @@ public class ToolButtonManager : MonoBehaviour,
         {
             selectedButton.unselect();
             select();
-            action();
         }
     }
 
     //Change the image and state to selected
     private void select()
     {
+        //Set the button images
         gameObject.GetComponent<Image>().sprite = selected;
         currentState = buttonState.selected;
         selectedButton = this;
+        //Execute the action of the button
+        action();
     }
 
     //Change the image and state to unselected
@@ -112,13 +121,20 @@ public class ToolButtonManager : MonoBehaviour,
         {
             selectedButton.unselect();
             select();
-            action();
         }
     }
 
     //The action triggered by the button press
-    public void action()
+    private void action()
     {
         ObjectSelection.setTool(toolType);
+    }
+
+    //Set the current tool and select the appropriate button from an external script
+    public static void setTool(Tool newTool)
+    {
+        //Unselect the currently active button and select the button for the new tool
+        selectedButton.unselect();
+        toolTable[newTool].select();
     }
 }

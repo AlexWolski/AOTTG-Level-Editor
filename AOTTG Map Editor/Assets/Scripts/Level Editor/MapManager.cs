@@ -16,7 +16,7 @@ public class MapManager : MonoBehaviour
     [SerializeField]
     private GameObject billboardPrefab;
 
-    //A hashtable mapping gameobjects to MapObject scripts
+    //A dictionary mapping gameobjects to MapObject scripts
     public static Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
     //Determines if the small map bounds have been disabled or not
     private static bool boundsDisabled;
@@ -121,7 +121,7 @@ public class MapManager : MonoBehaviour
         }
 
         //Once the selection is pasted, change the tool type to translate
-        ObjectSelection.setTool(Tool.Translate);
+        ToolButtonManager.setTool(Tool.Translate);
     }
 
     //Delete the selected objects
@@ -209,7 +209,7 @@ public class MapManager : MonoBehaviour
         objectToAdd.transform.parent = Instance.mapRoot.transform;
         //Make the new object selectable
         ObjectSelection.addSelectable(objectToAdd);
-        //Add the object and its MapObject script to the hashtable
+        //Add the object and its MapObject script to the dictionary
         objectScriptTable.Add(objectToAdd, objectScript);
     }
 
@@ -218,7 +218,7 @@ public class MapManager : MonoBehaviour
     {
         //Remove the object from the object selection script
         ObjectSelection.removeSelectable(objectToRemove);
-        //Remove the object from the script hashtable
+        //Remove the object from the script dictionary
         objectScriptTable.Remove(objectToRemove);
         //Delete the object itself
         Destroy(objectToRemove);
