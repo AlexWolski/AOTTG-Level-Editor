@@ -1,75 +1,76 @@
 ﻿using UnityEngine;
-using System.Collections;
-using UnityEngine.UI;
 
-public class ImportExportManager : MonoBehaviour
+namespace MapEditor
 {
-    //A rectangle marking the position where the text area should be
-    [SerializeField]
-    private GameObject textAreaPlaceholder;
-
-    //The RectTransform script attatched to the text area placeholder
-    private RectTransform rectTransform;
-    //A vector to hold the world coordinates of each corner of the text area placeholder
-    private Vector3[] corners = new Vector3[4];
-
-    //The text field that the user will enter the map script in
-    private string textArea = "";
-
-    //Get the needed scripts
-    void Awake()
+    public class ImportExportManager : MonoBehaviour
     {
-        rectTransform = textAreaPlaceholder.GetComponent<RectTransform>();
-    }
+        //A rectangle marking the position where the text area should be
+        [SerializeField]
+        private GameObject textAreaPlaceholder;
 
-    //Update the text area with the user's input
-    void OnGUI()
-    {
-        //Resize the text area and refresh the contents
-        textArea = GUI.TextArea(getTextAreaRect(), textArea);
-    }
+        //The RectTransform script attatched to the text area placeholder
+        private RectTransform rectTransform;
+        //A vector to hold the world coordinates of each corner of the text area placeholder
+        private Vector3[] corners = new Vector3[4];
 
-    //Create a rect based on the world corners of the text area placeholder
-    private Rect getTextAreaRect()
-    {
-        //Get the world position of each corner of the text area placeholder
-        rectTransform.GetWorldCorners(corners);
+        //The text field that the user will enter the map script in
+        private string textArea = "";
 
-        //The order of the corners starts at the top left and moves counter clockwise
-        float width = corners[3].x - corners[0].x;
-        float height = corners[1].y - corners[0].y;
+        //Get the needed scripts
+        void Awake()
+        {
+            rectTransform = textAreaPlaceholder.GetComponent<RectTransform>();
+        }
 
-        //Create a new rectangle object with those positions and return it
-        return new Rect(corners[0].x, corners[0].y, width, height);
-    }
+        //Update the text area with the user's input
+        void OnGUI()
+        {
+            //Resize the text area and refresh the contents
+            textArea = GUI.TextArea(getTextAreaRect(), textArea);
+        }
 
-    //Hide or show the import popup screen
-    public void togglePopup()
-    {
-        gameObject.SetActive(!gameObject.activeSelf);
+        //Create a rect based on the world corners of the text area placeholder
+        private Rect getTextAreaRect()
+        {
+            //Get the world position of each corner of the text area placeholder
+            rectTransform.GetWorldCorners(corners);
 
-        //If the export popup is being shown, export the map script and set it as the text area content
-        if (gameObject.name == "Export" && gameObject.activeSelf)
-            textArea = MapManager.Instance.ToString();
-    }
+            //The order of the corners starts at the top left and moves counter clockwise
+            float width = corners[3].x - corners[0].x;
+            float height = corners[1].y - corners[0].y;
 
-    //Import the map text in the input field
-    public void importTextField()
-    {
-        //Clear the existing map objects
-        MapManager.clearMap();
-        //Import the map script in the text field
-        MapManager.loadMap(textArea);
-        //Clear the textfield after the map is loaded
-        textArea = "";
-    }
+            //Create a new rectangle object with those positions and return it
+            return new Rect(corners[0].x, corners[0].y, width, height);
+        }
 
-    //Copy the content of the text field to the clipboard
-    public void copyTextField()
-    {
-        TextEditor te = new TextEditor();
-        te.text = textArea;
-        te.SelectAll();
-        te.Copy();
+        //Hide or show the import popup screen
+        public void togglePopup()
+        {
+            gameObject.SetActive(!gameObject.activeSelf);
+
+            //If the export popup is being shown, export the map script and set it as the text area content
+            if (gameObject.name == "Export" && gameObject.activeSelf)
+                textArea = MapManager.Instance.ToString();
+        }
+
+        //Import the map text in the input field
+        public void importTextField()
+        {
+            //Clear the existing map objects
+            MapManager.clearMap();
+            //Import the map script in the text field
+            MapManager.loadMap(textArea);
+            //Clear the textfield after the map is loaded
+            textArea = "";
+        }
+
+        //Copy the content of the text field to the clipboard
+        public void copyTextField()
+        {
+            TextEditor te = new TextEditor();
+            te.text = textArea;
+            te.SelectAll();
+            te.Copy();
+        }
     }
 }

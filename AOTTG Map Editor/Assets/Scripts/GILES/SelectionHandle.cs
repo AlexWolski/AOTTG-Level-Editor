@@ -3,6 +3,7 @@ using UnityEngine.EventSystems;
 //Used for manipulating the cursor position (Windows)
 using System.Runtime.InteropServices;
 using System.Drawing;
+using MapEditor;
 
 namespace GILES
 {

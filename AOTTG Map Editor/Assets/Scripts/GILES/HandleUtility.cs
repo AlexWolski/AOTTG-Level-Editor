@@ -1,10 +1,8 @@
 ﻿using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 
 namespace GILES
 {
-
 	/**
 	 * Collection of static methods commonly used when working with scene handles.
 	 */
