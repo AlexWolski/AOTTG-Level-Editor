@@ -13,10 +13,8 @@ namespace GILES
         //A self-reference to the singleton instance of this script
         public static SelectionHandle Instance { get; private set; }
 
-        private static Transform _trs;
-        private static Transform trs { get { if (_trs == null) _trs = Instance.gameObject.GetComponent<Transform>(); return _trs; } }
-        private static Camera _cam;
-        private static Camera cam { get { if (_cam == null) _cam = Camera.main; return _cam; } }
+        private static Transform trs;
+        private static Camera cam;
 
         private static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
 
@@ -163,8 +161,8 @@ namespace GILES
 
             //Hide the hanlde by default
             hidden = true;
-            _trs = null;
-            _cam = null;
+            trs = Instance.gameObject.GetComponent<Transform>();
+            cam = Camera.main;
         }
 
         public static void hide()
@@ -176,15 +174,6 @@ namespace GILES
         public static void show()
         {
             hidden = false;
-        }
-
-        public static void SetTRS(Vector3 position, Quaternion rotation, Vector3 scale)
-        {
-            trs.position = position;
-            trs.rotation = rotation;
-            trs.localScale = scale;
-
-            RebuildGizmoMatrix();
         }
         #endregion
 

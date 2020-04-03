@@ -362,7 +362,7 @@ namespace MapEditor
                 SelectionHandle.setRotation(selectedObjects[0].transform.rotation);
             //Otherwise reset the rotation
             else
-                SelectionHandle.setRotation(Quaternion.Euler(Vector3.up));
+                SelectionHandle.setRotation(Quaternion.identity);
         }
         #endregion
 
