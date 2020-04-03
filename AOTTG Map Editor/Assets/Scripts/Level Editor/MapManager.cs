@@ -12,6 +12,9 @@ namespace MapEditor
         //A self-reference to the singleton instance of this script
         public static MapManager Instance { get; private set; }
 
+        //A reference to the empty gameobject that contains all of the copied objects
+        [SerializeField]
+        private GameObject copiedObjectsRoot;
         //A reference to the empty map to add objects to
         [SerializeField]
         private GameObject mapRoot;
@@ -23,8 +26,6 @@ namespace MapEditor
         public static Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
         //Determines if the small map bounds have been disabled or not
         private static bool boundsDisabled;
-        //A list of objects cloned from the copied selection
-        private static List<GameObject> copiedObjects;
         #endregion
 
         #region Initialization
@@ -80,8 +81,10 @@ namespace MapEditor
             if (selectedObjects.Count == 0)
                 return;
 
-            //Reset the old list of copied objects
-            copiedObjects = new List<GameObject>();
+            //Destroy any previously copied objects
+            foreach (Transform copiedObject in Instance.copiedObjectsRoot.transform)
+                Destroy(copiedObject.gameObject);
+
             //Temporary GameObject to disable cloned objects before storing them
             GameObject objectClone;
 
@@ -95,8 +98,8 @@ namespace MapEditor
                 MapObject mapObjectScript = objectClone.GetComponent<MapObject>();
                 //Copy the values of the original map object script
                 mapObjectScript.copyValues(mapObject.GetComponent<MapObject>());
-                //Add the object to the copied objects list
-                copiedObjects.Add(objectClone);
+                //Set the object as the child of the copied objects root
+                objectClone.transform.parent = Instance.copiedObjectsRoot.transform;
             }
         }
 
@@ -109,15 +112,15 @@ namespace MapEditor
             ObjectSelection.deselectAll();
 
             //Loop through all of the copied objects
-            foreach (GameObject mapObject in copiedObjects)
+            foreach (Transform copiedObject in Instance.copiedObjectsRoot.transform)
             {
                 //Instantiate and enable the cloned object
-                objectClone = Instantiate(mapObject);
+                objectClone = Instantiate(copiedObject.gameObject);
                 objectClone.SetActive(true);
                 //Get a reference to the cloned object's MapObject script
                 MapObject mapObjectScript = objectClone.GetComponent<MapObject>();
                 //Copy the values of the original map object script
-                mapObjectScript.copyValues(mapObject.GetComponent<MapObject>());
+                mapObjectScript.copyValues(copiedObject.GetComponent<MapObject>());
                 //Add the object to the map and make it selectable
                 addObjectToMap(objectClone, mapObjectScript);
                 ObjectSelection.selectObject(objectClone);
@@ -174,6 +177,7 @@ namespace MapEditor
             //Remove all of the new lines and spaces in the script
             mapScript = mapScript.Replace("\n", "");
             mapScript = mapScript.Replace("\r", "");
+            mapScript = mapScript.Replace("\t", "");
             mapScript = mapScript.Replace(" ", "");
 
             //Seperate the map by semicolon
@@ -186,7 +190,7 @@ namespace MapEditor
                 {
                     //If the object script starts with '//' ignore it
                     if (parsedMap[i].StartsWith("//"))
-                        break;
+                        continue;
 
                     //Parse the object script and create a new map object
                     MapObject mapObjectScript;
