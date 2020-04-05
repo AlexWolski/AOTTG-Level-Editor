@@ -178,17 +178,17 @@ namespace MapEditor
             string[] parsedMap = mapScript.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
             //Create each object and add it to the map
-            for (int i = 0; i < parsedMap.Length; i++)
+            for (int scriptIndex = 0; scriptIndex < parsedMap.Length; scriptIndex++)
             {
                 try
                 {
                     //If the object script starts with '//' ignore it
-                    if (parsedMap[i].StartsWith("//"))
+                    if (parsedMap[scriptIndex].StartsWith("//"))
                         continue;
 
                     //Parse the object script and create a new map object
                     MapObject mapObjectScript;
-                    GameObject newMapObject = loadObject(parsedMap[i], out mapObjectScript);
+                    GameObject newMapObject = loadObject(parsedMap[scriptIndex], out mapObjectScript);
 
                     //If the object is defined, add it to the map hierarchy and make it selectable
                     if (newMapObject)
@@ -197,7 +197,7 @@ namespace MapEditor
                 catch (Exception e)
                 {
                     //If there was an issue parsing the object, log the error and skip it
-                    Debug.Log("Skipping object on line " + i);
+                    Debug.Log("Skipping object on line " + scriptIndex + "\t(" + parsedMap[scriptIndex] + ")");
                     Debug.Log(e + ":\t" + e.Message);
                 }
             }

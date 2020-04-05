@@ -35,21 +35,20 @@ namespace MapEditor
         {
             //If the gameobject has a mesh, add the outline script
             if (newObject.GetComponent<Renderer>() != null)
+            {
                 newObject.AddComponent<Outline>();
+                newObject.gameObject.tag = "Selectable Object";
+            }
 
             //Go through the children of the object and add the outline script if it has a mesh
             foreach (Transform child in newObject.transform)
             {
                 if (child.GetComponent<Renderer>() != null)
                 {
-                    //Add the outline script to the object and give it a selectable tag
                     child.gameObject.AddComponent<Outline>();
                     child.gameObject.tag = "Selectable Object";
                 }
             }
-
-            //Add a Map Object tag to the object
-            newObject.tag = "Map Object";
         }
 
         //Load the given vanilla material

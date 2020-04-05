@@ -63,7 +63,7 @@ namespace MapEditor
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
 
                 //If an object was clicked, select it
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+                if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Selectable Object")))
                 {
                     //Select the parent of the object
                     GameObject parentObject = getParent(hit.transform.gameObject);

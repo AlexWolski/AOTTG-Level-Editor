@@ -118,8 +118,8 @@ namespace MapEditor
                     defaultMatNames = new string[defaultRenderers.Length];
 
                     //Iterate through the renderers and save all of the material names
-                    for (int i = 0; i < defaultRenderers.Length; i++)
-                        defaultMatNames[i] = defaultRenderers[i].material.name;
+                    for (int matIndex = 0; matIndex < defaultRenderers.Length; matIndex++)
+                        defaultMatNames[matIndex] = defaultRenderers[matIndex].material.name;
                 }
                 //If the default materials weren't set, apply the saved default materials
                 else
@@ -128,8 +128,8 @@ namespace MapEditor
                     Renderer[] renderers = GetComponentsInChildren<Renderer>();
 
                     //Instantiate all of the default materials and assign them to the renderers
-                    for (int i = 0; i < renderers.Length; i++)
-                        renderers[i].material = AssetManager.loadRcMaterial(defaultMatNames[i]);
+                    for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
+                        renderers[rendererIndex].material = AssetManager.loadRcMaterial(defaultMatNames[rendererIndex]);
                 }
             }
             //Otherwise Apply the material to all of the children of the object
@@ -173,8 +173,8 @@ namespace MapEditor
                 //Create an array filled with the new color to apply to the mesh
                 Color[] colorArray = new Color[mesh.vertexCount];
 
-                for (int i = 0; i < colorArray.Length; i++)
-                    colorArray[i] = (Color)newColor;
+                for (int colorIndex = 0; colorIndex < colorArray.Length; colorIndex++)
+                    colorArray[colorIndex] = (Color)newColor;
 
                 //Apply the colors
                 mesh.colors = colorArray;
