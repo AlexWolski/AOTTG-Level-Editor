@@ -328,18 +328,17 @@ namespace MapEditor
             //The GameObject loaded from RCAssets corresponding to the object name
             GameObject newObject;
 
-            //Instantiate the object using the object name. If the object is a vanilla object, load a substitute model
+            //If the object is a vanilla object, instantiate it from the vanilla assets
             if (type == objectType.@base)
             {
-                //To-DO
-                newObject = null;
+                newObject = AssetManager.instantiateVanillaObject(objectName);
             }
-            //If the object is a barrier or region, change it to the editor version
+            //If the object is a barrier or region, instantiate editor version
             else if (objectName == "barrier" || objectName == "region")
             {
                 newObject = AssetManager.instantiateRcObject(objectName + "Editor");
             }
-            //Otherwise, instantiate the object regularly
+            //Otherwise, instantiate the object from teh RC assets
             else
                 newObject = AssetManager.instantiateRcObject(objectName);
 
