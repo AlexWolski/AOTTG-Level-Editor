@@ -150,14 +150,9 @@ namespace GILES
         {
             //Set this script as the only instance of the SelectionHandle script
             if (Instance == null)
-            {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
             else
-            {
                 Destroy(gameObject);
-            }
 
             //Hide the hanlde by default
             hidden = true;

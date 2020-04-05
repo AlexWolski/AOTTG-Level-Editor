@@ -22,6 +22,12 @@ namespace MapEditor
         [SerializeField]
         private GameObject billboardPrefab;
 
+        //References to the large and small map boundaries
+        [SerializeField]
+        private GameObject smallMapBounds;
+        [SerializeField]
+        private GameObject largeMapBounds;
+
         //A dictionary mapping gameobjects to MapObject scripts
         public static Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
         //Determines if the small map bounds have been disabled or not
@@ -33,14 +39,9 @@ namespace MapEditor
         void Awake()
         {
             if (Instance == null)
-            {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
             else
-            {
                 Destroy(gameObject);
-            }
         }
 
         void Start()
@@ -155,8 +156,9 @@ namespace MapEditor
             ObjectSelection.resetSelection();
             //Reset the hash table for MapObject scripts
             objectScriptTable = new Dictionary<GameObject, MapObject>();
-            //Reset the boundaries disabled flag
+            //Reset the boundaries disabled flag and activate the small bounds
             boundsDisabled = false;
+            enableLargeMapBounds(false);
 
             //Iterate over all children objects and delete them
             foreach (Transform child in Instance.mapRoot.GetComponentInChildren<Transform>())
@@ -239,8 +241,9 @@ namespace MapEditor
                 if (parsedObject[0].StartsWith("map") && parsedObject[1].StartsWith("disablebounds"))
                 {
                     boundsDisabled = true;
-                    disableMapBounds();
+                    enableLargeMapBounds(true);
                     mapObjectScript = null;
+
                     return null;
                 }
 
@@ -316,10 +319,11 @@ namespace MapEditor
             }
         }
 
-        //Destroy the smaller bounds around the map and isntantiate the larger bounds
-        private static void disableMapBounds()
+        //Toggle between the small and large map bounds being active
+        private static void enableLargeMapBounds(bool enabled)
         {
-            //
+            Instance.smallMapBounds.SetActive(!enabled);
+            Instance.largeMapBounds.SetActive(enabled);
         }
 
         //Load the GameObject from RCAssets with the corresponding object name and attach a MapObject script to it

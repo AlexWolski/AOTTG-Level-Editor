@@ -15,14 +15,9 @@ namespace MapEditor
         {
             //Set this script as the only instance of the EditorManger script
             if (Instance == null)
-            {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
             else
-            {
                 Destroy(gameObject);
-            }
 
             //Set the screen resolution
             Screen.fullScreen = false;

@@ -28,14 +28,9 @@ namespace MapEditor
         {
             //Set this script as the only instance of the ObjectSelection script
             if (Instance == null)
-            {
                 Instance = this;
-                DontDestroyOnLoad(gameObject);
-            }
             else
-            {
                 Destroy(gameObject);
-            }
 
             //Add the editSelection function as a listner to the OnHandleMove event
             SelectionHandle.OnHandleMove += editSelection;
