@@ -32,7 +32,7 @@ namespace MapEditor
             foreach (GameObject mapObject in objectsToScale)
             {
                 //Get the current scale and position of the object
-                Vector3 newScale = MapManager.objectScriptTable[mapObject].Scale;
+                Vector3 newScale = MapManager.ObjectScriptTable[mapObject].Scale;
                 Vector3 newPosition = mapObject.transform.position;
 
                 //Scale the position and scale of the object
@@ -54,7 +54,7 @@ namespace MapEditor
                 }
 
                 //Apply the new scale and position
-                MapManager.objectScriptTable[mapObject].Scale = newScale;
+                MapManager.ObjectScriptTable[mapObject].Scale = newScale;
                 mapObject.transform.position = newPosition;
             }
         }

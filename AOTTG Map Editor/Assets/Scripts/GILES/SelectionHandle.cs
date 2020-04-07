@@ -235,7 +235,7 @@ namespace GILES
                 OnCameraMove();
 
                 //Don't check for handle interactions if the handle is hidden or the editor is not in edit mode
-                if (EditorManager.currentMode != EditorMode.Edit)
+                if (EditorManager.CurrentMode != EditorMode.Edit)
                     return;
 
                 //Save the current mouse position

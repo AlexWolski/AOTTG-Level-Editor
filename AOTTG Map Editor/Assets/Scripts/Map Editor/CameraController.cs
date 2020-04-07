@@ -24,7 +24,7 @@ namespace MapEditor
         //If the editor is in fly mode, translate and rotate the camera
         void LateUpdate()
         {
-            if (EditorManager.currentMode == EditorMode.Fly)
+            if (EditorManager.CurrentMode == EditorMode.Fly)
             {
                 translateCamera();
                 rotateCamera();

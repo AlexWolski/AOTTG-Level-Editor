@@ -6,10 +6,21 @@ namespace MapEditor
     //A singleton class for managing the current mode
     public class EditorManager : MonoBehaviour
     {
+        #region Data Members
         //A self-reference to the singleton instance of this script
         public static EditorManager Instance { get; private set; }
         //Determines if the user is in fly more or edit mode
-        public static EditorMode currentMode { get; set; }
+        private EditorMode currentMode;
+        #endregion
+
+        //Static properties to be used instead of accessing the instance data members directly
+        #region Properties
+        public static EditorMode CurrentMode
+        {
+            get { return Instance.currentMode; }
+            set { Instance.currentMode = value; }
+        }
+        #endregion
 
         void Awake()
         {

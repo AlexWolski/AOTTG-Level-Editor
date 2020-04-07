@@ -5,7 +5,8 @@
     public enum EditorMode
     {
         Fly,
-        Edit
+        Edit,
+        UI
     }
 
     //A list of types an object can be

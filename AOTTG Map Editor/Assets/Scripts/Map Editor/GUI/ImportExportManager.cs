@@ -51,6 +51,13 @@ namespace MapEditor
             //If the export popup is being shown, export the map script and set it as the text area content
             if (gameObject.name == "Export" && gameObject.activeSelf)
                 textArea = MapManager.Instance.ToString();
+
+            //If the popup was enabled, change the Editor to UI mode so that the map can not be edited
+            if (gameObject.activeSelf)
+                EditorManager.CurrentMode = EditorMode.UI;
+            //If the popup was disabled, change the Editor back to edit mode
+            else
+                EditorManager.CurrentMode = EditorMode.Edit;
         }
 
         //Import the map text in the input field

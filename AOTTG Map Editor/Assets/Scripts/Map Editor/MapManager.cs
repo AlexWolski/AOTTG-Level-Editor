@@ -1,7 +1,7 @@
-﻿using UnityEngine;
+﻿using GILES;
 using System;
 using System.Collections.Generic;
-using GILES;
+using UnityEngine;
 
 namespace MapEditor
 {
@@ -29,9 +29,24 @@ namespace MapEditor
         private GameObject largeMapBounds;
 
         //A dictionary mapping gameobjects to MapObject scripts
-        public static Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
+        public Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
         //Determines if the small map bounds have been disabled or not
-        private static bool boundsDisabled;
+        private bool boundsDisabled;
+        #endregion
+
+        //Static properties to be used instead of accessing the instance data members directly
+        #region Properties
+        public static Dictionary<GameObject, MapObject> ObjectScriptTable
+        {
+            get { return Instance.objectScriptTable; }
+            private set { Instance.objectScriptTable = value; }
+        }
+
+        private static bool BoundsDisabled
+        {
+            get { return Instance.boundsDisabled; }
+            set { Instance.boundsDisabled = value; }
+        }
         #endregion
 
         #region Initialization
@@ -46,7 +61,7 @@ namespace MapEditor
 
         void Start()
         {
-            objectScriptTable = new Dictionary<GameObject, MapObject>();
+            ObjectScriptTable = new Dictionary<GameObject, MapObject>();
         }
         #endregion
 
@@ -54,7 +69,7 @@ namespace MapEditor
         void LateUpdate()
         {
             //If the game is in edit mode, check for keyboard shortcut inputs
-            if (EditorManager.currentMode == EditorMode.Edit)
+            if (EditorManager.CurrentMode == EditorMode.Edit)
             {
                 //Check delete keys
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
@@ -139,7 +154,7 @@ namespace MapEditor
             //Remove each selected object from the script table and destroy the object
             foreach (GameObject mapObject in selectedObjects)
             {
-                objectScriptTable.Remove(mapObject);
+                ObjectScriptTable.Remove(mapObject);
                 destroyObject(mapObject);
             }
 
@@ -155,9 +170,9 @@ namespace MapEditor
             //Remove all deleted objects from the selection lists
             ObjectSelection.resetSelection();
             //Reset the hash table for MapObject scripts
-            objectScriptTable = new Dictionary<GameObject, MapObject>();
+            ObjectScriptTable = new Dictionary<GameObject, MapObject>();
             //Reset the boundaries disabled flag and activate the small bounds
-            boundsDisabled = false;
+            BoundsDisabled = false;
             enableLargeMapBounds(false);
 
             //Iterate over all children objects and delete them
@@ -211,7 +226,7 @@ namespace MapEditor
             //Make the new object selectable
             ObjectSelection.addSelectable(objectToAdd);
             //Add the object and its MapObject script to the dictionary
-            objectScriptTable.Add(objectToAdd, objectScript);
+            ObjectScriptTable.Add(objectToAdd, objectScript);
         }
 
         //Remove the given object to the map hierarchy and make object selection script
@@ -220,7 +235,7 @@ namespace MapEditor
             //Remove the object from the object selection script
             ObjectSelection.removeSelectable(objectToRemove);
             //Remove the object from the script dictionary
-            objectScriptTable.Remove(objectToRemove);
+            ObjectScriptTable.Remove(objectToRemove);
             //Delete the object itself
             Destroy(objectToRemove);
         }
@@ -240,7 +255,7 @@ namespace MapEditor
                 //If the script is "map,disableBounds" then set a flag to disable the map boundries and skip the object
                 if (parsedObject[0].StartsWith("map") && parsedObject[1].StartsWith("disablebounds"))
                 {
-                    boundsDisabled = true;
+                    BoundsDisabled = true;
                     enableLargeMapBounds(true);
                     mapObjectScript = null;
 
@@ -297,11 +312,11 @@ namespace MapEditor
             string mapScript = "";
 
             //If bounds are disabled, add that script to the beginning of the script
-            if (boundsDisabled)
+            if (BoundsDisabled)
                 mapScript += "map,disablebounds;\n";
 
             //Add the script for each object to the map script
-            foreach (MapObject objectScript in objectScriptTable.Values)
+            foreach (MapObject objectScript in ObjectScriptTable.Values)
                 mapScript += objectScript.ToString() + "\n";
 
             return mapScript;
