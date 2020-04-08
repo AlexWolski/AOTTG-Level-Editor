@@ -16,13 +16,10 @@ namespace MapEditor
         }
 
         //The images used for the button
-        [SerializeField]
-        private Sprite unpressed;
-        [SerializeField]
-        private Sprite pressed;
+        [SerializeField] private Sprite unpressed;
+        [SerializeField] private Sprite pressed;
         //The function to call when the button is clicked
-        [SerializeField]
-        private UnityEvent onClick;
+        [SerializeField] private UnityEvent onClick;
 
         //The current state of the button
         private buttonState currentState;

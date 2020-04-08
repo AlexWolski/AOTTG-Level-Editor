@@ -18,22 +18,17 @@ namespace MapEditor
         }
 
         //The images used for the button
-        [SerializeField]
-        private Sprite unselected;
-        [SerializeField]
-        private Sprite pressed;
-        [SerializeField]
-        private Sprite selected;
+        [SerializeField] private Sprite unselected;
+        [SerializeField] private Sprite pressed;
+        [SerializeField] private Sprite selected;
 
         //The current state of the button
-        [SerializeField]
-        private buttonState currentState;
+        [SerializeField] private buttonState currentState;
         //The tool this button corresponds to
-        [SerializeField]
-        private Tool toolType;
+        [SerializeField] private Tool toolType;
         //The keyboard key that selects this button
-        [SerializeField]
-        private KeyCode shortCutKey;
+        [SerializeField] private KeyCode shortCutKey;
+
         //Determine if the left mouse button is currently pressed or not
         private static bool mouseDown;
         //The button script that is currently pressed down

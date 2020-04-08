@@ -18,27 +18,19 @@ namespace GILES
 
         private static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
 
-        //Used as translation handle cone caps.
-        [SerializeField]
-        private Mesh ConeMesh;
-        // Used for scale handle
-        [SerializeField]
-        private Mesh CubeMesh;
+        //Used for the tool handle gizmos
+        [SerializeField] private Mesh ConeMesh;
+        [SerializeField] private Mesh CubeMesh;
 
         //Materials used for the tool handle gizmo
-        [SerializeField]
-        private Material HandleOpaqueMaterial;
-        [SerializeField]
-        private Material RotateLineMaterial;
-        [SerializeField]
-        private Material HandleTransparentMaterial;
+        [SerializeField] private Material HandleOpaqueMaterial;
+        [SerializeField] private Material RotateLineMaterial;
+        [SerializeField] private Material HandleTransparentMaterial;
 
         //The width around the tool handle that can be interacted with
-        [SerializeField]
-        const int handleInteractWidth = 10;
+        [SerializeField] const int handleInteractWidth = 10;
         //The padding around the edges of the window past which the mouse will be moved back into the window
-        [SerializeField]
-        const int windowPadding = 5;
+        [SerializeField] const int windowPadding = 5;
 
         private static Mesh HandleLineMesh
         {
@@ -98,19 +90,22 @@ namespace GILES
         public static float cameraDist;
         public const float CAP_SIZE = .07f;
 
-        [SerializeField]
-        private float HandleSize = 90f;
+        [SerializeField] private float HandleSize = 90f;
+
         //Adjusts the speed of handle movement when rotating or translating 
-        [SerializeField]
-        private float rotationSpeed = 3f;
-        [SerializeField]
-        private float translationSpeed = 1f;
-        [SerializeField]
-        private float scaleSpeed = 1f;
+        [SerializeField] private float defaultTranslationSpeed = 1f;
+        [SerializeField] private float defaultRotationSpeed = 3f;
+        [SerializeField] private float defaultScaleSpeed = 1f;
+        //The fast and slow speeds are calculated from the default speed and the multiplier
+        [SerializeField] private float speedMultiplier = 50f;
+
+        //Stores the three different speeds for each tool
+        private AdjustableSpeed translationSpeed;
+        private AdjustableSpeed rotationSpeed;
+        private AdjustableSpeed scaleSpeed;
 
         //The maximum distance away from the origin an object can be
-        [SerializeField]
-        private static float maxDistance = 1000000000f;
+        [SerializeField] private static float maxDistance = 1000000000f;
 
         //Determines if the handle is being interacted with or not
         private static bool draggingHandle;
@@ -139,8 +134,7 @@ namespace GILES
             return previousOctant;
         }
 
-        [SerializeField]
-        private const float HANDLE_BOX_SIZE = .25f;
+        [SerializeField] private const float HANDLE_BOX_SIZE = .25f;
 
         #endregion
 
@@ -158,6 +152,11 @@ namespace GILES
             hidden = true;
             trs = Instance.gameObject.GetComponent<Transform>();
             cam = Camera.main;
+
+            //Instantiate the adjustable speed classes
+            translationSpeed = new AdjustableSpeed(defaultTranslationSpeed, speedMultiplier);
+            rotationSpeed = new AdjustableSpeed(defaultRotationSpeed, speedMultiplier);
+            scaleSpeed = new AdjustableSpeed(defaultScaleSpeed, speedMultiplier);
         }
 
         public static void hide()
@@ -336,7 +335,7 @@ namespace GILES
                             //Get the displcement of the mouse in the handle's local space along the drag axis
                             Vector3 translationVector = getDragDisplacement(mouseDisplacement);
                             //Scale the translation vector by the translation speed and distance to camera
-                            translationVector *= translationSpeed * cameraDist / 1000;
+                            translationVector *= cameraDist / (translationSpeed.getSpeed() * 1000);
 
                             //Translate the tool handle
                             trs.Translate(translationVector, Space.Self);
@@ -367,7 +366,7 @@ namespace GILES
                         //Use the magnitude of the displacement as the angle displacement
                         float angleDisplacement = tangentDisplacement.magnitude * sign;
                         //Add the displacement to the angle after scaling it by the rotation speed
-                        rotationDisplacement = angleDisplacement / 10 * rotationSpeed;
+                        rotationDisplacement = angleDisplacement / 10 * rotationSpeed.getSpeed();
                         axisAngle += rotationDisplacement;
 
                         //Rotate the tool handle
@@ -395,7 +394,7 @@ namespace GILES
                             scaleVector = getDragDisplacement(mouseDisplacement);
 
                         //Scale the vector by the translation speed and distance to camera
-                        scaleVector *= scaleSpeed / 100;
+                        scaleVector *= scaleSpeed.getSpeed() / 100;
 
                         //Scale the axis of the scale vector by the scale displacement
                         for (int axis = 0; axis < 3; axis++)

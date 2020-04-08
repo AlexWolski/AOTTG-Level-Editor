@@ -72,16 +72,12 @@ namespace OutlineEffect
         Material outline3Material;
         Material outline4Material;
         Material outlineEraseMaterial;
-        [SerializeField]
-        Shader outlineShader;
-        [SerializeField]
-        Shader outlineBufferShader;
-        [HideInInspector]
-        public Material outlineShaderMaterial;
-        [HideInInspector]
-        public RenderTexture renderTexture;
-        [HideInInspector]
-        public RenderTexture extraRenderTexture;
+
+        [SerializeField] Shader outlineShader;
+        [SerializeField] Shader outlineBufferShader;
+        [HideInInspector] public Material outlineShaderMaterial;
+        [HideInInspector] public RenderTexture renderTexture;
+        [HideInInspector] public RenderTexture extraRenderTexture;
 
         CommandBuffer commandBuffer;
 

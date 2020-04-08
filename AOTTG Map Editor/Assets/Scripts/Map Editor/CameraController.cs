@@ -4,25 +4,34 @@ namespace MapEditor
 {
     public class CameraController : MonoBehaviour
     {
-        //The three speeds the camera can move at
-        [SerializeField]
-        private float fastSpeed = 300f;
-        [SerializeField]
-        private float normalSpeed = 100f;
-        [SerializeField]
-        private float slowSpeed = 30f;
-        //The speed the camera rotates at
-        [SerializeField]
-        private float rotateSpeed = 100f;
+        #region Data Members
+        //The default speed the camrea moves at
+        [SerializeField] private float defaultMovementSpeed = 100f;
+        //The factor with which the movement speeds up or slows down when a speed modifier key is held
+        [SerializeField] private float speedMultiplier = 3f;
+        //Stores the three different speeds the camera can move at
+        private AdjustableSpeed movementSpeed;
 
+        //The speed the camera rotates at
+        [SerializeField] private float rotateSpeed = 100f;
+        #endregion
+
+        #region Instnatiation
         //Disable the fog on distant objects
         void OnPreRender()
         {
             RenderSettings.fog = false;
         }
 
+        //Instantiate the adjustable speed class
+        private void Awake()
+        {
+            movementSpeed = new AdjustableSpeed(defaultMovementSpeed, speedMultiplier);
+        }
+        #endregion
+
         //If the editor is in fly mode, translate and rotate the camera
-        void LateUpdate()
+        private void LateUpdate()
         {
             if (EditorManager.CurrentMode == EditorMode.Fly)
             {
@@ -33,28 +42,19 @@ namespace MapEditor
 
         private void translateCamera()
         {
-            //The speed the camera should move at
-            float currentSpeed = normalSpeed;
-
-            //Set the speed based on if shift, control, or neither is pressed
-            if (Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.LeftControl))
-                currentSpeed = slowSpeed;
-            else if (Input.GetKey(KeyCode.LeftControl) && !Input.GetKey(KeyCode.LeftShift))
-                currentSpeed = fastSpeed;
-
             //Get the amount to translate on the x and z axis
-            float xDisplacement = Input.GetAxisRaw("Horizontal") * currentSpeed * Time.deltaTime;
-            float zDisplacement = Input.GetAxisRaw("Vertical") * currentSpeed * Time.deltaTime;
+            float xDisplacement = Input.GetAxisRaw("Horizontal") * movementSpeed.getSpeed() * Time.deltaTime;
+            float zDisplacement = Input.GetAxisRaw("Vertical") * movementSpeed.getSpeed() * Time.deltaTime;
 
             //Get the amount to translate on the y axis
             float yDisplacement = 0;
 
             //If only the left mouse button is pressed, move the camera down
             if (Input.GetButton("Fire1") && !Input.GetButton("Fire2"))
-                yDisplacement = -currentSpeed * Time.deltaTime;
+                yDisplacement = -movementSpeed.getSpeed() * Time.deltaTime;
             //If only the right mouse button is pressed, move the camera up
             else if (Input.GetButton("Fire2") && !Input.GetButton("Fire1"))
-                yDisplacement = currentSpeed * Time.deltaTime;
+                yDisplacement = movementSpeed.getSpeed() * Time.deltaTime;
 
             //Translate the camera on the x and z axes in self space
             transform.Translate(xDisplacement, 0, zDisplacement, Space.Self);

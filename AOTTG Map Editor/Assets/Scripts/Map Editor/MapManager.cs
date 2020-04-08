@@ -13,20 +13,15 @@ namespace MapEditor
         public static MapManager Instance { get; private set; }
 
         //A reference to the empty gameobject that contains all of the copied objects
-        [SerializeField]
-        private GameObject copiedObjectsRoot;
+        [SerializeField] private GameObject copiedObjectsRoot;
         //A reference to the empty map to add objects to
-        [SerializeField]
-        private GameObject mapRoot;
+        [SerializeField] private GameObject mapRoot;
         //A reference to the billboard prefab
-        [SerializeField]
-        private GameObject billboardPrefab;
+        [SerializeField] private GameObject billboardPrefab;
 
         //References to the large and small map boundaries
-        [SerializeField]
-        private GameObject smallMapBounds;
-        [SerializeField]
-        private GameObject largeMapBounds;
+        [SerializeField] private GameObject smallMapBounds;
+        [SerializeField] private GameObject largeMapBounds;
 
         //A dictionary mapping gameobjects to MapObject scripts
         public Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
@@ -57,10 +52,7 @@ namespace MapEditor
                 Instance = this;
             else
                 Destroy(gameObject);
-        }
 
-        void Start()
-        {
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
         }
         #endregion
