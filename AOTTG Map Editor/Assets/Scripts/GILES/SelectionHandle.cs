@@ -1,4 +1,5 @@
 ﻿using MapEditor;
+using System.Collections;
 using System.Drawing;
 //Used for manipulating the cursor position (Windows)
 using System.Runtime.InteropServices;
@@ -72,7 +73,7 @@ namespace GILES
         private Vector2 clickTangent;
 
         //Persistient variable used by the translation tool
-        public float cameraDist;
+        private float cameraDist;
 
         //Adjusts the speed of handle movement when rotating or translating 
         [SerializeField] private float defaultTranslationSpeed = 1f;
@@ -106,7 +107,7 @@ namespace GILES
         #endregion
 
         #region Initialization
-        protected void Awake()
+        private void Awake()
         {
             //Set this script as the only instance of the SelectionHandle script
             if (Instance == null)
@@ -120,9 +121,9 @@ namespace GILES
             mainCamera = Camera.main;
 
             //Instantiate the adjustable speed classes
-            translationSpeed = new AdjustableSpeed(defaultTranslationSpeed, speedMultiplier);
-            rotationSpeed = new AdjustableSpeed(defaultRotationSpeed, speedMultiplier);
-            scaleSpeed = new AdjustableSpeed(defaultScaleSpeed, speedMultiplier);
+            translationSpeed = new AdjustableSpeed(defaultTranslationSpeed, speedMultiplier, true, false);
+            rotationSpeed = new AdjustableSpeed(defaultRotationSpeed, speedMultiplier, true, false);
+            scaleSpeed = new AdjustableSpeed(defaultScaleSpeed, speedMultiplier, true, false);
 
             //TODO comment
             handleLineMesh = new Mesh();
@@ -678,6 +679,15 @@ namespace GILES
             //Reset the offset between the onscreen mouse position and its hypotheical unclamped position
             mouseOffest = Vector2.zero;
 
+            //Notify listners that the handle is no longer being dragged
+            StartCoroutine(InvokeFinishHandleEvent());
+        }
+
+        private IEnumerator InvokeFinishHandleEvent()
+        {
+            //Wait until the end of the frame so that the OnHandleFinish event doesn't overlap with the OnMouseUp event
+            yield return new WaitForEndOfFrame();
+            
             //Notify all listners that the handle is no longer being interacted with
             OnHandleFinish?.Invoke();
         }

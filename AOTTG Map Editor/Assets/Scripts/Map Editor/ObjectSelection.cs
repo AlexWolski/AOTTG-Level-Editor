@@ -54,7 +54,7 @@ namespace MapEditor
 
         private void onDragEnd()
         {
-            draggingToolHandle = true;
+            draggingToolHandle = false;
         }
         #endregion
 
