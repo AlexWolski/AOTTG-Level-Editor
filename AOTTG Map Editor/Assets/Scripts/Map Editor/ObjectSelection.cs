@@ -21,33 +21,9 @@ namespace MapEditor
         private Vector3 selectionAverage;
         //The sum of the points of all the selected objects for calculating the average
         private Vector3 positionSum;
-        #endregion
 
-        //Static properties to be used instead of accessing the instance data members directly
-        #region Properties
-        private static List<GameObject> SelectableObjects
-        {
-            get { return Instance.selectableObjects; }
-            set { Instance.selectableObjects = value; }
-        }
-
-        private static List<GameObject> SelectedObjects
-        {
-            get { return Instance.selectedObjects; }
-            set { Instance.selectedObjects = value; }
-        }
-
-        private static Vector3 SelectionAverage
-        {
-            get { return Instance.selectionAverage; }
-            set { Instance.selectionAverage = value; }
-        }
-
-        private static Vector3 PositionSum
-        {
-            get { return Instance.positionSum; }
-            set { Instance.positionSum = value; }
-        }
+        //Determines if the tool handle is being dragged or not
+        private bool draggingToolHandle = false;
         #endregion
 
         #region Instantiation
@@ -58,33 +34,51 @@ namespace MapEditor
                 Instance = this;
             else
                 Destroy(gameObject);
+        }
 
-            //Add the editSelection function as a listner to the OnHandleMove event
-            SelectionHandle.OnHandleMove += editSelection;
+        private void Start()
+        {
+            //Add listners to events in the SelectionHandle class
+            SelectionHandle.Instance.OnHandleMove += editSelection;
+            SelectionHandle.Instance.OnHandleBegin += onDragStart;
+            SelectionHandle.Instance.OnHandleFinish += onDragEnd;
         }
         #endregion
 
-        #region Update
-        public void lateUpdate()
+        //Methods to listen for changes in tool handle state
+        #region Tool Drag Event Listners
+        private void onDragStart()
+        {
+            draggingToolHandle = true;
+        }
+
+        private void onDragEnd()
+        {
+            draggingToolHandle = true;
+        }
+        #endregion
+
+        #region Update Selection Methods
+        private void Update()
         {
             //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
-            if (EditorManager.CurrentMode == EditorMode.Edit && !SelectionHandle.InUse())
+            if (EditorManager.Instance.currentMode == EditorMode.Edit && !draggingToolHandle)
                 checkSelect();
         }
 
         //Test if any objects were clicked
-        private static void checkSelect()
+        private void checkSelect()
         {
             //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
             if (Input.GetKeyDown(KeyCode.A))
             {
-                if (SelectedObjects.Count > 0)
+                if (selectedObjects.Count > 0)
                     deselectAll();
                 else
                     selectAll();
             }
             //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected
-            else if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject(-1))
+            else if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject(-1))
             {
                 RaycastHit hit;
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
@@ -96,7 +90,7 @@ namespace MapEditor
                     GameObject parentObject = getParent(hit.transform.gameObject);
 
                     //Only select the object if it is selectable
-                    if (SelectableObjects.Contains(parentObject))
+                    if (selectableObjects.Contains(parentObject))
                     {
                         //If left control is not held, deselect all objects and select the clicked object
                         if (!Input.GetKey(KeyCode.LeftControl))
@@ -109,7 +103,7 @@ namespace MapEditor
                         //If left control is held, select or deselect the object based on if its currently selected
                         else
                         {
-                            if (!SelectedObjects.Contains(parentObject))
+                            if (!selectedObjects.Contains(parentObject))
                                 selectObject(parentObject);
                             else
                                 deselectObject(parentObject);
@@ -126,34 +120,34 @@ namespace MapEditor
         }
 
         //Update the position, rotation, or scale of the object selections based on the tool handle
-        private static void editSelection()
+        private void editSelection()
         {
             //Determine which tool was used and call the respective transform
-            switch (SelectionHandle.tool)
+            switch (SelectionHandle.Instance.currentTool)
             {
                 case Tool.Translate:
                     //Get the position displacement and translate the selected objects
-                    Vector3 posDisplacement = SelectionHandle.getPosDisplacement();
+                    Vector3 posDisplacement = SelectionHandle.Instance.getPosDisplacement();
                     TransformTools.TranslateSelection(ref Instance.selectedObjects, posDisplacement);
 
                     //Update the selection average
-                    PositionSum += posDisplacement * SelectedObjects.Count;
-                    SelectionAverage += posDisplacement;
+                    positionSum += posDisplacement * selectedObjects.Count;
+                    selectionAverage += posDisplacement;
                     break;
 
                 case Tool.Rotate:
                     //Get the angle and axis and to rotate around
                     Vector3 rotationAxis;
-                    float angle = SelectionHandle.getRotDisplacement(out rotationAxis);
+                    float angle = SelectionHandle.Instance.getRotDisplacement(out rotationAxis);
 
                     //Rotate the selected objects around the seleciton average
-                    TransformTools.RotateSelection(ref Instance.selectedObjects, SelectionAverage, rotationAxis, angle);
+                    TransformTools.RotateSelection(ref Instance.selectedObjects, selectionAverage, rotationAxis, angle);
                     break;
 
                 case Tool.Scale:
                     //Get the scale displacement and scale the selected objects
-                    Vector3 scaleDisplacement = SelectionHandle.getScaleDisplacement();
-                    TransformTools.ScaleSelection(ref Instance.selectedObjects, SelectionAverage, scaleDisplacement, false);
+                    Vector3 scaleDisplacement = SelectionHandle.Instance.getScaleDisplacement();
+                    TransformTools.ScaleSelection(ref Instance.selectedObjects, selectionAverage, scaleDisplacement, false);
                     break;
             }
         }
@@ -161,65 +155,65 @@ namespace MapEditor
 
         #region Selection Average Methods
         //Add a point to the total average
-        private static void addAveragePoint(Vector3 point)
+        private void addAveragePoint(Vector3 point)
         {
             //Add the point to the total and update the average
-            PositionSum += point;
-            SelectionAverage = PositionSum / SelectedObjects.Count;
-            SelectionHandle.setPosition(SelectionAverage);
+            positionSum += point;
+            selectionAverage = positionSum / selectedObjects.Count;
+            SelectionHandle.Instance.setPosition(selectionAverage);
 
             //If the tool handle is not active, activate it
-            SelectionHandle.show();
+            SelectionHandle.Instance.show();
         }
 
         //Add all selected objects to the total average
-        private static void addAverageAll()
+        private void addAverageAll()
         {
             //Reset the total
-            PositionSum = Vector3.zero;
+            positionSum = Vector3.zero;
 
             //Count up the total of all the objects
-            foreach (GameObject mapObject in SelectedObjects)
-                PositionSum += mapObject.transform.position;
+            foreach (GameObject mapObject in selectedObjects)
+                positionSum += mapObject.transform.position;
 
             //Average the points
-            SelectionAverage = PositionSum / SelectableObjects.Count;
-            SelectionHandle.setPosition(SelectionAverage);
+            selectionAverage = positionSum / selectableObjects.Count;
+            SelectionHandle.Instance.setPosition(selectionAverage);
 
             //If the tool handle is not active, activate it
-            SelectionHandle.show();
+            SelectionHandle.Instance.show();
         }
 
         //Remove a point from the total average
-        private static void removeAveragePoint(Vector3 point)
+        private void removeAveragePoint(Vector3 point)
         {
             //Subtract the point to the total and update the average
-            PositionSum -= point;
+            positionSum -= point;
 
             //If there are any objects selected, update the handle position
-            if (SelectedObjects.Count != 0)
+            if (selectedObjects.Count != 0)
             {
-                SelectionAverage = PositionSum / SelectedObjects.Count;
-                SelectionHandle.setPosition(SelectionAverage);
+                selectionAverage = positionSum / selectedObjects.Count;
+                SelectionHandle.Instance.setPosition(selectionAverage);
             }
             //Otherwise, disable the tool handle
             else
-                SelectionHandle.hide();
+                SelectionHandle.Instance.hide();
         }
 
         //Remove all selected objects from the total average
-        private static void removeAverageAll()
+        private void removeAverageAll()
         {
             //Reset the total and average
-            PositionSum = Vector3.zero;
-            SelectionAverage = Vector3.zero;
+            positionSum = Vector3.zero;
+            selectionAverage = Vector3.zero;
 
             //Hide the tool handle
-            SelectionHandle.hide();
+            SelectionHandle.Instance.hide();
         }
 
-        //Return the selection average
-        public static ref Vector3 getSelectionAverage()
+        //Return a reference to the selection average
+        public ref Vector3 getSelectionAverage()
         {
             return ref Instance.selectionAverage;
         }
@@ -227,7 +221,7 @@ namespace MapEditor
 
         #region Select Objects Methods
         //Return the parent of the given object. If there is no parent, return the given object
-        private static GameObject getParent(GameObject childObject)
+        private GameObject getParent(GameObject childObject)
         {
             //The parent object that gets returned
             GameObject parentObject = childObject;
@@ -247,29 +241,29 @@ namespace MapEditor
         }
 
         //Add the given object to the selectable objects list
-        public static void addSelectable(GameObject objectToAdd)
+        public void addSelectable(GameObject objectToAdd)
         {
-            SelectableObjects.Add(getParent(objectToAdd));
+            selectableObjects.Add(getParent(objectToAdd));
         }
 
         //Remove the given object from both the selectable and selected objects lists
-        public static void removeSelectable(GameObject objectToAdd)
+        public void removeSelectable(GameObject objectToAdd)
         {
             //If the object is selected, deselect it
-            if (SelectedObjects.Contains(objectToAdd))
+            if (selectedObjects.Contains(objectToAdd))
                 deselectObject(objectToAdd);
 
             //Remove the object from the selectable objects list
-            SelectableObjects.Remove(getParent(objectToAdd));
+            selectableObjects.Remove(getParent(objectToAdd));
         }
 
-        public static void selectObject(GameObject objectToSelect)
+        public void selectObject(GameObject objectToSelect)
         {
             //Get the parent of the object
             GameObject parentObject = getParent(objectToSelect);
 
             //Select the object
-            SelectedObjects.Add(parentObject);
+            selectedObjects.Add(parentObject);
             addOutline(parentObject);
 
             //Update the position of the tool handle
@@ -278,16 +272,16 @@ namespace MapEditor
             resetToolHandleRotation();
         }
 
-        public static void selectAll()
+        public void selectAll()
         {
             //Select all objects by copying the selectedObjects list
-            SelectedObjects = new List<GameObject>(SelectableObjects);
+            selectedObjects = new List<GameObject>(selectableObjects);
 
             //Check if any objects are selected
-            if (SelectableObjects.Count != 0)
+            if (selectableObjects.Count != 0)
             {
                 //Add the outline to all of the objects
-                foreach (GameObject selectedObject in SelectedObjects)
+                foreach (GameObject selectedObject in selectedObjects)
                     addOutline(selectedObject);
 
                 //Update the tool handle position
@@ -297,13 +291,13 @@ namespace MapEditor
             }
         }
 
-        public static void deselectObject(GameObject objectToDeselect)
+        public void deselectObject(GameObject objectToDeselect)
         {
             //Get the parent of the object
             GameObject parentObject = getParent(objectToDeselect);
 
             //Deselect the object
-            SelectedObjects.Remove(parentObject);
+            selectedObjects.Remove(parentObject);
             removeOutline(parentObject);
 
             //Update the position of the tool handle
@@ -312,18 +306,18 @@ namespace MapEditor
             resetToolHandleRotation();
         }
 
-        public static void deselectAll()
+        public void deselectAll()
         {
             //If there are no selected objects, return from the function
-            if (SelectedObjects.Count == 0)
+            if (selectedObjects.Count == 0)
                 return;
 
             //Remove the outline on all selected objects
-            foreach (GameObject selectedObject in SelectedObjects)
+            foreach (GameObject selectedObject in selectedObjects)
                 removeOutline(selectedObject);
 
             //Deselect all objects by deleting the selected objects list
-            SelectedObjects = new List<GameObject>();
+            selectedObjects = new List<GameObject>();
 
             //Update the position of the tool handle
             removeAverageAll();
@@ -332,26 +326,26 @@ namespace MapEditor
         }
 
         //Resets both the selected and selectable object lists
-        public static void resetSelection()
+        public void resetSelection()
         {
-            SelectedObjects = new List<GameObject>();
-            SelectableObjects = new List<GameObject>();
+            selectedObjects = new List<GameObject>();
+            selectableObjects = new List<GameObject>();
             removeAverageAll();
         }
 
         //Remove any selected objects from both the selected and selectable objects lists
         //Returns a the selected objects list. Caller is expected to reset it after use
-        public static ref List<GameObject> removeSelected()
+        public ref List<GameObject> removeSelected()
         {
             //If all of the objects are selected, reset just the selectable objects list
-            if (SelectedObjects.Count == SelectableObjects.Count)
-                SelectableObjects = new List<GameObject>();
+            if (selectedObjects.Count == selectableObjects.Count)
+                selectableObjects = new List<GameObject>();
             //If a subset of objects are selected, remove just the selected objects from the selectable list
             else
             {
                 //Remove all of the selected objects from the selectable list
-                foreach (GameObject mapObject in SelectedObjects)
-                    SelectableObjects.Remove(mapObject);
+                foreach (GameObject mapObject in selectedObjects)
+                    selectableObjects.Remove(mapObject);
             }
 
             //Reset the selection average
@@ -362,7 +356,7 @@ namespace MapEditor
         }
 
         //Return a reference to the seleceted objects
-        public static ref List<GameObject> getSelection()
+        public ref List<GameObject> getSelection()
         {
             return ref Instance.selectedObjects;
         }
@@ -370,27 +364,27 @@ namespace MapEditor
 
         #region Tool Methods
         //Set the type of the tool handle
-        public static void setTool(Tool toolType)
+        public void setTool(Tool toolType)
         {
-            SelectionHandle.SetTool(toolType);
+            SelectionHandle.Instance.SetTool(toolType);
             resetToolHandleRotation();
         }
 
         //Set the rotation of the tool handle based on how many objects are selected
-        public static void resetToolHandleRotation()
+        public void resetToolHandleRotation()
         {
             //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
-            if ((SelectionHandle.tool == Tool.Rotate || SelectionHandle.tool == Tool.Scale) && SelectedObjects.Count == 1)
-                SelectionHandle.setRotation(SelectedObjects[0].transform.rotation);
+            if ((SelectionHandle.Instance.currentTool == Tool.Rotate || SelectionHandle.Instance.currentTool == Tool.Scale) && selectedObjects.Count == 1)
+                SelectionHandle.Instance.setRotation(selectedObjects[0].transform.rotation);
             //Otherwise reset the rotation
             else
-                SelectionHandle.setRotation(Quaternion.identity);
+                SelectionHandle.Instance.setRotation(Quaternion.identity);
         }
         #endregion
 
         #region Outline Methods
         //Add a green outline around a GameObject
-        private static void addOutline(GameObject objectToAddOutline)
+        private void addOutline(GameObject objectToAddOutline)
         {
             //Get the outline script of the parent object
             Outline outlineScript = objectToAddOutline.GetComponent<Outline>();
@@ -406,7 +400,7 @@ namespace MapEditor
         }
 
         //Remove the green outline shader
-        private static void removeOutline(GameObject objectToRemoveOutline)
+        private void removeOutline(GameObject objectToRemoveOutline)
         {
             //Get the outline script of the parent object
             Outline outlineScript = objectToRemoveOutline.GetComponent<Outline>();

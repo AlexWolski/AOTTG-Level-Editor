@@ -29,7 +29,7 @@ namespace MapEditor
         private bool boundsDisabled;
         #endregion
 
-        //Static properties to be used instead of accessing the instance data members directly
+        //Static properties to access private instance data members
         #region Properties
         public static Dictionary<GameObject, MapObject> ObjectScriptTable
         {
@@ -61,7 +61,7 @@ namespace MapEditor
         void LateUpdate()
         {
             //If the game is in edit mode, check for keyboard shortcut inputs
-            if (EditorManager.CurrentMode == EditorMode.Edit)
+            if (EditorManager.Instance.currentMode == EditorMode.Edit)
             {
                 //Check delete keys
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
@@ -81,7 +81,7 @@ namespace MapEditor
         private static void copySelection()
         {
             //Get a reference to the list of selected objects
-            ref List<GameObject> selectedObjects = ref ObjectSelection.getSelection();
+            ref List<GameObject> selectedObjects = ref ObjectSelection.Instance.getSelection();
 
             //If there aren't any objects to copy, return
             if (selectedObjects.Count == 0)
@@ -115,7 +115,7 @@ namespace MapEditor
             //Temporary GameObject to enable cloned objects before storing them
             GameObject objectClone;
             //Reset the current selection
-            ObjectSelection.deselectAll();
+            ObjectSelection.Instance.deselectAll();
 
             //Loop through all of the copied objects
             foreach (Transform copiedObject in Instance.copiedObjectsRoot.transform)
@@ -129,7 +129,7 @@ namespace MapEditor
                 mapObjectScript.copyValues(copiedObject.GetComponent<MapObject>());
                 //Add the object to the map and make it selectable
                 addObjectToMap(objectClone, mapObjectScript);
-                ObjectSelection.selectObject(objectClone);
+                ObjectSelection.Instance.selectObject(objectClone);
             }
 
             //Once the selection is pasted, change the tool type to translate
@@ -141,7 +141,7 @@ namespace MapEditor
         private static void deleteSelection()
         {
             //Get a reference to the selected objects list
-            ref List<GameObject> selectedObjects = ref ObjectSelection.removeSelected();
+            ref List<GameObject> selectedObjects = ref ObjectSelection.Instance.removeSelected();
 
             //Remove each selected object from the script table and destroy the object
             foreach (GameObject mapObject in selectedObjects)
@@ -160,7 +160,7 @@ namespace MapEditor
         public static void clearMap()
         {
             //Remove all deleted objects from the selection lists
-            ObjectSelection.resetSelection();
+            ObjectSelection.Instance.resetSelection();
             //Reset the hash table for MapObject scripts
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
             //Reset the boundaries disabled flag and activate the small bounds
@@ -216,7 +216,7 @@ namespace MapEditor
             //Make the new object a child of the map root.
             objectToAdd.transform.parent = Instance.mapRoot.transform;
             //Make the new object selectable
-            ObjectSelection.addSelectable(objectToAdd);
+            ObjectSelection.Instance.addSelectable(objectToAdd);
             //Add the object and its MapObject script to the dictionary
             ObjectScriptTable.Add(objectToAdd, objectScript);
         }
@@ -225,7 +225,7 @@ namespace MapEditor
         private static void removeObjectFromMap(GameObject objectToRemove)
         {
             //Remove the object from the object selection script
-            ObjectSelection.removeSelectable(objectToRemove);
+            ObjectSelection.Instance.removeSelectable(objectToRemove);
             //Remove the object from the script dictionary
             ObjectScriptTable.Remove(objectToRemove);
             //Delete the object itself

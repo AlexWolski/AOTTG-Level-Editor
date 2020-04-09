@@ -10,16 +10,7 @@ namespace MapEditor
         //A self-reference to the singleton instance of this script
         public static EditorManager Instance { get; private set; }
         //Determines if the user is in fly more or edit mode
-        private EditorMode currentMode;
-        #endregion
-
-        //Static properties to be used instead of accessing the instance data members directly
-        #region Properties
-        public static EditorMode CurrentMode
-        {
-            get { return Instance.currentMode; }
-            set { Instance.currentMode = value; }
-        }
+        public EditorMode currentMode { get; set; }
         #endregion
 
         void Awake()
@@ -42,7 +33,7 @@ namespace MapEditor
         {
             //If the x key is pressed and the tool handle is not being dragged,
             //toggle between edit and fly mode
-            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.InUse())
+            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.InUse())
             {
                 if (currentMode == EditorMode.Fly)
                 {
@@ -57,12 +48,6 @@ namespace MapEditor
                     Cursor.visible = false;
                 }
             }
-        }
-
-        private void LateUpdate()
-        {
-            SelectionHandle.Instance.lateUpdate();
-            ObjectSelection.Instance.lateUpdate();
         }
     }
 }

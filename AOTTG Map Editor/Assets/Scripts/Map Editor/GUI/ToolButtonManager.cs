@@ -40,7 +40,7 @@ namespace MapEditor
         private static Dictionary<Tool, ToolButtonManager> toolTable = new Dictionary<Tool, ToolButtonManager>();
 
         //Initialize data members and set up the triggers
-        void Awake()
+        void Start()
         {
             //Add this button management script to the static table
             toolTable.Add(toolType, this);
@@ -58,7 +58,7 @@ namespace MapEditor
         //Check if the shortcut key was pressed
         private void Update()
         {
-            if (EditorManager.CurrentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
+            if (EditorManager.Instance.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
             {
                 selectedButton.unselect();
                 select();
@@ -125,7 +125,7 @@ namespace MapEditor
         //The action triggered by the button press
         private void action()
         {
-            ObjectSelection.setTool(toolType);
+            ObjectSelection.Instance.setTool(toolType);
         }
 
         //Set the current tool and select the appropriate button from an external script

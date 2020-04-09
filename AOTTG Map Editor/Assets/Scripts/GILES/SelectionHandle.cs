@@ -1,9 +1,9 @@
-﻿using UnityEngine;
-using UnityEngine.EventSystems;
+﻿using MapEditor;
+using System.Drawing;
 //Used for manipulating the cursor position (Windows)
 using System.Runtime.InteropServices;
-using System.Drawing;
-using MapEditor;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace GILES
 {
@@ -13,12 +13,18 @@ namespace GILES
         //A self-reference to the singleton instance of this script
         public static SelectionHandle Instance { get; private set; }
 
-        private static Transform trs;
-        private static Camera cam;
+        //Stores the position and rotation information of the tool handle gizmo
+        private Matrix4x4 handleMatrix;
+        //Transform of the parent GameObject
+        private Transform parentTransform;
+        //Main camera in the scene
+        private Camera mainCamera;
 
-        private static Mesh _HandleLineMesh = null, _HandleTriangleMesh = null;
+        //Meshes used for the handle lines and ends
+        private Mesh handleLineMesh;
+        private Mesh handleTriangleMesh;
 
-        //Used for the tool handle gizmos
+        //Meshes used for the tool handle axis ends
         [SerializeField] private Mesh ConeMesh;
         [SerializeField] private Mesh CubeMesh;
 
@@ -27,70 +33,46 @@ namespace GILES
         [SerializeField] private Material RotateLineMaterial;
         [SerializeField] private Material HandleTransparentMaterial;
 
+        //The sizes for the tool handle meshes
+        [SerializeField] private const float handleBoxSize = .25f;
+        [SerializeField] private float handleSize = 90f;
+        public const float capSize = .07f;
+
         //The width around the tool handle that can be interacted with
         [SerializeField] const int handleInteractWidth = 10;
         //The padding around the edges of the window past which the mouse will be moved back into the window
         [SerializeField] const int windowPadding = 5;
 
-        private static Mesh HandleLineMesh
-        {
-            get
-            {
-                if (_HandleLineMesh == null)
-                {
-                    _HandleLineMesh = new Mesh();
-                    CreateHandleLineMesh(ref _HandleLineMesh, Vector3.one);
-                }
-                return _HandleLineMesh;
-            }
-        }
-
-        private static Mesh HandleTriangleMesh
-        {
-            get
-            {
-                if (_HandleTriangleMesh == null)
-                {
-                    _HandleTriangleMesh = new Mesh();
-                    CreateHandleTriangleMesh(ref _HandleTriangleMesh, Vector3.one);
-                }
-                return _HandleTriangleMesh;
-            }
-        }
-
         //The current tool. Default is translate tool
-        public static Tool tool { get; private set; } = Tool.Translate;
+        public Tool currentTool { get; private set; } = Tool.Translate;
 
         //Save the handle displacements for when they need to be returned
-        private static Vector3 prevPosition;
-        private static float rotationDisplacement;
-        private static Vector3 prevScale;
-        private static Vector3 scale;
-        private static float prevCursorDist;
-        private static float currCursorDist;
+        private Vector3 prevPosition;
+        private float rotationDisplacement;
+        private Vector3 prevScale;
+        private Vector3 scale;
+        private float prevCursorDist;
+        private float currCursorDist;
 
         //The current position of the mouse. Used instead of Input.mousePosition because it can be modified
-        private static Vector2 currentMousePosition;
+        private Vector2 currentMousePosition;
         //Used to keep track of the displacement of the mouse between frames
-        private static Vector2 prevMousePosition = Vector2.zero;
+        private Vector2 prevMousePosition = Vector2.zero;
         //The distance the mouse moved between the previous and the current frame
-        private static Vector2 mouseDisplacement = Vector2.zero;
+        private Vector2 mouseDisplacement = Vector2.zero;
         //The amount to offset the onscreen cursor to get the hypothetical unconstrained position. Used in the plane drag and scale all tools
-        private static Vector2 mouseOffest = Vector2.zero;
+        private Vector2 mouseOffest = Vector2.zero;
 
         ///Persistient variables used by the rotation tool
         //The angle displacement of the rotation handle since the drag started
-        private static float axisAngle = 0f;
+        private float axisAngle = 0f;
         //Determines if the latest rotation was positive or negative
-        private static float sign;
+        private float sign;
         //The vector in screenspace representing the tangent line of the rotation handle that was clicked
-        private static Vector2 clickTangent;
+        private Vector2 clickTangent;
 
-        ///Persistient variables used by the translation tool
-        public static float cameraDist;
-        public const float CAP_SIZE = .07f;
-
-        [SerializeField] private float HandleSize = 90f;
+        //Persistient variable used by the translation tool
+        public float cameraDist;
 
         //Adjusts the speed of handle movement when rotating or translating 
         [SerializeField] private float defaultTranslationSpeed = 1f;
@@ -105,41 +87,25 @@ namespace GILES
         private AdjustableSpeed scaleSpeed;
 
         //The maximum distance away from the origin an object can be
-        [SerializeField] private static float maxDistance = 1000000000f;
+        [SerializeField] private float maxDistance = 1000000000f;
 
         //Determines if the handle is being interacted with or not
-        private static bool draggingHandle;
+        private bool draggingHandle;
         //In how many directions is the handle able to move
-        private static int draggingAxes = 0;
+        private int draggingAxes = 0;
         //The transform of the rotation hanlde used when using the rotate tool
-        private static TransformData handleOrigin = TransformData.identity;
+        private TransformData handleOrigin = TransformData.identity;
 
         //Determines if the handle should be displayed and interactable
-        private static bool hidden = false;
-        public static bool InUse() { return draggingHandle; }
+        private bool hidden = false;
 
         //The octant of the camera relative ot the tool handle
-        public static Vector3 viewOctant { get; private set; }
+        public Vector3 viewOctant { get; private set; }
         //The octant of the camera in the previous frame
-        private static Vector3 previousOctant;
-
-        //Get the octant to display the planes in based on camera position and tool dragging status
-        private static Vector3 getViewOctant()
-        {
-            //If the tool is not being dragged, use the current octant
-            if (!draggingHandle)
-                return HandleUtility.getViewOctant(trs.position, cam.transform.position);
-
-            //If it is being dragged, use the octant the camera was in before the drag
-            return previousOctant;
-        }
-
-        [SerializeField] private const float HANDLE_BOX_SIZE = .25f;
-
+        private Vector3 previousOctant;
         #endregion
 
         #region Initialization
-
         protected void Awake()
         {
             //Set this script as the only instance of the SelectionHandle script
@@ -148,45 +114,33 @@ namespace GILES
             else
                 Destroy(gameObject);
 
-            //Hide the hanlde by default
+            //Hide the handle by default
             hidden = true;
-            trs = Instance.gameObject.GetComponent<Transform>();
-            cam = Camera.main;
+            parentTransform = Instance.gameObject.GetComponent<Transform>();
+            mainCamera = Camera.main;
 
             //Instantiate the adjustable speed classes
             translationSpeed = new AdjustableSpeed(defaultTranslationSpeed, speedMultiplier);
             rotationSpeed = new AdjustableSpeed(defaultRotationSpeed, speedMultiplier);
             scaleSpeed = new AdjustableSpeed(defaultScaleSpeed, speedMultiplier);
-        }
 
-        public static void hide()
-        {
-            hidden = true;
-            draggingHandle = false;
-        }
-
-        public static void show()
-        {
-            hidden = false;
+            //TODO comment
+            handleLineMesh = new Mesh();
+            CreateHandleLineMesh(ref handleLineMesh, Vector3.one);
+            handleTriangleMesh = new Mesh();
+            CreateHandleTriangleMesh(ref handleTriangleMesh, Vector3.one);
         }
         #endregion
 
         #region Delegate
-
         public delegate void OnHandleMoveEvent();
-        public static event OnHandleMoveEvent OnHandleMove;
+        public event OnHandleMoveEvent OnHandleMove;
 
         public delegate void OnHandleBeginEvent();
-        public static event OnHandleBeginEvent OnHandleBegin;
+        public event OnHandleBeginEvent OnHandleBegin;
 
         public delegate void OnHandleFinishEvent();
-        public static event OnHandleFinishEvent OnHandleFinish;
-
-        private static void OnCameraMove()
-        {
-            RebuildGizmoMesh(Vector3.one);
-            RebuildGizmoMatrix();
-        }
+        public event OnHandleFinishEvent OnHandleFinish;
         #endregion
 
         #region Imported Functions
@@ -217,24 +171,18 @@ namespace GILES
             }
         }
 
-        private static DragOrientation drag = new DragOrientation();
+        private DragOrientation drag = new DragOrientation();
         #endregion Drag Class
 
         #region Update
-        public void lateUpdate()
+        //Check for any mouse inputs and handle interactions
+        private void Update()
         {
             //Don't display or interact with the handle if it is hidden
             if (!hidden)
             {
-                //Update the octant the camera is in relative to the tool handle
-                previousOctant = viewOctant;
-                viewOctant = getViewOctant();
-
-                //Rebuild the gizmo meshes and matricies when the camera moves
-                OnCameraMove();
-
                 //Don't check for handle interactions if the handle is hidden or the editor is not in edit mode
-                if (EditorManager.CurrentMode != EditorMode.Edit)
+                if (EditorManager.Instance.currentMode != EditorMode.Edit)
                     return;
 
                 //Save the current mouse position
@@ -257,6 +205,61 @@ namespace GILES
                 else if (draggingHandle && Input.GetMouseButton(0))
                     interactHandle();
             }
+        }
+
+        //Rebuild the gizmos after all camera movements are finished
+        private void LateUpdate()
+        {
+            //Update the octant the camera is in relative to the tool handle
+            previousOctant = viewOctant;
+            viewOctant = getViewOctant();
+
+            //Update the gizmo position and rotation
+            RebuildGizmoMesh(Vector3.one);
+            RebuildGizmoMatrix();
+        }
+        #endregion
+
+        #region Methods
+        public void SetTool(Tool newTool)
+        {
+            if (currentTool != newTool)
+            {
+                currentTool = newTool;
+                RebuildGizmoMesh(Vector3.one);
+            }
+        }
+
+        public Tool GetTool()
+        {
+            return currentTool;
+        }
+
+        public bool InUse()
+        {
+            return draggingHandle;
+        }
+
+        public void hide()
+        {
+            hidden = true;
+            draggingHandle = false;
+        }
+
+        public void show()
+        {
+            hidden = false;
+        }
+
+        //Get the octant to display the planes in based on camera position and tool dragging status
+        private Vector3 getViewOctant()
+        {
+            //If the tool is not being dragged, use the current octant
+            if (!draggingHandle)
+                return HandleUtility.getViewOctant(parentTransform.position, mainCamera.transform.position);
+
+            //If it is being dragged, use the octant the camera was in before the drag
+            return previousOctant;
         }
 
         //If the mouse moves too close to the edges of the window, move it to the opposite side
@@ -301,10 +304,10 @@ namespace GILES
         private void interactHandle()
         {
             //Set the starting point of the drag to the position of the handle
-            drag.origin = trs.position;
+            drag.origin = parentTransform.position;
 
             //Reset the persistient variables of each tool
-            prevPosition = trs.position;
+            prevPosition = parentTransform.position;
             rotationDisplacement = 0f;
             prevScale = scale;
             prevCursorDist = currCursorDist;
@@ -312,7 +315,7 @@ namespace GILES
             //Only rotate the hanlde if the mouse was moved
             if (mouseDisplacement.magnitude > 0f)
             {
-                switch (tool)
+                switch (currentTool)
                 {
                     case Tool.Translate:
                         //If the plane translate is selected, use the whole hit point as the position of the handle
@@ -327,7 +330,7 @@ namespace GILES
                                     return;
 
                             //If the point is valid, move the tool handle to the point under the cursor
-                            trs.position = planeHit - drag.offset;
+                            parentTransform.position = planeHit - drag.offset;
                         }
                         //If only one axis is selected, use the component of the mosue displacement parallel to the drag axis
                         else
@@ -335,23 +338,23 @@ namespace GILES
                             //Get the displcement of the mouse in the handle's local space along the drag axis
                             Vector3 translationVector = getDragDisplacement(mouseDisplacement);
                             //Scale the translation vector by the translation speed and distance to camera
-                            translationVector *= cameraDist / (translationSpeed.getSpeed() * 1000);
+                            translationVector *= cameraDist / 1000 * translationSpeed.getSpeed();
 
                             //Translate the tool handle
-                            trs.Translate(translationVector, Space.Self);
+                            parentTransform.Translate(translationVector, Space.Self);
 
                             //If any of the axes of the object went out of bounds, set it back to the maximum valid value
                             for(int axis = 0; axis < 3; axis++)
                             {
-                                if(Mathf.Abs(trs.position[axis]) > maxDistance)
+                                if(Mathf.Abs(parentTransform.position[axis]) > maxDistance)
                                 {
                                     //Get the sign of the current position
-                                    float positionSign = Mathf.Sign(trs.position[axis]);
+                                    float positionSign = Mathf.Sign(parentTransform.position[axis]);
 
                                     //Set the position to back in bounds
-                                    Vector3 fixedPosition = trs.position;
+                                    Vector3 fixedPosition = parentTransform.position;
                                     fixedPosition[axis] = maxDistance * positionSign;
-                                    trs.position = fixedPosition;
+                                    parentTransform.position = fixedPosition;
                                 }
                             }
                         }
@@ -370,7 +373,7 @@ namespace GILES
                         axisAngle += rotationDisplacement;
 
                         //Rotate the tool handle
-                        trs.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;
+                        parentTransform.rotation = Quaternion.AngleAxis(axisAngle, drag.worldAxis) * handleOrigin.rotation;
 
                         break;
 
@@ -406,7 +409,7 @@ namespace GILES
             }
 
             //If the current tool is the scale tool, rebuild the handle with the correct scale
-            if(tool == Tool.Scale)
+            if(currentTool == Tool.Scale)
                 RebuildGizmoMesh(scale);
 
             //Notify all listners that the handle was moved
@@ -416,20 +419,20 @@ namespace GILES
         }
 
         //Return the difference between the current handle position and the previous position
-        public static Vector3 getPosDisplacement()
+        public Vector3 getPosDisplacement()
         {
-            return trs.position - prevPosition;
+            return parentTransform.position - prevPosition;
         }
 
         //Return the angle the handle was rotated and the axis it was rotated around
-        public static float getRotDisplacement(out Vector3 rotationAxis)
+        public float getRotDisplacement(out Vector3 rotationAxis)
         {
             rotationAxis = drag.worldAxis;
             return rotationDisplacement;
         }
 
         //Calculte how much each axis was scaled since the last frame and return it
-        public static Vector3 getScaleDisplacement()
+        public Vector3 getScaleDisplacement()
         {
             Vector3 scaleDisplacement = new Vector3();
 
@@ -440,18 +443,18 @@ namespace GILES
         }
 
         //Public getters and setters for the variables of the handle transform component
-        public static Vector3 getPosition() { return trs.position; }
-        public static void setPosition(Vector3 newPosition) { trs.position = newPosition; }
-        public static Quaternion getRotation() { return trs.rotation; }
-        public static void setRotation(Quaternion newRotation) { trs.rotation = newRotation; }
-        public static Vector3 getScale() { return trs.localScale; }
-        public static void setScale(Vector3 newScale) { trs.localScale = newScale; }
+        public Vector3 getPosition() { return parentTransform.position; }
+        public void setPosition(Vector3 newPosition) { parentTransform.position = newPosition; }
+        public Quaternion getRotation() { return parentTransform.rotation; }
+        public void setRotation(Quaternion newRotation) { parentTransform.rotation = newRotation; }
+        public Vector3 getScale() { return parentTransform.localScale; }
+        public void setScale(Vector3 newScale) { parentTransform.localScale = newScale; }
 
         //Find the point the mouse is over on the plane the handle is moving along
-        private static Vector3 getMovementPlaneHit()
+        private Vector3 getMovementPlaneHit()
         {
             //Create a ray originating from the camera and passing through the cursor
-            Ray ray = cam.ScreenPointToRay(currentMousePosition + mouseOffest);
+            Ray ray = mainCamera.ScreenPointToRay(currentMousePosition + mouseOffest);
 
             //Find the position the cursor over on the corresponding plane
             if (drag.plane.Raycast(ray, out float distToHit))
@@ -461,7 +464,7 @@ namespace GILES
             return new Vector3(float.NaN, float.NaN, float.NaN);
         }
 
-        private static Vector3 getClickVector()
+        private Vector3 getClickVector()
         {
             //A plane representing the axis currently being dragged
             Plane movementPlane = new Plane();
@@ -469,12 +472,12 @@ namespace GILES
             Vector3 hitPoint;
 
             //Create a ray originating from the camera and passing through the cursor
-            Ray ray = cam.ScreenPointToRay(currentMousePosition);
+            Ray ray = mainCamera.ScreenPointToRay(currentMousePosition);
             //The distance from the camera to the hit point
             float distToHit;
 
             //Set the movemnet plane based on the axis being dragged
-            movementPlane.SetNormalAndPosition(drag.worldAxis, trs.position);
+            movementPlane.SetNormalAndPosition(drag.worldAxis, parentTransform.position);
 
             //Find the plane hit point
             if (movementPlane.Raycast(ray, out distToHit))
@@ -484,25 +487,25 @@ namespace GILES
                 return Vector3.zero;
 
             //Return the position of hit point relative to the tool handle
-            return hitPoint - trs.position;
+            return hitPoint - parentTransform.position;
         }
 
         //Find the vector orthogonal to the given vector but in the same plane (counter-clockwise)
-        private static Vector3 getOrthInPlane(Vector3 originalVector)
+        private Vector3 getOrthInPlane(Vector3 originalVector)
         {
             return Vector3.Cross(drag.worldAxis, originalVector);
         }
 
         //Find the vector from the handle origin to where the handle was clicked
-        private static Vector2 getClickTangent()
+        private Vector2 getClickTangent()
         {
             //Convert both the handle position to screen space
-            Vector2 screenPosHandle = cam.WorldToScreenPoint(trs.position);
+            Vector2 screenPosHandle = mainCamera.WorldToScreenPoint(parentTransform.position);
             //The 3D vector tangent to the rotation handle at the click point
             Vector3 tangentVector3;
 
             //Get the vector starting at the hanlde origin and ending at the camera
-            Vector3 cameraVector = (cam.transform.position - trs.position).normalized;
+            Vector3 cameraVector = (mainCamera.transform.position - parentTransform.position).normalized;
 
             //If the dragging plane is nearly orthogonal to the camera, calculate the tangent vector using the drag plane normal
             //Temporary fix until parts of the rotation handle further from the camera aren't interactable
@@ -521,13 +524,13 @@ namespace GILES
             }
 
             //Calculate the position of the end of hte tangent vector in screen space
-            Vector2 screenPosTangent = cam.WorldToScreenPoint(trs.position + tangentVector3);
+            Vector2 screenPosTangent = mainCamera.WorldToScreenPoint(parentTransform.position + tangentVector3);
             //Get the tangent vector in screen space by subtracting the screen tangent position by the screen handle position
             return screenPosTangent - screenPosHandle;
         }
 
         //Calculate the projection of one 2D vector onto another
-        private static Vector2 projectBontoA(Vector2 B, Vector3 A)
+        private Vector2 projectBontoA(Vector2 B, Vector3 A)
         {
             //The scalar to multiply the onto vector by
             float scalar = Vector2.Dot(A, B) / Mathf.Pow(A.magnitude, 2);
@@ -538,12 +541,12 @@ namespace GILES
 
         //Use the displacement of the mouse in screen space to calculate the corresponding displacement
         //in the local space of the tool handle along the drag axis
-        private static Vector3 getDragDisplacement(Vector2 mouseDisplacement)
+        private Vector3 getDragDisplacement(Vector2 mouseDisplacement)
         {
             //Convert the position of the tool handle to screen space
-            Vector2 screenHandlePos = cam.WorldToScreenPoint(trs.position);
+            Vector2 screenHandlePos = mainCamera.WorldToScreenPoint(parentTransform.position);
             //Convert the drag axis to screen space
-            Vector2 screenDragAxis = cam.WorldToScreenPoint(trs.position + drag.worldAxis);
+            Vector2 screenDragAxis = mainCamera.WorldToScreenPoint(parentTransform.position + drag.worldAxis);
 
             //Get the drag axis vector in screen space by subtracting the drag axis tail point from the head point
             Vector2 screenDragVector = screenDragAxis - screenHandlePos;
@@ -557,16 +560,16 @@ namespace GILES
         }
 
         //Return the distance between the tool handle and the mouse in screen space
-        private static float getMouseHandleDist(Vector2 mouseDisplacement)
+        private float getMouseHandleDist(Vector2 mouseDisplacement)
         {
             //Convert the position of the tool handle to screen space
-            Vector2 screenHandlePos = cam.WorldToScreenPoint(trs.position);
+            Vector2 screenHandlePos = mainCamera.WorldToScreenPoint(parentTransform.position);
 
             //Return the magnitude of the difference between the mouse and the handle position
             return (mouseDisplacement - screenHandlePos).magnitude;
         }
 
-        private static void checkInteract()
+        private void checkInteract()
         {
             //Don't check for handle interactions if it is hidden or if the cursor is over the UI
             if (hidden || EventSystem.current.IsPointerOverGameObject(-1))
@@ -583,7 +586,7 @@ namespace GILES
                 return;
 
             //Save the current transform of the tool handle
-            handleOrigin.SetTRS(trs);
+            handleOrigin.SetTRS(parentTransform);
 
             //Reset the axes being dragged
             drag.worldAxis = Vector3.zero;
@@ -594,12 +597,12 @@ namespace GILES
             setDragData(plane);
 
             //Save the distance from the camera to the tool handle
-            if (tool == Tool.Translate)
+            if (currentTool == Tool.Translate)
             {
-                cameraDist = (cam.transform.position - trs.position).magnitude;
+                cameraDist = (mainCamera.transform.position - parentTransform.position).magnitude;
             }
             //Reset the total displacement and save the angle of the point clicked on
-            if (tool == Tool.Rotate)
+            if (currentTool == Tool.Rotate)
             {
                 axisAngle = 0f;
                 clickTangent = getClickTangent();
@@ -617,19 +620,19 @@ namespace GILES
         }
 
         //Sets the appropriate variables according to which axes are being dragged
-        private static void setDragData(Axis plane)
+        private void setDragData(Axis plane)
         {
             Vector3 a, b;
             drag.offset = Vector3.zero;
 
-            Ray ray = cam.ScreenPointToRay(currentMousePosition);
+            Ray ray = mainCamera.ScreenPointToRay(currentMousePosition);
 
             if ((plane & Axis.X) == Axis.X)
             {
                 draggingAxes++;
-                drag.worldAxis = trs.right.normalized;
+                drag.worldAxis = parentTransform.right.normalized;
                 drag.localAxis = Vector3.right;
-                drag.plane.SetNormalAndPosition(trs.right.normalized, trs.position);
+                drag.plane.SetNormalAndPosition(parentTransform.right.normalized, parentTransform.position);
             }
 
             if ((plane & Axis.Y) == Axis.Y)
@@ -637,11 +640,11 @@ namespace GILES
                 draggingAxes++;
 
                 if (draggingAxes > 1)
-                    drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.up).normalized, trs.position);
+                    drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, parentTransform.up).normalized, parentTransform.position);
                 else
-                    drag.plane.SetNormalAndPosition(trs.up.normalized, trs.position);
+                    drag.plane.SetNormalAndPosition(parentTransform.up.normalized, parentTransform.position);
 
-                drag.worldAxis += trs.up.normalized;
+                drag.worldAxis += parentTransform.up.normalized;
                 drag.localAxis += Vector3.up;
             }
 
@@ -649,31 +652,28 @@ namespace GILES
             {
                 draggingAxes++;
                 if (draggingAxes > 1)
-                    drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, trs.forward).normalized, trs.position);
+                    drag.plane.SetNormalAndPosition(Vector3.Cross(drag.worldAxis, parentTransform.forward).normalized, parentTransform.position);
                 else
-                    drag.plane.SetNormalAndPosition(trs.forward.normalized, trs.position);
+                    drag.plane.SetNormalAndPosition(parentTransform.forward.normalized, parentTransform.position);
 
-                drag.worldAxis += trs.forward.normalized;
+                drag.worldAxis += parentTransform.forward.normalized;
                 drag.localAxis += Vector3.forward;
             }
 
             if (draggingAxes < 2)
             {
-                if (HandleUtility.PointOnLine(new Ray(trs.position, drag.worldAxis), ray, out a, out b))
-                    drag.offset = a - trs.position;
+                if (HandleUtility.PointOnLine(new Ray(parentTransform.position, drag.worldAxis), ray, out a, out b))
+                    drag.offset = a - parentTransform.position;
             }
             else
             {
                 if (drag.plane.Raycast(ray, out float hit))
-                    drag.offset = ray.GetPoint(hit) - trs.position;
+                    drag.offset = ray.GetPoint(hit) - parentTransform.position;
             }
         }
 
-        private static void OnFinishHandleMovement()
+        private void OnFinishHandleMovement()
         {
-            RebuildGizmoMesh(Vector3.one);
-            RebuildGizmoMatrix();
-
             draggingHandle = false;
             //Reset the offset between the onscreen mouse position and its hypotheical unclamped position
             mouseOffest = Vector2.zero;
@@ -686,31 +686,31 @@ namespace GILES
 
         #region Interface
 
-        public static TransformData GetTransform()
+        public TransformData GetTransform()
         {
-            return new TransformData(trs.position, trs.rotation, scale);
+            return new TransformData(parentTransform.position, parentTransform.rotation, scale);
         }
 
-        private static bool CheckHandleActivated(Vector2 mousePosition, out Axis plane)
+        private bool CheckHandleActivated(Vector2 mousePosition, out Axis plane)
         {
-            plane = (Axis)0x0;
+            plane = Axis.None;
 
-            if (tool == Tool.Translate || tool == Tool.Scale)
+            if (currentTool == Tool.Translate || currentTool == Tool.Scale)
             {
-                float sceneHandleSize = HandleUtility.GetHandleSize(trs.position);
+                float sceneHandleSize = HandleUtility.GetHandleSize(parentTransform.position);
 
                 // cen
-                Vector2 cen = cam.WorldToScreenPoint(trs.position);
+                Vector2 cen = mainCamera.WorldToScreenPoint(parentTransform.position);
                 // up
-                Vector2 up = cam.WorldToScreenPoint((trs.position + (trs.up + trs.up * CAP_SIZE * 4f) * (sceneHandleSize * Instance.HandleSize)));
+                Vector2 up = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.up + parentTransform.up * capSize * 4f) * (sceneHandleSize * Instance.handleSize)));
                 // right
-                Vector2 right = cam.WorldToScreenPoint((trs.position + (trs.right + trs.right * CAP_SIZE * 4f) * (sceneHandleSize * Instance.HandleSize)));
+                Vector2 right = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.right + parentTransform.right * capSize * 4f) * (sceneHandleSize * Instance.handleSize)));
                 // forward
-                Vector2 forward = cam.WorldToScreenPoint((trs.position + (trs.forward + trs.forward * CAP_SIZE * 4f) * (sceneHandleSize * Instance.HandleSize)));
+                Vector2 forward = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.forward + parentTransform.forward * capSize * 4f) * (sceneHandleSize * Instance.handleSize)));
                 // First check if the plane boxes have been activated
-                Vector2 p_right = (cen + ((right - cen) * viewOctant.x) * HANDLE_BOX_SIZE);
-                Vector2 p_up = (cen + ((up - cen) * viewOctant.y) * HANDLE_BOX_SIZE);
-                Vector2 p_forward = (cen + ((forward - cen) * viewOctant.z) * HANDLE_BOX_SIZE);
+                Vector2 p_right = (cen + ((right - cen) * viewOctant.x) * handleBoxSize);
+                Vector2 p_up = (cen + ((up - cen) * viewOctant.y) * handleBoxSize);
+                Vector2 p_forward = (cen + ((forward - cen) * viewOctant.z) * handleBoxSize);
 
                 //x plane
                 if (HandleUtility.PointInPolygon(new Vector2[] { cen, p_up, p_up, (p_up+p_forward) - cen,
@@ -758,19 +758,19 @@ namespace GILES
 
                 for (int i = 0; i < 3; i++)
                 {
-                    cur = cam.WorldToScreenPoint(vertices[i][0]);
+                    cur = mainCamera.WorldToScreenPoint(vertices[i][0]);
 
                     for (int n = 0; n < vertices[i].Length - 1; n++)
                     {
                         prev = cur;
-                        cur = cam.WorldToScreenPoint(handleMatrix.MultiplyPoint3x4(vertices[i][n + 1]));
+                        cur = mainCamera.WorldToScreenPoint(handleMatrix.MultiplyPoint3x4(vertices[i][n + 1]));
 
                         float dist = HandleUtility.DistancePointLineSegment(mousePosition, prev, cur);
 
                         if (dist < best && dist < handleInteractWidth)
                         {
-                            Vector3 viewDir = (handleMatrix.MultiplyPoint3x4((vertices[i][n] + vertices[i][n + 1]) * .5f) - cam.transform.position).normalized;
-                            Vector3 nrm = trs.TransformDirection(vertices[i][n]).normalized;
+                            Vector3 viewDir = (handleMatrix.MultiplyPoint3x4((vertices[i][n] + vertices[i][n + 1]) * .5f) - mainCamera.transform.position).normalized;
+                            Vector3 nrm = parentTransform.TransformDirection(vertices[i][n]).normalized;
 
                             if (Vector3.Dot(nrm, viewDir) > .5f)
                                 continue;
@@ -796,92 +796,62 @@ namespace GILES
                 }
 
                 if (best < handleInteractWidth + .1f)
-                {
                     return true;
-                }
             }
 
             return false;
         }
-
         #endregion
 
         #region Render
-
-        private static Matrix4x4 handleMatrix;
-
         void OnRenderObject()
         {
             //Don't render the handle if it is hidden or this is not the designated camera
-            if (hidden || Camera.current != cam)
+            if (hidden || Camera.current != mainCamera)
                 return;
 
-            switch (tool)
+            switch (currentTool)
             {
                 case Tool.Translate:
                 case Tool.Scale:
                     HandleOpaqueMaterial.SetPass(0);
-                    Graphics.DrawMeshNow(HandleLineMesh, handleMatrix);
-                    Graphics.DrawMeshNow(HandleTriangleMesh, handleMatrix, 1);  // Cones
+                    Graphics.DrawMeshNow(handleLineMesh, handleMatrix);
+                    Graphics.DrawMeshNow(handleTriangleMesh, handleMatrix, 1);  // Cones
 
                     HandleTransparentMaterial.SetPass(0);
-                    Graphics.DrawMeshNow(HandleTriangleMesh, handleMatrix, 0);  // Box
+                    Graphics.DrawMeshNow(handleTriangleMesh, handleMatrix, 0);  // Box
                     break;
 
                 case Tool.Rotate:
                     RotateLineMaterial.SetPass(0);
-                    Graphics.DrawMeshNow(HandleLineMesh, handleMatrix);
+                    Graphics.DrawMeshNow(handleLineMesh, handleMatrix);
                     break;
             }
         }
 
-        private static void RebuildGizmoMatrix()
+        private void RebuildGizmoMatrix()
         {
-            float handleSize = HandleUtility.GetHandleSize(trs.position);
-            Matrix4x4 scale = Matrix4x4.Scale(Vector3.one * handleSize * Instance.HandleSize);
+            float handleSize = HandleUtility.GetHandleSize(parentTransform.position);
+            Matrix4x4 scale = Matrix4x4.Scale(Vector3.one * handleSize * Instance.handleSize);
 
-            handleMatrix = trs.localToWorldMatrix * scale;
+            handleMatrix = parentTransform.localToWorldMatrix * scale;
         }
 
-        private static void RebuildGizmoMesh(Vector3 scale)
+        private void RebuildGizmoMesh(Vector3 scale)
         {
-            if (_HandleLineMesh == null)
-                _HandleLineMesh = new Mesh();
-
-            if (_HandleTriangleMesh == null)
-                _HandleTriangleMesh = new Mesh();
-
-            CreateHandleLineMesh(ref _HandleLineMesh, scale);
-            CreateHandleTriangleMesh(ref _HandleTriangleMesh, scale);
+            CreateHandleLineMesh(ref handleLineMesh, scale);
+            CreateHandleTriangleMesh(ref handleTriangleMesh, scale);
         }
-        #endregion
-
-        #region Set Functionality
-
-        public static void SetTool(Tool tool)
-        {
-            if (SelectionHandle.tool != tool)
-            {
-                SelectionHandle.tool = tool;
-                RebuildGizmoMesh(Vector3.one);
-            }
-        }
-
-        public static Tool GetTool()
-        {
-            return tool;
-        }
-
         #endregion
 
         #region Mesh Generation
-        private static void CreateHandleLineMesh(ref Mesh mesh, Vector3 scale)
+        private void CreateHandleLineMesh(ref Mesh mesh, Vector3 scale)
         {
-            switch (tool)
+            switch (currentTool)
             {
                 case Tool.Translate:
                 case Tool.Scale:
-                    HandleMesh.CreatePositionLineMesh(ref mesh, trs, scale, viewOctant, cam, HANDLE_BOX_SIZE);
+                    HandleMesh.CreatePositionLineMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, handleBoxSize);
                     break;
                 
                 case Tool.Rotate:
@@ -893,14 +863,13 @@ namespace GILES
             }
         }
 
-        private static void CreateHandleTriangleMesh(ref Mesh mesh, Vector3 scale)
+        private void CreateHandleTriangleMesh(ref Mesh mesh, Vector3 scale)
         {
-            if (tool == Tool.Translate)
-                HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, Instance.ConeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
-            else if (tool == Tool.Scale)
-                HandleMesh.CreateTriangleMesh(ref mesh, trs, scale, viewOctant, cam, Instance.CubeMesh, HANDLE_BOX_SIZE, CAP_SIZE);
+            if (currentTool == Tool.Translate)
+                HandleMesh.CreateTriangleMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, Instance.ConeMesh, handleBoxSize, capSize);
+            else if (currentTool == Tool.Scale)
+                HandleMesh.CreateTriangleMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, Instance.CubeMesh, handleBoxSize, capSize);
         }
-
         #endregion
     }
 }

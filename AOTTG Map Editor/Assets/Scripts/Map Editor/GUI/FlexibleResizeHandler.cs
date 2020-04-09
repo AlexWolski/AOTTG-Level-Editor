@@ -42,7 +42,7 @@ namespace MapEditor
         public void OnPointerEnter(PointerEventData data)
         {
             //Don't enter dragging mode if the tool handle is being dragged
-            if (!SelectionHandle.InUse())
+            if (!SelectionHandle.Instance.InUse())
             {
                 Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
                 resizeBoxHover = true;

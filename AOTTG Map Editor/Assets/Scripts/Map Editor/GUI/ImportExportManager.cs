@@ -54,10 +54,10 @@ namespace MapEditor
 
             //If the popup was enabled, change the Editor to UI mode so that the map can not be edited
             if (gameObject.activeSelf)
-                EditorManager.CurrentMode = EditorMode.UI;
+                EditorManager.Instance.currentMode = EditorMode.UI;
             //If the popup was disabled, change the Editor back to edit mode
             else
-                EditorManager.CurrentMode = EditorMode.Edit;
+                EditorManager.Instance.currentMode = EditorMode.Edit;
         }
 
         //Import the map text in the input field
