@@ -1,7 +1,6 @@
 ﻿using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
-using GILES;
 
 namespace MapEditor
 {
@@ -42,7 +41,7 @@ namespace MapEditor
         public void OnPointerEnter(PointerEventData data)
         {
             //Don't enter dragging mode if the tool handle is being dragged
-            if (!SelectionHandle.Instance.InUse())
+            if (!SelectionHandle.Instance.getDragging())
             {
                 Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
                 resizeBoxHover = true;

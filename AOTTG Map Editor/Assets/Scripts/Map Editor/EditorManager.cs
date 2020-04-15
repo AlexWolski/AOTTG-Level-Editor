@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using GILES;
 
 namespace MapEditor
 {
@@ -29,24 +28,26 @@ namespace MapEditor
             currentMode = EditorMode.Edit;
         }
 
-        void Update()
+        private void Update()
         {
-            //If the x key is pressed and the tool handle is not being dragged,
-            //toggle between edit and fly mode
-            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.InUse())
+            //If the x key is pressed and nothing is being dragged, toggle between edit and fly mode
+            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.getDragging() && !DragSelect.Instance.getDragging())
+                toggleFlyEditMode();
+        }
+
+        private void toggleFlyEditMode()
+        {
+            if (currentMode == EditorMode.Fly)
             {
-                if (currentMode == EditorMode.Fly)
-                {
-                    currentMode = EditorMode.Edit;
-                    Cursor.lockState = CursorLockMode.None;
-                    Cursor.visible = true;
-                }
-                else if (currentMode == EditorMode.Edit)
-                {
-                    currentMode = EditorMode.Fly;
-                    Cursor.lockState = CursorLockMode.Locked;
-                    Cursor.visible = false;
-                }
+                currentMode = EditorMode.Edit;
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+            }
+            else if (currentMode == EditorMode.Edit)
+            {
+                currentMode = EditorMode.Fly;
+                Cursor.lockState = CursorLockMode.Locked;
+                Cursor.visible = false;
             }
         }
     }

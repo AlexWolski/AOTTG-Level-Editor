@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace GILES
+namespace MapEditor
 {
     //The three modes the tool handle can be in
     public enum Tool

@@ -2,7 +2,6 @@
 using UnityEngine.EventSystems;
 using System.Collections.Generic;
 using OutlineEffect;
-using GILES;
 
 namespace MapEditor
 {
@@ -22,8 +21,9 @@ namespace MapEditor
         //The sum of the points of all the selected objects for calculating the average
         private Vector3 positionSum;
 
-        //Determines if the tool handle is being dragged or not
-        private bool draggingToolHandle = false;
+        //Determines if objects can be selected by clicking on them
+        //False when the tool handle is being dragged or the drag selection box is active
+        private bool canSelect = false;
         #endregion
 
         #region Instantiation
@@ -40,29 +40,32 @@ namespace MapEditor
         {
             //Add listners to events in the SelectionHandle class
             SelectionHandle.Instance.OnHandleMove += editSelection;
-            SelectionHandle.Instance.OnHandleBegin += onDragStart;
-            SelectionHandle.Instance.OnHandleFinish += onDragEnd;
+            SelectionHandle.Instance.OnHandleBegin += disableSelection;
+            SelectionHandle.Instance.OnHandleFinish += enableSelection;
+
+            //Add listners to events in the DragSelect class
+            DragSelect.Instance.OnDragStart += disableSelection;
+            DragSelect.Instance.OnDragEnd += enableSelection;
         }
         #endregion
 
-        //Methods to listen for changes in tool handle state
-        #region Tool Drag Event Listners
-        private void onDragStart()
+        #region Drag Event Listners
+        private void disableSelection()
         {
-            draggingToolHandle = true;
+            canSelect = true;
         }
 
-        private void onDragEnd()
+        private void enableSelection()
         {
-            draggingToolHandle = false;
+            canSelect = false;
         }
         #endregion
 
         #region Update Selection Methods
         private void Update()
         {
-            //Check for an object selection if the editor is in edit mode and the tool handle is not being dragged
-            if (EditorManager.Instance.currentMode == EditorMode.Edit && !draggingToolHandle)
+            //Check for an object selection if in edit mode and nothing is being dragged
+            if (EditorManager.Instance.currentMode == EditorMode.Edit && !canSelect)
                 checkSelect();
         }
 
@@ -366,7 +369,7 @@ namespace MapEditor
         //Set the type of the tool handle
         public void setTool(Tool toolType)
         {
-            SelectionHandle.Instance.SetTool(toolType);
+            SelectionHandle.Instance.setTool(toolType);
             resetToolHandleRotation();
         }
 

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace GILES
+namespace MapEditor
 {
 	/**
 	 * Static class with commonly used geometry functions.

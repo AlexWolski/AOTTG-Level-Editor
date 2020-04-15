@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace GILES
+namespace MapEditor
 {
     public class SelectionHandle : MonoBehaviour
     {
@@ -194,7 +194,7 @@ namespace GILES
                 prevMousePosition = currentMousePosition;
 
                 //While the tool handle is being dragged, make sure the mouse stays within the window bounds
-                if (InUse() && !Input.GetMouseButtonUp(0))
+                if (getDragging() && !Input.GetMouseButtonUp(0))
                     constrainMouse();
                 //If the mouse is pressed, check if the handle was clicked
                 if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
@@ -222,7 +222,7 @@ namespace GILES
         #endregion
 
         #region Methods
-        public void SetTool(Tool newTool)
+        public void setTool(Tool newTool)
         {
             if (currentTool != newTool)
             {
@@ -231,12 +231,12 @@ namespace GILES
             }
         }
 
-        public Tool GetTool()
+        public Tool getTool()
         {
             return currentTool;
         }
 
-        public bool InUse()
+        public bool getDragging()
         {
             return draggingHandle;
         }

@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections.Generic;
 
-namespace GILES
+namespace MapEditor
 {
 	/**
 	 * Collection of static methods commonly used when working with scene handles.

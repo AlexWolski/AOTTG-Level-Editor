@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 
-namespace GILES
+namespace MapEditor
 {
 	/**
 	 * Static methods to build meshes necessary for the handle gizmos.

@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Runtime.Serialization;
 
-namespace GILES
+namespace MapEditor
 {
 	[System.Serializable]
 	public class TransformData : System.IEquatable<TransformData>, ISerializable
