@@ -133,7 +133,7 @@ namespace MapEditor
         }
         #endregion
 
-        #region Delegate
+        #region Delegates
         public delegate void OnHandleMoveEvent();
         public event OnHandleMoveEvent OnHandleMove;
 

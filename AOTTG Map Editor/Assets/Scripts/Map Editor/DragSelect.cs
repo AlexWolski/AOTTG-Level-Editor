@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace MapEditor
@@ -6,6 +8,7 @@ namespace MapEditor
     //A singleton class for displaying the drag select box and selecting objects
     public class DragSelect : MonoBehaviour
     {
+        #region Data Members
         //A self-reference to the singleton instance of this script
         public static DragSelect Instance { get; private set; }
 
@@ -21,16 +24,30 @@ namespace MapEditor
         //A reference to the Canvas component
         private Canvas canvasComponent;
 
-        private bool dragging = false;
-        private Vector2 dragStartPosition;
-        private Vector2 mousePosition;
+        //A reference to the main camera in the scene
+        private Camera mainCamera;
+        //Cached transformation matricies for the camera
+        Matrix4x4 worldToViewMatrix;
+        Matrix4x4 projectionMatrix;
 
-        //Delegates to notify listners when the drag select box is activated or deactivated
+        private bool mouseDown = false;
+        private bool dragging = false;
+        private Vector2 mousePosition;
+        private Vector2 dragStartPosition;
+
+        //A dictionary that maps visible game objects to their screen space bounding box (top left and bottom right verticies)
+        private Dictionary<GameObject, Tuple<Vector2, Vector2>> objectVertexTable;
+        #endregion
+
+        #region Delegates
         public delegate void OnDragStartEvent();
         public event OnDragStartEvent OnDragStart;
+
         public delegate void OnDragEndEvent();
         public event OnDragEndEvent OnDragEnd;
+        #endregion
 
+        #region Instantiation
         private void Awake()
         {
             //Set this script as the only instance of the ObjectSelection script
@@ -42,57 +59,210 @@ namespace MapEditor
 
         private void Start()
         {
+            //Find and store the main camrea in the scene
+            mainCamera = Camera.main;
+
+            objectVertexTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
+
             //Get references to components on other game objects
             dragBoxRect = dragSelectBox.GetComponent<RectTransform>();
             canvasComponent = canvas.GetComponent<Canvas>();
-        }
 
+            //Add listners to save map object verticies when needed
+            EditorManager.Instance.OnChangeMode += onModeChange;
+            MapManager.Instance.OnImport += saveObjectVerticies;
+        }
+        #endregion
+
+        #region Update
         private void LateUpdate()
         {
             //If in edit mode and the selection handle is not being dragged, update the drag select box
             if (EditorManager.Instance.currentMode == EditorMode.Edit && !SelectionHandle.Instance.getDragging())
-                updateSelectionBox();
+            {
+                //Save the position where the mouse was pressed down
+                if (Input.GetMouseButtonDown(0))
+                {
+                    dragStartPosition = Input.mousePosition;
+                    mouseDown = true;
+                }
+                //Disable the drag select when the mouse is released
+                else if (Input.GetMouseButtonUp(0))
+                {
+                    dragSelectBox.SetActive(false);
+                    mouseDown = false;
+                    dragging = false;
+                    StartCoroutine(InvokeOnDragEndEvent());
+                }
+                //Update the drag select box while the mouse is held down
+                else if (Input.GetMouseButton(0))
+                {
+                    mousePosition = Input.mousePosition;
+
+                    //If the drag select box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag select box
+                    if (mouseDown && !dragging && (mousePosition - dragStartPosition).magnitude > deadzone)
+                    {
+                        dragSelectBox.SetActive(true);
+                        dragging = true;
+                        OnDragStart?.Invoke();
+                    }
+
+                    //If the drag select box is enabled, update the box and check for selected objects
+                    if (dragging)
+                    {
+                        updateDragRect();
+                        updateSelection();
+                    }
+                }
+            }
         }
 
-        private void updateSelectionBox()
+        //Update the position and size of the drag selection box
+        private void updateDragRect()
         {
-            //Save the position where the mouse was pressed down
-            if (Input.GetMouseButtonDown(0))
-                dragStartPosition = Input.mousePosition;
-            //Disable the drag select when the mouse is released
-            else if (Input.GetMouseButtonUp(0))
-            {
-                dragSelectBox.SetActive(false);
-                dragging = false;
-                StartCoroutine(InvokeOnDragEndEvent());
-            }
-            //Update the drag select box while the mouse is held down
-            else if (Input.GetMouseButton(0))
-            {
-                mousePosition = Input.mousePosition;
+            //Calculate the dimensions of the drag select box
+            float width = Mathf.Abs(mousePosition.x - dragStartPosition.x);
+            float height = Mathf.Abs(mousePosition.y - dragStartPosition.y);
 
-                //If the drag select box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag select box
-                if (!dragging && (mousePosition - dragStartPosition).magnitude > deadzone)
+            //Divide the dimensions of the box by the scale factor of the canvas to correct the width and height
+            dragBoxRect.sizeDelta = new Vector2(width, height) / canvasComponent.scaleFactor;
+            dragBoxRect.position = (mousePosition + dragStartPosition) / 2f;
+        }
+
+        //Check for any objects that were deselected or selected
+        private void updateSelection()
+        {
+
+        }
+        #endregion
+
+        //Save or clear the bounding boxes based on the new mode
+        private void onModeChange(EditorMode prevMode, EditorMode newMode)
+        {
+            //When the mode changes from fly to edit mode, save the bounding boxes of onscreen objects
+            if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
+                saveObjectVerticies();
+            //If the new mode is fly mode, then clear the verticies
+            else if(newMode == EditorMode.Fly)
+                clearObjectVerticies();
+        }
+
+        //Store the screen space bounding box of all visible map objects
+        private void saveObjectVerticies()
+        {
+            //Get a list of all the selectable objects
+            ref List<GameObject> selectableObjects = ref ObjectSelection.Instance.getSelectable();
+            //Store the camera tranformation matricies
+            worldToViewMatrix = mainCamera.worldToCameraMatrix;
+            projectionMatrix = mainCamera.projectionMatrix;
+
+            //Iterate through the selectable objects
+            foreach (GameObject mapObject in selectableObjects)
+            {
+                bool isVisible = false;
+
+                //Loop through all renderers attatched to the object and check if they are visible
+                foreach(Renderer renderer in mapObject.GetComponentsInChildren<Renderer>())
                 {
-                    dragSelectBox.SetActive(true);
-                    dragging = true;
-                    OnDragStart?.Invoke();
+                    if(renderer.isVisible)
+                    {
+                        isVisible = true;
+                        break;
+                    }
                 }
 
-                //If the drag select box is enabled, update the box and check for selected objects
-                if (dragging)
-                    updateDragSelectBox();
+                //Check if the object is visible to the camera
+                if (isVisible)
+                {
+                    //Get the verticies of the object in screen space
+                    Tuple<Vector2, Vector2> boundingBox = get2DBoundingBox(mapObject);
+
+                    //Add the object and its screen space verticies to the dictionary
+                    if (boundingBox != null)
+                        objectVertexTable.Add(mapObject, boundingBox);
+                }
             }
         }
 
-        private void updateDragSelectBox()
+        //Return a list of screen space verticies for the meshes of the given game object
+        private Tuple<Vector2, Vector2> get2DBoundingBox(GameObject mapObject)
         {
-            float scaleFactor = canvasComponent.scaleFactor;
-            float width = Mathf.Abs(mousePosition.x - dragStartPosition.x) / scaleFactor;
-            float height = Mathf.Abs(mousePosition.y - dragStartPosition.y) / scaleFactor;
+            Matrix4x4 localToScreenMatrix = calculateLocalToScreenMatrix(mapObject);
 
-            dragBoxRect.position = (mousePosition + dragStartPosition) / 2f;
-            dragBoxRect.sizeDelta = new Vector2(width, height);
+            //Calculate the screen space dimensions
+            float scaledWidth = Screen.width / canvasComponent.scaleFactor;
+            float scaledHeight = Screen.height / canvasComponent.scaleFactor;
+
+            //Used to find the bounding box of the object
+            bool firstVertex = true;
+            float minX = 0;
+            float maxX = 0;
+            float minY = 0;
+            float maxY = 0;
+
+            //Iterate through all meshes in the map object and its children
+            foreach (MeshFilter meshFilter in mapObject.GetComponentsInChildren<MeshFilter>())
+            {
+                //Convert the verticies of the mesh to screen space and store the position in a list
+                foreach (Vector3 localVertex in meshFilter.mesh.vertices)
+                {
+                    //Get the vertex in screen space
+                    Vector2 screenVertex = localToScreenMatrix.MultiplyPoint(localVertex);
+
+                    //If any of the verticies is offscreen, return null
+                    if (screenVertex.x < 0 || screenVertex.x > scaledWidth ||
+                        screenVertex.y < 0 || screenVertex.y > scaledHeight)
+                        return null;
+
+                    //If this is the first vertex, use it to initialize the bounds
+                    if (firstVertex)
+                    {
+                        firstVertex = false;
+                        minX = screenVertex.x;
+                        maxX = screenVertex.x;
+                        minY = screenVertex.y;
+                        maxY = screenVertex.y;
+                    }
+                    //Check if this vertex is a new minimum or maximum
+                    else
+                    {
+                        if (screenVertex.x < minX)
+                            minX = screenVertex.x;
+                        else if (screenVertex.x > maxX)
+                            maxX = screenVertex.x;
+
+                        if (screenVertex.y < minY)
+                            minY = screenVertex.y;
+                        else if (screenVertex.y > maxY)
+                            maxY = screenVertex.y;
+                    }
+                }
+            }
+
+            //Return the list of screen space verticies
+            return new Tuple<Vector2, Vector2>(new Vector2(minX, maxY), new Vector2(maxX, minY));
+        }
+
+        //Create a transformation from the local space of the given game object to screen space
+        private Matrix4x4 calculateLocalToScreenMatrix(GameObject mapObject)
+        {
+            //Get the local space to world space matrix
+            Matrix4x4 localToWorldMatrix = mapObject.transform.localToWorldMatrix;
+
+            //Used to remap points from the viewport to the screen
+            float screenWidth = mainCamera.pixelWidth * 0.5f;
+            float screenHeight = mainCamera.pixelHeight * 0.5f;
+
+            //Calcualte the matrix that converts points in the view port to screen space
+            Matrix4x4 viewToScreenMatrix = Matrix4x4.TRS(new Vector3(screenWidth, screenHeight, 0f), Quaternion.identity, new Vector3(screenWidth, screenHeight, 1f));
+            
+            //Calculate and return the matrix that converts tocal points to screen space
+            return viewToScreenMatrix * projectionMatrix * worldToViewMatrix * localToWorldMatrix;
+        }
+
+        private void clearObjectVerticies()
+        {
+            objectVertexTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
         }
 
         public bool getDragging()

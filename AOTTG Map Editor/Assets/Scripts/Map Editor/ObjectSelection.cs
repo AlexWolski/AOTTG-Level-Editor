@@ -12,6 +12,8 @@ namespace MapEditor
         //A self-reference to the singleton instance of this script
         public static ObjectSelection Instance { get; private set; }
 
+        private Camera mainCamera;
+
         //A list containing the objects that can be selected
         private List<GameObject> selectableObjects = new List<GameObject>();
         //A list containing the objects currently selected
@@ -38,6 +40,9 @@ namespace MapEditor
 
         private void Start()
         {
+            //Find and store the main camrea in the scene
+            mainCamera = Camera.main;
+
             //Add listners to events in the SelectionHandle class
             SelectionHandle.Instance.OnHandleMove += editSelection;
             SelectionHandle.Instance.OnHandleBegin += disableSelection;
@@ -84,7 +89,7 @@ namespace MapEditor
             else if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject(-1))
             {
                 RaycastHit hit;
-                Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+                Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
                 //If an object was clicked, select it
                 if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Selectable")))
@@ -358,10 +363,14 @@ namespace MapEditor
             return ref Instance.selectedObjects;
         }
 
-        //Return a reference to the seleceted objects
         public ref List<GameObject> getSelection()
         {
             return ref Instance.selectedObjects;
+        }
+
+        public ref List<GameObject> getSelectable()
+        {
+            return ref Instance.selectableObjects;
         }
         #endregion
 

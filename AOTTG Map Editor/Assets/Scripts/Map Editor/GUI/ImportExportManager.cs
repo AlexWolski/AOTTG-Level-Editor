@@ -64,9 +64,9 @@ namespace MapEditor
         public void importTextField()
         {
             //Clear the existing map objects
-            MapManager.clearMap();
+            MapManager.Instance.clearMap();
             //Import the map script in the text field
-            MapManager.loadMap(textArea);
+            MapManager.Instance.loadMap(textArea);
             //Clear the textfield after the map is loaded
             textArea = "";
         }

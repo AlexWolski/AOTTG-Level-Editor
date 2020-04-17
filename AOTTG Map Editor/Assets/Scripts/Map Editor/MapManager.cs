@@ -28,15 +28,20 @@ namespace MapEditor
         private bool boundsDisabled;
         #endregion
 
+        #region Delegates
+        public delegate void OnImportEvent();
+        public event OnImportEvent OnImport;
+        #endregion
+
         //Static properties to access private instance data members
         #region Properties
-        public static Dictionary<GameObject, MapObject> ObjectScriptTable
+        public Dictionary<GameObject, MapObject> ObjectScriptTable
         {
             get { return Instance.objectScriptTable; }
             private set { Instance.objectScriptTable = value; }
         }
 
-        private static bool BoundsDisabled
+        private bool BoundsDisabled
         {
             get { return Instance.boundsDisabled; }
             set { Instance.boundsDisabled = value; }
@@ -77,7 +82,7 @@ namespace MapEditor
         }
 
         //Copy a selection by cloning all of the selected objects and storing them
-        private static void copySelection()
+        private void copySelection()
         {
             //Get a reference to the list of selected objects
             ref List<GameObject> selectedObjects = ref ObjectSelection.Instance.getSelection();
@@ -109,7 +114,7 @@ namespace MapEditor
         }
 
         //Paste the copied objects by instantiating them
-        private static void pasteSelection()
+        private void pasteSelection()
         {
             //Temporary GameObject to enable cloned objects before storing them
             GameObject objectClone;
@@ -137,7 +142,7 @@ namespace MapEditor
 
         //Delete the selected objects
         //To-Do: store deleted objects so the delete can be undone
-        private static void deleteSelection()
+        private void deleteSelection()
         {
             //Get a reference to the selected objects list
             ref List<GameObject> selectedObjects = ref ObjectSelection.Instance.removeSelected();
@@ -156,7 +161,7 @@ namespace MapEditor
 
         #region Map Methods
         //Delete all of the map objects
-        public static void clearMap()
+        public void clearMap()
         {
             //Remove all deleted objects from the selection lists
             ObjectSelection.Instance.resetSelection();
@@ -172,7 +177,7 @@ namespace MapEditor
         }
 
         //Parse the given map script and load the map
-        public static void loadMap(string mapScript)
+        public void loadMap(string mapScript)
         {
             //Remove all of the new lines and spaces in the script
             mapScript = mapScript.Replace("\n", "");
@@ -207,10 +212,13 @@ namespace MapEditor
                     Debug.Log(e + ":\t" + e.Message);
                 }
             }
+
+            //Notify listners that a map was loaded
+            OnImport?.Invoke();
         }
 
         //Add the given object to the map hierarchy and make it selectable
-        private static void addObjectToMap(GameObject objectToAdd, MapObject objectScript)
+        private void addObjectToMap(GameObject objectToAdd, MapObject objectScript)
         {
             //Make the new object a child of the map root.
             objectToAdd.transform.parent = Instance.mapRoot.transform;
@@ -221,7 +229,7 @@ namespace MapEditor
         }
 
         //Remove the given object to the map hierarchy and make object selection script
-        private static void removeObjectFromMap(GameObject objectToRemove)
+        private void removeObjectFromMap(GameObject objectToRemove)
         {
             //Remove the object from the object selection script
             ObjectSelection.Instance.removeSelectable(objectToRemove);
@@ -232,7 +240,7 @@ namespace MapEditor
         }
 
         //Parse the given object script and instantiate a new GameObject with the data
-        private static GameObject loadObject(string objectScript, out MapObject mapObjectScript)
+        private GameObject loadObject(string objectScript, out MapObject mapObjectScript)
         {
             //Seperate the object script by comma
             string[] parsedObject = objectScript.Split(',');
