@@ -25,7 +25,7 @@ namespace MapEditor
             }
         }
 
-        //An event that 
+        //Event to notify listners when the mode changes
         public delegate void OnChangeModeEvent(EditorMode prevMode, EditorMode newMode);
         public event OnChangeModeEvent OnChangeMode;
 

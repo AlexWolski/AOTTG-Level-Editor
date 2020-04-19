@@ -36,7 +36,7 @@ namespace MapEditor
         private Vector2 dragStartPosition;
 
         //A dictionary that maps visible game objects to their screen space bounding box (top left and bottom right verticies)
-        private Dictionary<GameObject, Tuple<Vector2, Vector2>> objectVertexTable;
+        private Dictionary<GameObject, Tuple<Vector2, Vector2>> boundingBoxTable;
         #endregion
 
         #region Delegates
@@ -62,15 +62,53 @@ namespace MapEditor
             //Find and store the main camrea in the scene
             mainCamera = Camera.main;
 
-            objectVertexTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
+            boundingBoxTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
 
             //Get references to components on other game objects
             dragBoxRect = dragSelectBox.GetComponent<RectTransform>();
             canvasComponent = canvas.GetComponent<Canvas>();
 
             //Add listners to save map object verticies when needed
+            MapManager.Instance.OnImport += saveBoundingBoxes;
+            MapManager.Instance.OnPaste += saveBoundingBoxes;
+            MapManager.Instance.OnDelete += removeBoundingBoxes;
             EditorManager.Instance.OnChangeMode += onModeChange;
-            MapManager.Instance.OnImport += saveObjectVerticies;
+            SelectionHandle.Instance.OnHandleFinish += saveSelectedBBs;
+        }
+        #endregion
+
+        #region Event Handlers
+        //Save or clear the bounding boxes based on the new mode
+        private void onModeChange(EditorMode prevMode, EditorMode newMode)
+        {
+            //When the mode changes from fly to edit mode, save the bounding boxes of onscreen objects
+            if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
+            {
+                //Store the camera tranformation matricies
+                worldToViewMatrix = mainCamera.worldToCameraMatrix;
+                projectionMatrix = mainCamera.projectionMatrix;
+
+                //Save the bounding box of all selectable objects
+                saveBoundingBoxes(ref ObjectSelection.Instance.getSelectable());
+            }
+            //If the new mode is fly mode, then clear the verticies
+            else if (newMode == EditorMode.Fly)
+                clearObjectVerticies();
+        }
+
+        //Saves the bounding boxes of the currently updated objects
+        private void saveSelectedBBs()
+        {
+            saveBoundingBoxes(ref ObjectSelection.Instance.getSelection());
+        }
+
+        private IEnumerator InvokeOnDragEndEvent()
+        {
+            //Wait until the end of the frame so that the OnHandleFinish event doesn't overlap with the OnMouseUp event
+            yield return new WaitForEndOfFrame();
+
+            //Notify all listners that the selection drag box was disabled
+            OnDragEnd?.Invoke();
         }
         #endregion
 
@@ -132,56 +170,100 @@ namespace MapEditor
         //Check for any objects that were deselected or selected
         private void updateSelection()
         {
+            //The bounds of the drag selection box
+            float minX, maxX, minY, maxY;
 
+            //Find horizontal bounds
+            if(dragStartPosition.x < mousePosition.x)
+            {
+                minX = dragStartPosition.x;
+                maxX = mousePosition.x;
+            }
+            else
+            {
+                minX = mousePosition.x;
+                maxX = dragStartPosition.x;
+            }
+
+            //Find vertical bounds
+            if (dragStartPosition.y < mousePosition.y)
+            {
+                minY = dragStartPosition.y;
+                maxY = mousePosition.y;
+            }
+            else
+            {
+                minY = mousePosition.y;
+                maxY = dragStartPosition.y;
+            }
+
+            //Iterate through all onscreen objects
+            foreach (KeyValuePair<GameObject, Tuple<Vector2, Vector2>> objectEntry in boundingBoxTable)
+            {
+                //Get the top left and bottom right of the object's bounding box
+                Vector2 topLeft = objectEntry.Value.Item1;
+                Vector2 bottomRight = objectEntry.Value.Item2;
+
+                //If the bounding box of the object is inside the drag select box, select the object
+                if (topLeft.x > minX && topLeft.y < maxY && bottomRight.x < maxX && bottomRight.y > minY)
+                    ObjectSelection.Instance.selectObject(objectEntry.Key);
+                //Otherwise deselect it
+                else
+                    ObjectSelection.Instance.deselectObject(objectEntry.Key);
+            }
         }
         #endregion
 
-        //Save or clear the bounding boxes based on the new mode
-        private void onModeChange(EditorMode prevMode, EditorMode newMode)
+        #region Bounding Box Methods
+        //Store the screen space bounding box of the given map objects
+        private void saveBoundingBoxes(ref HashSet<GameObject> mapObjects)
         {
-            //When the mode changes from fly to edit mode, save the bounding boxes of onscreen objects
-            if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
-                saveObjectVerticies();
-            //If the new mode is fly mode, then clear the verticies
-            else if(newMode == EditorMode.Fly)
-                clearObjectVerticies();
+            //Iterate through the selectable objects
+            foreach (GameObject mapObject in mapObjects)
+                saveBoundingBox(mapObject);
         }
 
-        //Store the screen space bounding box of all visible map objects
-        private void saveObjectVerticies()
+        //Save the screen space bounding of the given map object
+        private void saveBoundingBox(GameObject mapObject)
         {
-            //Get a list of all the selectable objects
-            ref List<GameObject> selectableObjects = ref ObjectSelection.Instance.getSelectable();
-            //Store the camera tranformation matricies
-            worldToViewMatrix = mainCamera.worldToCameraMatrix;
-            projectionMatrix = mainCamera.projectionMatrix;
+            bool isVisible = false;
 
-            //Iterate through the selectable objects
-            foreach (GameObject mapObject in selectableObjects)
+            //Loop through all renderers attatched to the object and check if they are visible
+            foreach (Renderer renderer in mapObject.GetComponentsInChildren<Renderer>())
             {
-                bool isVisible = false;
-
-                //Loop through all renderers attatched to the object and check if they are visible
-                foreach(Renderer renderer in mapObject.GetComponentsInChildren<Renderer>())
+                if (renderer.isVisible)
                 {
-                    if(renderer.isVisible)
-                    {
-                        isVisible = true;
-                        break;
-                    }
-                }
-
-                //Check if the object is visible to the camera
-                if (isVisible)
-                {
-                    //Get the verticies of the object in screen space
-                    Tuple<Vector2, Vector2> boundingBox = get2DBoundingBox(mapObject);
-
-                    //Add the object and its screen space verticies to the dictionary
-                    if (boundingBox != null)
-                        objectVertexTable.Add(mapObject, boundingBox);
+                    isVisible = true;
+                    break;
                 }
             }
+
+            //Check if the object is visible to the camera
+            if (isVisible)
+            {
+                //Get the verticies of the object in screen space
+                Tuple<Vector2, Vector2> boundingBox = get2DBoundingBox(mapObject);
+
+                //If the bounding box is offscreen, skip the object
+                if (boundingBox == null)
+                    return;
+
+                //If the table contains this item, update the value
+                if (boundingBoxTable.ContainsKey(mapObject))
+                    boundingBoxTable[mapObject] = boundingBox;
+                //Otherwise create a new entry
+                else
+                    boundingBoxTable.Add(mapObject, boundingBox);
+            }
+        }
+
+        //Removes the bounding boxes for the given list of map objects 
+        private void removeBoundingBoxes(ref HashSet<GameObject> deletedObjects)
+        {
+            //Remove all of the bounding boxes for the objects that were deleted
+            foreach (GameObject mapObject in deletedObjects)
+                if (boundingBoxTable.ContainsKey(mapObject))
+                    boundingBoxTable.Remove(mapObject);
         }
 
         //Return a list of screen space verticies for the meshes of the given game object
@@ -250,8 +332,8 @@ namespace MapEditor
             Matrix4x4 localToWorldMatrix = mapObject.transform.localToWorldMatrix;
 
             //Used to remap points from the viewport to the screen
-            float screenWidth = mainCamera.pixelWidth * 0.5f;
-            float screenHeight = mainCamera.pixelHeight * 0.5f;
+            float screenWidth = Screen.width * 0.5f;
+            float screenHeight = Screen.height * 0.5f;
 
             //Calcualte the matrix that converts points in the view port to screen space
             Matrix4x4 viewToScreenMatrix = Matrix4x4.TRS(new Vector3(screenWidth, screenHeight, 0f), Quaternion.identity, new Vector3(screenWidth, screenHeight, 1f));
@@ -259,24 +341,18 @@ namespace MapEditor
             //Calculate and return the matrix that converts tocal points to screen space
             return viewToScreenMatrix * projectionMatrix * worldToViewMatrix * localToWorldMatrix;
         }
+        #endregion
 
+        #region Public Methods
         private void clearObjectVerticies()
         {
-            objectVertexTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
+            boundingBoxTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
         }
 
         public bool getDragging()
         {
             return dragging;
         }
-
-        private IEnumerator InvokeOnDragEndEvent()
-        {
-            //Wait until the end of the frame so that the OnHandleFinish event doesn't overlap with the OnMouseUp event
-            yield return new WaitForEndOfFrame();
-
-            //Notify all listners that the selection drag box was disabled
-            OnDragEnd?.Invoke();
-        }
+        #endregion
     }
 }

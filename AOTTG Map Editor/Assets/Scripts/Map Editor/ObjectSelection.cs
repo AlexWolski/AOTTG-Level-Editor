@@ -14,10 +14,10 @@ namespace MapEditor
 
         private Camera mainCamera;
 
-        //A list containing the objects that can be selected
-        private List<GameObject> selectableObjects = new List<GameObject>();
-        //A list containing the objects currently selected
-        private List<GameObject> selectedObjects = new List<GameObject>();
+        //A hash set containing the objects that can be selected
+        private HashSet<GameObject> selectableObjects = new HashSet<GameObject>();
+        //A hash set containing the objects currently selected
+        private HashSet<GameObject> selectedObjects = new HashSet<GameObject>();
         //The average point of all the selected objects
         private Vector3 selectionAverage;
         //The sum of the points of all the selected objects for calculating the average
@@ -92,38 +92,42 @@ namespace MapEditor
                 Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
 
                 //If an object was clicked, select it
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity, LayerMask.GetMask("Selectable")))
+                if (Physics.Raycast(ray, out hit, Mathf.Infinity))
                 {
+                    //If the object isn't selectable, don't select it
+                    if (hit.transform.gameObject.tag != "Selectable")
+                    {
+                        //If the left control key isn't held down, deselect all objects
+                        if(!Input.GetKey(KeyCode.LeftControl))
+                            deselectAll();
+
+                        //Skil the non-selectable object
+                        return;
+                    }
+
                     //Select the parent of the object
                     GameObject parentObject = getParent(hit.transform.gameObject);
 
-                    //Only select the object if it is selectable
-                    if (selectableObjects.Contains(parentObject))
+                    //If left control is not held, deselect all objects and select the clicked object
+                    if (!Input.GetKey(KeyCode.LeftControl))
                     {
-                        //If left control is not held, deselect all objects and select the clicked object
-                        if (!Input.GetKey(KeyCode.LeftControl))
-                        {
-                            deselectAll();
+                        deselectAll();
 
-                            //Select the object that was clicked on
+                        //Select the object that was clicked on
+                        selectObject(parentObject);
+                    }
+                    //If left control is held, select or deselect the object based on if its currently selected
+                    else
+                    {
+                        if (!selectedObjects.Contains(parentObject))
                             selectObject(parentObject);
-                        }
-                        //If left control is held, select or deselect the object based on if its currently selected
                         else
-                        {
-                            if (!selectedObjects.Contains(parentObject))
-                                selectObject(parentObject);
-                            else
-                                deselectObject(parentObject);
-                        }
+                            deselectObject(parentObject);
                     }
                 }
-                //If no objects were clicked and left control is not held, deselect all objects and select
-                else
-                {
-                    if (!Input.GetKey(KeyCode.LeftControl))
-                        deselectAll();
-                }
+                //If no objects were clicked and left control is not held, deselect all objects
+                else if (!Input.GetKey(KeyCode.LeftControl))
+                    deselectAll();
             }
         }
 
@@ -231,27 +235,22 @@ namespace MapEditor
         //Return the parent of the given object. If there is no parent, return the given object
         private GameObject getParent(GameObject childObject)
         {
-            //The parent object that gets returned
-            GameObject parentObject = childObject;
             //The tag of the parent object
             string parentTag = childObject.transform.parent.gameObject.tag;
 
-            //Keep going up the hierarchy until the parent is a map or group
-            while (parentTag != "Map" && parentTag != "Group")
-            {
-                //Move up the hierarchy
-                parentObject = parentObject.transform.parent.gameObject;
-                //Update the parent tag
-                parentTag = parentObject.transform.parent.gameObject.tag;
-            }
+            //If the parent isn't a map object, return the child
+            if (parentTag == "Map" || parentTag == "Group")
+                return childObject;
 
-            return parentObject;
+            //Otherwise return the parent of the child
+            return childObject.transform.parent.gameObject;
         }
 
         //Add the given object to the selectable objects list
         public void addSelectable(GameObject objectToAdd)
         {
-            selectableObjects.Add(getParent(objectToAdd));
+            if(!selectableObjects.Contains(objectToAdd))
+                selectableObjects.Add(getParent(objectToAdd));
         }
 
         //Remove the given object from both the selectable and selected objects lists
@@ -270,6 +269,10 @@ namespace MapEditor
             //Get the parent of the object
             GameObject parentObject = getParent(objectToSelect);
 
+            //If the object is arleady selected, skip it
+            if (selectedObjects.Contains(parentObject))
+                return;
+
             //Select the object
             selectedObjects.Add(parentObject);
             addOutline(parentObject);
@@ -283,26 +286,26 @@ namespace MapEditor
         public void selectAll()
         {
             //Select all objects by copying the selectedObjects list
-            selectedObjects = new List<GameObject>(selectableObjects);
+            selectedObjects = new HashSet<GameObject>(selectableObjects);
 
-            //Check if any objects are selected
-            if (selectableObjects.Count != 0)
-            {
-                //Add the outline to all of the objects
-                foreach (GameObject selectedObject in selectedObjects)
-                    addOutline(selectedObject);
+            //Add the outline to all of the objects
+            foreach (GameObject selectedObject in selectedObjects)
+                addOutline(selectedObject);
 
-                //Update the tool handle position
-                addAverageAll();
-                //Reset the rotation on the tool handle
-                resetToolHandleRotation();
-            }
+            //Update the tool handle position
+            addAverageAll();
+            //Reset the rotation on the tool handle
+            resetToolHandleRotation();
         }
 
         public void deselectObject(GameObject objectToDeselect)
         {
             //Get the parent of the object
             GameObject parentObject = getParent(objectToDeselect);
+
+            //If the object isn't selected, skip it
+            if (!selectedObjects.Contains(parentObject))
+                return;
 
             //Deselect the object
             selectedObjects.Remove(parentObject);
@@ -325,7 +328,7 @@ namespace MapEditor
                 removeOutline(selectedObject);
 
             //Deselect all objects by deleting the selected objects list
-            selectedObjects = new List<GameObject>();
+            selectedObjects.Clear();
 
             //Update the position of the tool handle
             removeAverageAll();
@@ -336,18 +339,18 @@ namespace MapEditor
         //Resets both the selected and selectable object lists
         public void resetSelection()
         {
-            selectedObjects = new List<GameObject>();
-            selectableObjects = new List<GameObject>();
+            selectedObjects.Clear();
+            selectableObjects.Clear();
             removeAverageAll();
         }
 
         //Remove any selected objects from both the selected and selectable objects lists
         //Returns a the selected objects list. Caller is expected to reset it after use
-        public ref List<GameObject> removeSelected()
+        public ref HashSet<GameObject> removeSelected()
         {
             //If all of the objects are selected, reset just the selectable objects list
             if (selectedObjects.Count == selectableObjects.Count)
-                selectableObjects = new List<GameObject>();
+                selectableObjects.Clear();
             //If a subset of objects are selected, remove just the selected objects from the selectable list
             else
             {
@@ -363,12 +366,12 @@ namespace MapEditor
             return ref Instance.selectedObjects;
         }
 
-        public ref List<GameObject> getSelection()
+        public ref HashSet<GameObject> getSelection()
         {
             return ref Instance.selectedObjects;
         }
 
-        public ref List<GameObject> getSelectable()
+        public ref HashSet<GameObject> getSelectable()
         {
             return ref Instance.selectableObjects;
         }
@@ -387,7 +390,11 @@ namespace MapEditor
         {
             //If the tool handle is in rotate mode and only one object is selected, use the rotation of that object
             if ((SelectionHandle.Instance.currentTool == Tool.Rotate || SelectionHandle.Instance.currentTool == Tool.Scale) && selectedObjects.Count == 1)
-                SelectionHandle.Instance.setRotation(selectedObjects[0].transform.rotation);
+            {
+                GameObject[] selectedArray = new GameObject[1];
+                selectedObjects.CopyTo(selectedArray, 0);
+                SelectionHandle.Instance.setRotation(selectedArray[0].transform.rotation);
+            }
             //Otherwise reset the rotation
             else
                 SelectionHandle.Instance.setRotation(Quaternion.identity);
@@ -398,16 +405,13 @@ namespace MapEditor
         //Add a green outline around a GameObject
         private void addOutline(GameObject objectToAddOutline)
         {
-            //Get the outline script of the parent object
-            Outline outlineScript = objectToAddOutline.GetComponent<Outline>();
-
             //If parent has an outline script, enable it
-            if (outlineScript != null)
-                outlineScript.enabled = true;
+            if (objectToAddOutline.tag == "Selectable")
+                objectToAddOutline.GetComponent<Outline>().enabled = true;
 
             //Go through the children of the object and enable the outline if it is a selectable object
             foreach (Transform child in objectToAddOutline.transform)
-                if (child.gameObject.tag == "Selectable Object")
+                if (child.gameObject.tag == "Selectable")
                     child.GetComponent<Outline>().enabled = true;
         }
 
@@ -423,7 +427,7 @@ namespace MapEditor
 
             //Go through the children of the object and disable the outline if it is a selectable object
             foreach (Transform child in objectToRemoveOutline.transform)
-                if (child.gameObject.tag == "Selectable Object")
+                if (child.gameObject.tag == "Selectable")
                     child.GetComponent<Outline>().enabled = false;
         }
         #endregion

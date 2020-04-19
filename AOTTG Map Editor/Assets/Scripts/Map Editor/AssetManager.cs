@@ -37,8 +37,7 @@ namespace MapEditor
             if (newObject.GetComponent<Renderer>() != null)
             {
                 newObject.AddComponent<Outline>();
-                newObject.gameObject.tag = "Selectable Object";
-                newObject.gameObject.layer = LayerMask.NameToLayer("Selectable");
+                newObject.gameObject.tag = "Selectable";
             }
 
             //Go through the children of the object and add the outline script if it has a mesh
@@ -47,8 +46,7 @@ namespace MapEditor
                 if (child.GetComponent<Renderer>() != null)
                 {
                     child.gameObject.AddComponent<Outline>();
-                    child.gameObject.tag = "Selectable Object";
-                    child.gameObject.layer = LayerMask.NameToLayer("Selectable");
+                    child.gameObject.tag = "Selectable";
                 }
             }
         }

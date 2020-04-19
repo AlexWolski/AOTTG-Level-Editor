@@ -197,14 +197,19 @@ namespace MapEditor
                 if (getDragging() && !Input.GetMouseButtonUp(0))
                     constrainMouse();
                 //If the mouse is pressed, check if the handle was clicked
-                if (Input.GetMouseButtonDown(0) && !Input.GetKey(KeyCode.LeftControl))
+                if (Input.GetMouseButtonDown(0))
                     checkInteract();
-                //If the mouse is released, finish interacting with the handle
-                if (Input.GetMouseButtonUp(0))
-                    OnFinishHandleMovement();
-                //If the mouse is pressed and dragging the handle, interact with the handle
-                else if (draggingHandle && Input.GetMouseButton(0))
-                    interactHandle();
+
+                //Check if the handle is being dragged
+                if (draggingHandle)
+                {
+                    //If the mouse is released, finish interacting with the handle
+                    if (Input.GetMouseButtonUp(0))
+                        OnFinishHandleMovement();
+                    //If the mouse is pressed, interact with the handle
+                    else if (Input.GetMouseButton(0))
+                        interactHandle();
+                }
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -29,8 +30,14 @@ namespace MapEditor
         #endregion
 
         #region Delegates
-        public delegate void OnImportEvent();
+        public delegate void OnImportEvent(ref HashSet<GameObject> imported);
         public event OnImportEvent OnImport;
+
+        public delegate void OnPasteEvent(ref HashSet<GameObject> pastedObjects);
+        public event OnPasteEvent OnPaste;
+
+        public delegate void OnDeleteEvent(ref HashSet<GameObject> deletedObjects);
+        public event OnDeleteEvent OnDelete;
         #endregion
 
         //Static properties to access private instance data members
@@ -85,7 +92,7 @@ namespace MapEditor
         private void copySelection()
         {
             //Get a reference to the list of selected objects
-            ref List<GameObject> selectedObjects = ref ObjectSelection.Instance.getSelection();
+            ref HashSet<GameObject> selectedObjects = ref ObjectSelection.Instance.getSelection();
 
             //If there aren't any objects to copy, return
             if (selectedObjects.Count == 0)
@@ -138,6 +145,9 @@ namespace MapEditor
 
             //Once the selection is pasted, change the tool type to translate
             ToolButtonManager.setTool(Tool.Translate);
+
+            //Notify listners that the copied objects were pasted at the end of the frame
+            StartCoroutine(InvokeOnPaste());
         }
 
         //Delete the selected objects
@@ -145,7 +155,7 @@ namespace MapEditor
         private void deleteSelection()
         {
             //Get a reference to the selected objects list
-            ref List<GameObject> selectedObjects = ref ObjectSelection.Instance.removeSelected();
+            ref HashSet<GameObject> selectedObjects = ref ObjectSelection.Instance.removeSelected();
 
             //Remove each selected object from the script table and destroy the object
             foreach (GameObject mapObject in selectedObjects)
@@ -154,8 +164,31 @@ namespace MapEditor
                 destroyObject(mapObject);
             }
 
+            //Notify listners that the selected objects were deleted
+            OnDelete?.Invoke(ref selectedObjects);
+
             //Reset the selected objects lsit
-            selectedObjects = new List<GameObject>();
+            selectedObjects.Clear();
+        }
+        #endregion
+
+        #region Event Invocation
+        private IEnumerator InvokeOnImport()
+        {
+            //Wait until the pasted objects are rendered
+            yield return new WaitForEndOfFrame();
+
+            //Notify listners that the copied objects were pasted
+            OnPaste?.Invoke(ref ObjectSelection.Instance.getSelectable());
+        }
+
+        private IEnumerator InvokeOnPaste()
+        {
+            //Wait until the pasted objects are rendered
+            yield return new WaitForEndOfFrame();
+
+            //Notify listners that the copied objects were pasted
+            OnPaste?.Invoke(ref ObjectSelection.Instance.getSelection());
         }
         #endregion
 
@@ -213,8 +246,8 @@ namespace MapEditor
                 }
             }
 
-            //Notify listners that a map was loaded
-            OnImport?.Invoke();
+            //Notify listners that a map was loaded at the end of the frame
+            StartCoroutine(InvokeOnImport());
         }
 
         //Add the given object to the map hierarchy and make it selectable
