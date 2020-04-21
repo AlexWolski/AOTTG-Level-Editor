@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace MapEditor
 {
-    //A singleton class for displaying the drag select box and selecting objects
+    //A singleton class for displaying the drag selection box and selecting objects
     public class DragSelect : MonoBehaviour
     {
         #region Data Members
@@ -19,7 +19,7 @@ namespace MapEditor
         //How many pixels the cursor has to move after the drag starts before the drag select starts
         [SerializeField] private float deadzone = 5f;
 
-        //The RectTransform component of the drag select box game object
+        //The RectTransform component of the drag selection box game object
         private RectTransform dragBoxRect;
         //A reference to the Canvas component
         private Canvas canvasComponent;
@@ -30,13 +30,18 @@ namespace MapEditor
         Matrix4x4 worldToViewMatrix;
         Matrix4x4 projectionMatrix;
 
+        //Variables for managing the drag selection box
         private bool mouseDown = false;
         private bool dragging = false;
         private Vector2 mousePosition;
         private Vector2 dragStartPosition;
+        //The mode that the drag seleciton box is currently in
+        DragSelectMode selectMode;
 
         //A dictionary that maps visible game objects to their screen space bounding box (top left and bottom right verticies)
         private Dictionary<GameObject, Tuple<Vector2, Vector2>> boundingBoxTable;
+        //The selected objects before the drag was started
+        private HashSet<GameObject> originalSeleciton = null;
         #endregion
 
         #region Delegates
@@ -45,6 +50,16 @@ namespace MapEditor
 
         public delegate void OnDragEndEvent();
         public event OnDragEndEvent OnDragEnd;
+        #endregion
+
+        #region Enums
+        //Stores the three selection types the drag selection box can use
+        private enum DragSelectMode
+        {
+            replace,
+            additive,
+            subtractive
+        }
         #endregion
 
         #region Instantiation
@@ -115,40 +130,47 @@ namespace MapEditor
         #region Update
         private void LateUpdate()
         {
-            //If in edit mode and the selection handle is not being dragged, update the drag select box
+            //If in edit mode and the selection handle is not being dragged, update the drag selection box
             if (EditorManager.Instance.currentMode == EditorMode.Edit && !SelectionHandle.Instance.getDragging())
             {
-                //Save the position where the mouse was pressed down
+                //When the mouse is clicked, save the position where the mouse was pressed down
                 if (Input.GetMouseButtonDown(0))
                 {
                     dragStartPosition = Input.mousePosition;
                     mouseDown = true;
                 }
-                //Disable the drag select when the mouse is released
+                //Disable the drag selection box when the mouse is released
                 else if (Input.GetMouseButtonUp(0))
                 {
+                    //Release the old selected object set
+                    originalSeleciton = null;
+                    //Disable the drag section box
                     dragSelectBox.SetActive(false);
                     mouseDown = false;
                     dragging = false;
                     StartCoroutine(InvokeOnDragEndEvent());
                 }
-                //Update the drag select box while the mouse is held down
+                //Update the drag selection box while the mouse is held down
                 else if (Input.GetMouseButton(0))
                 {
                     mousePosition = Input.mousePosition;
 
-                    //If the drag select box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag select box
+                    //If the drag selection box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag selection box
                     if (mouseDown && !dragging && (mousePosition - dragStartPosition).magnitude > deadzone)
                     {
+                        //Save the currently selecited objects
+                        originalSeleciton = new HashSet<GameObject>(ObjectSelection.Instance.getSelection());
+                        //Enable the drag selection box
                         dragSelectBox.SetActive(true);
                         dragging = true;
                         OnDragStart?.Invoke();
                     }
 
-                    //If the drag select box is enabled, update the box and check for selected objects
+                    //If the drag selection box is enabled, update the box and check for selected objects
                     if (dragging)
                     {
                         updateDragRect();
+                        updateSelectMode();
                         updateSelection();
                     }
                 }
@@ -158,13 +180,29 @@ namespace MapEditor
         //Update the position and size of the drag selection box
         private void updateDragRect()
         {
-            //Calculate the dimensions of the drag select box
+            //Calculate the dimensions of the drag selection box
             float width = Mathf.Abs(mousePosition.x - dragStartPosition.x);
             float height = Mathf.Abs(mousePosition.y - dragStartPosition.y);
 
             //Divide the dimensions of the box by the scale factor of the canvas to correct the width and height
             dragBoxRect.sizeDelta = new Vector2(width, height) / canvasComponent.scaleFactor;
             dragBoxRect.position = (mousePosition + dragStartPosition) / 2f;
+        }
+
+        //Change how the drag box selects objects based on what keys are held
+        private void updateSelectMode()
+        {
+            //Get which selection modifier keys are held down
+            bool shiftHeld = Input.GetKey(KeyCode.LeftShift);
+            bool controlHeld = Input.GetKey(KeyCode.LeftControl);
+
+            //Set the select mode
+            if (!shiftHeld && !controlHeld)
+                selectMode = DragSelectMode.replace;
+            else if (shiftHeld)
+                selectMode = DragSelectMode.additive;
+            else if (controlHeld)
+                selectMode = DragSelectMode.subtractive;
         }
 
         //Check for any objects that were deselected or selected
@@ -197,19 +235,56 @@ namespace MapEditor
                 maxY = dragStartPosition.y;
             }
 
+            //If the drag select mode is additive or subtractive, select all of the originally selected objects
+            if (selectMode == DragSelectMode.additive || selectMode == DragSelectMode.subtractive)
+            {
+                foreach (GameObject selectedObject in originalSeleciton)
+                    ObjectSelection.Instance.selectObject(selectedObject);
+            }
+            //If the drag selefct mode is repalce, deselect all map objects
+            else
+                ObjectSelection.Instance.deselectAll();
+
             //Iterate through all onscreen objects
             foreach (KeyValuePair<GameObject, Tuple<Vector2, Vector2>> objectEntry in boundingBoxTable)
             {
+                //Determines if the map object is inside the drag seleciton box
+                bool inDragBox = false;
+
                 //Get the top left and bottom right of the object's bounding box
                 Vector2 topLeft = objectEntry.Value.Item1;
                 Vector2 bottomRight = objectEntry.Value.Item2;
+                //Get the map object
+                GameObject mapObject = objectEntry.Key;
 
-                //If the bounding box of the object is inside the drag select box, select the object
+                //If the bounding box of the object is inside the drag selection box, set the inDragBox flag
                 if (topLeft.x > minX && topLeft.y < maxY && bottomRight.x < maxX && bottomRight.y > minY)
-                    ObjectSelection.Instance.selectObject(objectEntry.Key);
-                //Otherwise deselect it
-                else
-                    ObjectSelection.Instance.deselectObject(objectEntry.Key);
+                    inDragBox = true;
+
+                //Select the object based on the select mode
+                switch (selectMode)
+                {
+                    case DragSelectMode.replace:
+                        //Select the object if it is in the selection box and deselect it if not
+                        if (inDragBox)
+                            ObjectSelection.Instance.selectObject(mapObject);
+                        else
+                            ObjectSelection.Instance.deselectObject(mapObject);
+
+                        break;
+
+                    case DragSelectMode.additive:
+                        //Select the object if it is in the selection box
+                        if (inDragBox)
+                            ObjectSelection.Instance.selectObject(mapObject);
+                        break;
+
+                    case DragSelectMode.subtractive:
+                        //Deselect the object if it is in the selection box
+                        if (inDragBox)
+                            ObjectSelection.Instance.deselectObject(mapObject);
+                        break;
+                }
             }
         }
         #endregion

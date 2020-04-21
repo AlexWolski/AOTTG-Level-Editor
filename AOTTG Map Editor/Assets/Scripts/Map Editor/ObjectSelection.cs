@@ -77,16 +77,24 @@ namespace MapEditor
         //Test if any objects were clicked
         private void checkSelect()
         {
-            //If the 'A' key was pressed, either select or deselect all based on if anything is currently selected
-            if (Input.GetKeyDown(KeyCode.A))
+            //If the left control key is held, check for shortcuts
+            if (Input.GetKey(KeyCode.LeftControl))
             {
-                if (selectedObjects.Count > 0)
-                    deselectAll();
-                else
-                    selectAll();
+                //If 'control + A' is pressed, either select or deselect all based on if anything is currently selected
+                if (Input.GetKeyDown(KeyCode.A))
+                {
+                    if (selectedObjects.Count > 0)
+                        deselectAll();
+                    else
+                        selectAll();
+                }
+                //If 'control + I' is pressed, invert the current selection
+                if (Input.GetKeyDown(KeyCode.I))
+                    invertSelection();
             }
+
             //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected
-            else if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject(-1))
+            if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject(-1))
             {
                 RaycastHit hit;
                 Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
@@ -98,7 +106,7 @@ namespace MapEditor
                     if (hit.transform.gameObject.tag != "Selectable")
                     {
                         //If the left control key isn't held down, deselect all objects
-                        if(!Input.GetKey(KeyCode.LeftControl))
+                        if (!Input.GetKey(KeyCode.LeftControl))
                             deselectAll();
 
                         //Skil the non-selectable object
@@ -364,6 +372,25 @@ namespace MapEditor
 
             //Return a reference to the selected objects list
             return ref Instance.selectedObjects;
+        }
+
+        //Deselect the current seleciton and select all other objects
+        public void invertSelection()
+        {
+            //Iterate over all selectable map objects
+            foreach (GameObject mapObject in selectableObjects)
+                invertObject(mapObject);
+        }
+
+        //Invert the selection on the given object
+        public void invertObject(GameObject mapObject)
+        {
+            //If the map object is already selected, deselect it
+            if (selectedObjects.Contains(mapObject))
+                deselectObject(mapObject);
+            //Otherwise, select it
+            else
+                selectObject(mapObject);
         }
 
         public ref HashSet<GameObject> getSelection()
