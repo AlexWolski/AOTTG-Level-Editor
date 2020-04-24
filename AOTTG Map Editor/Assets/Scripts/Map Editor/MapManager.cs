@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Text;
 using UnityEngine;
 
 namespace MapEditor
@@ -340,18 +341,20 @@ namespace MapEditor
         //Convert the map into a script
         public override string ToString()
         {
-            //The exported map script
-            string mapScript = "";
+            //Create a string builder to efficiently construct the script
+            //Initialize with a starting buffer with enough room to fit a large map script
+            StringBuilder scriptBuilder = new StringBuilder(100000);
 
-            //If bounds are disabled, add that script to the beginning of the script
+            //If bounds are disabled, append the bounds disable script
             if (BoundsDisabled)
-                mapScript += "map,disablebounds;\n";
+                scriptBuilder.AppendLine("map,disablebounds;");
 
-            //Add the script for each object to the map script
+            //Append the script for each object to the map script
             foreach (MapObject objectScript in ObjectScriptTable.Values)
-                mapScript += objectScript.ToString() + "\n";
+                scriptBuilder.AppendLine(objectScript.ToString());
 
-            return mapScript;
+            //Get the script string and return it
+            return scriptBuilder.ToString();
         }
         #endregion
 

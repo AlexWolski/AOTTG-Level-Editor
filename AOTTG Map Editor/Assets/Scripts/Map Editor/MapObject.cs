@@ -1,5 +1,6 @@
 ﻿using UnityEngine;
 using System;
+using System.Text;
 
 namespace MapEditor
 {
@@ -344,23 +345,28 @@ namespace MapEditor
         //Convert the map object into a script
         public override string ToString()
         {
-            //The exported object script. Every script starts with the type and name
-            string objectScript = FullTypeName + "," + ObjectName;
+            //Create a string builder to efficiently construct the script
+            //Initialize with a starting buffer with enough room to fit a long object script
+            StringBuilder scriptBuilder = new StringBuilder(100);
 
-            //Add properties to the script based on what type of object it is
+            //Append the object type and name to the script
+            scriptBuilder.Append(FullTypeName + "," + ObjectName);
+
+            //Append properties to the script based on what type of object it is
             if (Type == objectType.photon && ObjectName.StartsWith("spawn"))
-                objectScript += "," + SpawnTimer + "," + boolToString(EndlessSpawn);
+                scriptBuilder.Append("," + SpawnTimer + "," + boolToString(EndlessSpawn));
             else if (ObjectName.StartsWith("region"))
-                objectScript += "," + RegionName + "," + vector3ToString(Scale);
+                scriptBuilder.Append("," + RegionName + "," + vector3ToString(Scale));
             else if (Type == objectType.custom || propertyNumber >= 15 && (Type == objectType.@base || Type == objectType.photon))
-                objectScript += "," + Material + "," + vector3ToString(Scale) + "," + boolToString(ColorEnabled) + "," + colorToString(Color) + "," + vector2ToString(Tiling);
+                scriptBuilder.Append("," + Material + "," + vector3ToString(Scale) + "," + boolToString(ColorEnabled) + "," + colorToString(Color) + "," + vector2ToString(Tiling));
             else if (Type == objectType.racing || Type == objectType.misc)
-                objectScript += "," + vector3ToString(Scale);
+                scriptBuilder.Append("," + vector3ToString(Scale));
 
-            //Add the position and rotation to all objects. Scale the position up by a factor of 10
-            objectScript += "," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";";
+            //Append the position and rotation to all objects. Scale the position up by a factor of 10
+            scriptBuilder.Append("," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";");
 
-            return objectScript;
+            //Get the script string and return it
+            return scriptBuilder.ToString();
         }
         #endregion
     }

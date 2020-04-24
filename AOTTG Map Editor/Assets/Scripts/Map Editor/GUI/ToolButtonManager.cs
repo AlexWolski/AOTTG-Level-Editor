@@ -8,6 +8,7 @@ namespace MapEditor
     public class ToolButtonManager : MonoBehaviour,
     IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
+        #region Data Members
         //A list of the states the button can be in
         private enum buttonState
         {
@@ -21,6 +22,9 @@ namespace MapEditor
         [SerializeField] private Sprite pressed;
         [SerializeField] private Sprite selected;
 
+        //The image component attached to this game object
+        private Image imageScript;
+
         //The current state of the button
         [SerializeField] private buttonState currentState;
         //The tool this button corresponds to
@@ -28,7 +32,7 @@ namespace MapEditor
         //The keyboard key that selects this button
         [SerializeField] private KeyCode shortCutKey;
 
-        //Determine if the left mouse button is currently pressed or not
+        //Determines if the left mouse button is currently pressed or not
         private static bool mouseDown;
         //The button script that is currently pressed down
         private static ToolButtonManager pressedButton;
@@ -37,10 +41,15 @@ namespace MapEditor
 
         //A dictionary mapping the different tools to their respective button scripts
         private static Dictionary<Tool, ToolButtonManager> toolTable = new Dictionary<Tool, ToolButtonManager>();
+        #endregion
 
+        #region Initialization
         //Initialize data members and set up the triggers
         void Start()
         {
+            //Save the image component
+            imageScript = gameObject.GetComponent<Image>();
+
             //Add this button management script to the static table
             toolTable.Add(toolType, this);
 
@@ -53,7 +62,9 @@ namespace MapEditor
 
             mouseDown = false;
         }
+        #endregion
 
+        #region Update
         //Check if the shortcut key was pressed
         private void Update()
         {
@@ -63,12 +74,14 @@ namespace MapEditor
                 select();
             }
         }
+        #endregion
 
+        #region Button Methods
         //Change the image and state to selected
         private void select()
         {
             //Set the button images
-            gameObject.GetComponent<Image>().sprite = selected;
+            imageScript.sprite = selected;
             currentState = buttonState.selected;
             selectedButton = this;
             //Execute the action of the button
@@ -78,10 +91,26 @@ namespace MapEditor
         //Change the image and state to unselected
         private void unselect()
         {
-            gameObject.GetComponent<Image>().sprite = unselected;
+            imageScript.sprite = unselected;
             currentState = buttonState.unselected;
         }
 
+        //The action triggered by the button press
+        private void action()
+        {
+            ObjectSelection.Instance.setTool(toolType);
+        }
+
+        //Set the current tool and select the appropriate button from an external script
+        public static void setTool(Tool newTool)
+        {
+            //Unselect the currently active button and select the button for the new tool
+            selectedButton.unselect();
+            toolTable[newTool].select();
+        }
+        #endregion
+
+        #region Pointer Methods
         //If this button was last pressed and the mouse moves over it, change to the pressed image
         public void OnPointerEnter(PointerEventData data)
         {
@@ -103,7 +132,7 @@ namespace MapEditor
 
             if (currentState == buttonState.unselected)
             {
-                gameObject.GetComponent<Image>().sprite = pressed;
+                imageScript.sprite = pressed;
                 currentState = buttonState.pressed;
                 pressedButton = this;
             }
@@ -120,19 +149,6 @@ namespace MapEditor
                 select();
             }
         }
-
-        //The action triggered by the button press
-        private void action()
-        {
-            ObjectSelection.Instance.setTool(toolType);
-        }
-
-        //Set the current tool and select the appropriate button from an external script
-        public static void setTool(Tool newTool)
-        {
-            //Unselect the currently active button and select the button for the new tool
-            selectedButton.unselect();
-            toolTable[newTool].select();
-        }
+        #endregion
     }
 }
