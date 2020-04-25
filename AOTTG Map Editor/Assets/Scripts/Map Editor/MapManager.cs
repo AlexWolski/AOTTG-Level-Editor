@@ -17,12 +17,24 @@ namespace MapEditor
         [SerializeField] private GameObject copiedObjectsRoot;
         //A reference to the empty map to add objects to
         [SerializeField] private GameObject mapRoot;
+        //A refrence to the canvas object
+        [SerializeField] private GameObject canvas;
+        //The canvas group component attached to the canvas
+        private CanvasGroup canvasGroup;
+        //References to the UI objects to be displayed when importing or exporting
+        [SerializeField] private GameObject importText;
+        [SerializeField] private GameObject exportText;
         //A reference to the billboard prefab
         [SerializeField] private GameObject billboardPrefab;
 
         //References to the large and small map boundaries
         [SerializeField] private GameObject smallMapBounds;
         [SerializeField] private GameObject largeMapBounds;
+
+        //The minimum in-game frame rate while loading or exporting
+        [SerializeField] private float loadingFPS = 60f;
+        //The maximum amount of time a coroutine can run before returning. Calculated from minimum loading frame rate
+        private float loadingDelay;
 
         //A dictionary mapping gameobjects to MapObject scripts
         public Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
@@ -65,7 +77,12 @@ namespace MapEditor
             else
                 Destroy(gameObject);
 
+            //Insantiate the script table
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
+            //Get a reference to the canvas group
+            canvasGroup = canvas.GetComponent<CanvasGroup>();
+            //Calcualte the delay between each frame while loading in milliseconds
+            loadingDelay = 1f / loadingFPS * 1000;
         }
         #endregion
 
@@ -179,6 +196,10 @@ namespace MapEditor
             //Wait until the pasted objects are rendered
             yield return new WaitForEndOfFrame();
 
+            //Enable the UI and shortcuts
+            canvasGroup.blocksRaycasts = true;
+            EditorManager.Instance.shortcutsEnabled = true;
+
             //Notify listners that the copied objects were pasted
             OnPaste?.Invoke(ref ObjectSelection.Instance.getSelectable());
         }
@@ -210,9 +231,23 @@ namespace MapEditor
                 GameObject.Destroy(child.gameObject);
         }
 
-        //Parse the given map script and load the map
         public void loadMap(string mapScript)
         {
+            //Disable the UI and shortcuts
+            canvasGroup.blocksRaycasts = false;
+            EditorManager.Instance.shortcutsEnabled = false;
+
+            //Load the map in a coroutine
+            StartCoroutine(loadMapRoutine(mapScript));
+        }
+
+        //Parse the given map script and load the map
+        private IEnumerator loadMapRoutine(string mapScript)
+        {
+            //Used to keep track of how much time has elapsed between frames
+            System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
+            stopWatch.Start();
+
             //Remove all of the new lines and spaces in the script
             mapScript = mapScript.Replace("\n", "");
             mapScript = mapScript.Replace("\r", "");
@@ -245,6 +280,21 @@ namespace MapEditor
                     Debug.Log("Skipping object on line " + scriptIndex + "\t(" + parsedMap[scriptIndex] + ")");
                     Debug.Log(e + ":\t" + e.Message);
                 }
+
+                //Get the time elapsed since last frame
+                stopWatch.Stop();
+
+                //Check if enough time has passed to start a new frame
+                if (stopWatch.ElapsedMilliseconds > loadingDelay)
+                {
+                    //Return from the corouting and render a frame
+                    yield return null;
+                    //Start counting the elapsed time from zero
+                    stopWatch.Restart();
+                }
+                //Otherwise, resume measuring the elapsed time
+                else
+                    stopWatch.Start();
             }
 
             //Notify listners that a map was loaded at the end of the frame

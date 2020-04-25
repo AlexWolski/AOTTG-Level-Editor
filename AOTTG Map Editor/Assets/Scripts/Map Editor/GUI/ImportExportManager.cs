@@ -47,6 +47,10 @@ namespace MapEditor
             MapManager.Instance.clearMap();
             //Import the map script in the text field
             MapManager.Instance.loadMap(textArea.text);
+            //Clear the import text area
+            textArea.clearText();
+            //Hide the import popup
+            togglePopup();
         }
     }
 }

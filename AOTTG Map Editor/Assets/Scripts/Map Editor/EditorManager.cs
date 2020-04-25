@@ -7,8 +7,9 @@ namespace MapEditor
     {
         //A self-reference to the singleton instance of this script
         public static EditorManager Instance { get; private set; }
-        //Determines if the user is in fly more or edit mode
+        //A hidden variable to hold the current mode
         private EditorMode currentModeValue;
+        public bool shortcutsEnabled { get; set; }
 
         //A property for accessing the current mode variable
         public EditorMode currentMode
@@ -43,6 +44,7 @@ namespace MapEditor
 
             //The editor is in edit mode by default
             currentMode = EditorMode.Edit;
+            shortcutsEnabled = true;
         }
 
         private void Update()

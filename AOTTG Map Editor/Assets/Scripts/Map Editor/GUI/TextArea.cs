@@ -13,6 +13,8 @@ namespace MapEditor
         [SerializeField] private Sprite focusedSprite;
         //The child game object that contains the text component
         [SerializeField] private GameObject textObject;
+        //Toggles the ability to delete the text area contents using key inputs
+        [SerializeField] private bool canDelete = false;
 
         //The image component attached to this game object
         private Image imageComponent;
@@ -69,6 +71,13 @@ namespace MapEditor
                 else if (Input.GetKeyDown(KeyCode.V))
                     pasteToTextArea();
             }
+
+            //If the delete or backspace key is pressed, clear the text
+            if(canDelete && isFocused &&
+              (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)))
+            {
+                clearText();
+            }
         }
 
         //Set the sprite image for the game object
@@ -104,6 +113,11 @@ namespace MapEditor
             TextEditor te = new TextEditor();
             te.Paste();
             textComponent.text = te.text;
+        }
+
+        public void clearText()
+        {
+            textComponent.text = "";
         }
     }
 }

@@ -2,6 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace MapEditor
 {
@@ -117,6 +118,17 @@ namespace MapEditor
             saveBoundingBoxes(ref ObjectSelection.Instance.getSelection());
         }
 
+        //Disable the drag select box
+        private void endDrag()
+        {
+            //Release the old selected object set
+            originalSeleciton = null;
+            //Disable the drag section box
+            dragSelectBox.SetActive(false);
+            mouseDown = false;
+            dragging = false;
+        }
+
         private IEnumerator InvokeOnDragEndEvent()
         {
             //Wait until the end of the frame so that the OnHandleFinish event doesn't overlap with the OnMouseUp event
@@ -133,8 +145,8 @@ namespace MapEditor
             //If in edit mode and the selection handle is not being dragged, update the drag selection box
             if (EditorManager.Instance.currentMode == EditorMode.Edit && !SelectionHandle.Instance.getDragging())
             {
-                //When the mouse is clicked, save the position where the mouse was pressed down
-                if (Input.GetMouseButtonDown(0))
+                //When the mouse is clicked and the cursor is not over the UI, save the position where the mouse was pressed down
+                if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject(-1))
                 {
                     dragStartPosition = Input.mousePosition;
                     mouseDown = true;
@@ -142,17 +154,26 @@ namespace MapEditor
                 //Disable the drag selection box when the mouse is released
                 else if (Input.GetMouseButtonUp(0))
                 {
-                    //Release the old selected object set
-                    originalSeleciton = null;
-                    //Disable the drag section box
-                    dragSelectBox.SetActive(false);
-                    mouseDown = false;
-                    dragging = false;
+                    endDrag();
                     StartCoroutine(InvokeOnDragEndEvent());
                 }
                 //Update the drag selection box while the mouse is held down
                 else if (Input.GetMouseButton(0))
                 {
+                    //If the escapse key was pressed, revert the seleciton to what it was before
+                    if (Input.GetKeyDown(KeyCode.Escape))
+                    {
+                        //Deselect all of the currently selected objects
+                        ObjectSelection.Instance.deselectAll();
+
+                        //Select the previously selected objects
+                        foreach (GameObject mapObject in originalSeleciton)
+                            ObjectSelection.Instance.selectObject(mapObject);
+
+                        //Disable the drag selection box
+                        endDrag();
+                    }
+
                     mousePosition = Input.mousePosition;
 
                     //If the drag selection box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag selection box

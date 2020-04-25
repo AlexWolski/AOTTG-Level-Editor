@@ -1,5 +1,4 @@
-﻿using MapEditor;
-using System.Collections;
+﻿using System.Collections;
 using System.Drawing;
 //Used for manipulating the cursor position (Windows)
 using System.Runtime.InteropServices;
@@ -383,7 +382,7 @@ namespace MapEditor
 
                         break;
 
-                    //If the tool isn't translate or rotate, it has to be scale
+                    //If the tool isn't translate or rotate, it is scale
                     default:
                         //Stores the scale factor of each axis
                         Vector3 scaleVector;

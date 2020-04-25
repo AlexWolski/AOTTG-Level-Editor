@@ -70,7 +70,9 @@ namespace MapEditor
         private void Update()
         {
             //Check for an object selection if in edit mode and nothing is being dragged
-            if (EditorManager.Instance.currentMode == EditorMode.Edit && !canSelect)
+            if (EditorManager.Instance.currentMode == EditorMode.Edit &&
+                EditorManager.Instance.shortcutsEnabled &&
+                !canSelect)
                 checkSelect();
         }
 

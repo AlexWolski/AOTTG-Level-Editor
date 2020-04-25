@@ -68,7 +68,9 @@ namespace MapEditor
         //Check if the shortcut key was pressed
         private void Update()
         {
-            if (EditorManager.Instance.currentMode == EditorMode.Edit && Input.GetKeyDown(shortCutKey))
+            if (EditorManager.Instance.currentMode == EditorMode.Edit &&
+                EditorManager.Instance.shortcutsEnabled  &&
+                Input.GetKeyDown(shortCutKey))
             {
                 selectedButton.unselect();
                 select();
