@@ -129,6 +129,8 @@ namespace MapEditor
             CreateHandleLineMesh(ref handleLineMesh, Vector3.one);
             handleTriangleMesh = new Mesh();
             CreateHandleTriangleMesh(ref handleTriangleMesh, Vector3.one);
+            //Set the default size of the hanlde mesh
+            scale = Vector3.one;
         }
         #endregion
 
@@ -219,8 +221,8 @@ namespace MapEditor
             previousOctant = viewOctant;
             viewOctant = getViewOctant();
 
-            //Update the gizmo position and rotation
-            RebuildGizmoMesh(Vector3.one);
+            //Update the gizmo mesh and scale
+            RebuildGizmoMesh(scale);
             RebuildGizmoMatrix();
         }
         #endregion
@@ -413,14 +415,8 @@ namespace MapEditor
                 }
             }
 
-            //If the current tool is the scale tool, rebuild the handle with the correct scale
-            if(currentTool == Tool.Scale)
-                RebuildGizmoMesh(scale);
-
             //Notify all listners that the handle was moved
             OnHandleMove?.Invoke();
-
-            RebuildGizmoMatrix();
         }
 
         //Return the difference between the current handle position and the previous position
@@ -682,6 +678,8 @@ namespace MapEditor
             draggingHandle = false;
             //Reset the offset between the onscreen mouse position and its hypotheical unclamped position
             mouseOffest = Vector2.zero;
+            //Reset the size of the mesh
+            scale = Vector3.one;
 
             //Notify listners that the handle is no longer being dragged
             StartCoroutine(InvokeFinishHandleEvent());
