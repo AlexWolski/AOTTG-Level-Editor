@@ -20,7 +20,7 @@ namespace MapEditor
         //Main camera in the scene
         private Camera mainCamera;
 
-        //Meshes used for the handle lines and ends
+        //Meshes used for the handle lines and plane drag box
         private Mesh handleLineMesh;
         private Mesh handleTriangleMesh;
 
@@ -124,7 +124,7 @@ namespace MapEditor
             rotationSpeed = new AdjustableSpeed(defaultRotationSpeed, speedMultiplier, true, false);
             scaleSpeed = new AdjustableSpeed(defaultScaleSpeed, speedMultiplier, true, false);
 
-            //TODO comment
+            //Create the meshes needed for the tool handle
             handleLineMesh = new Mesh();
             CreateHandleLineMesh(ref handleLineMesh, Vector3.one);
             handleTriangleMesh = new Mesh();

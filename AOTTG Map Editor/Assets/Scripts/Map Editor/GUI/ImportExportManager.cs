@@ -1,56 +1,109 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using UnityEngine;
+using UnityEngine.UI;
 
 namespace MapEditor
 {
     public class ImportExportManager : MonoBehaviour
     {
-        //The text area object
-        [SerializeField] private GameObject textAreaObject;
-        //A reference to the custom Text Area script on the text area object
-        private TextArea textArea;
+        //A refrence to the canvas object
+        [SerializeField] private GameObject canvas;
+        //The canvas group component attached to the canvas
+        private CanvasGroup canvasGroup;
 
-        //Determines if the Start function has been called or not
-        private bool initialized = false;
+        //The Import popup
+        [SerializeField] private GameObject importPopup;
+        //Displays the imported text
+        [SerializeField] private GameObject importTextArea;
+        //The text area component attached to the import text area object
+        private TextArea importTextAreaComponent;
+
+        //Displays the importing message
+        [SerializeField] private GameObject importingMessage;
+        //Displays how many map objects have been imported
+        [SerializeField] private GameObject progressText;
+        //The text component attached to the progress text object
+        private Text progressTextComponent;
+        //Displays how many map objects are in the script
+        [SerializeField] private GameObject totalText;
+        //The text component attached to the total text object
+        private Text totalTextComponent;
+
+        //The export popup
+        [SerializeField] private GameObject exportPopup;
+        //Displays the exported text
+        [SerializeField] private GameObject exportTextArea;
+        //The text area component attached to the export text area object
+        private TextArea exportTextAreaComponent;
 
         private void Start()
         {
             //Find and store the needed component references
-            textArea = textAreaObject.GetComponent<TextArea>();
-            initialized = true;
+            canvasGroup = canvas.GetComponent<CanvasGroup>();
+            importTextAreaComponent = importTextArea.GetComponent<TextArea>();
+            exportTextAreaComponent = exportTextArea.GetComponent<TextArea>();
+            progressTextComponent = progressText.GetComponent<Text>();
+            totalTextComponent = totalText.GetComponent<Text>();
         }
 
         //Hide or show the import popup screen
-        public void togglePopup()
+        public void toggleImportPopup()
         {
-            //If this funciton was called before initialization, call the start function
-            if (!initialized)
-                Start();
+            importPopup.SetActive(!importPopup.activeSelf);
+            toggleMode();
+        }
 
-            gameObject.SetActive(!gameObject.activeSelf);
+        //Hide or show the export popup screen
+        public void toggleExportPopup()
+        {
+            exportPopup.SetActive(!exportPopup.activeSelf);
 
-            //If the export popup is being shown, export the map script and set it as the text area content
-            if (gameObject.name == "Export" && gameObject.activeSelf)
-                textArea.text = MapManager.Instance.ToString();
+            //If the export popup was enabled, export the map script and set it as the text area content
+            if (exportPopup.activeSelf)
+                exportTextAreaComponent.text = MapManager.Instance.ToString();
 
-            //If the popup was enabled, change the Editor to UI mode so that the map can not be edited
-            if (gameObject.activeSelf)
+            toggleMode();
+        }
+
+        //Set the editor mode based on if the popups are enabled or not
+        private void toggleMode()
+        {
+            if(importPopup.activeSelf || exportPopup.activeSelf)
                 EditorManager.Instance.currentMode = EditorMode.UI;
-            //If the popup was disabled, change the Editor back to edit mode
             else
                 EditorManager.Instance.currentMode = EditorMode.Edit;
         }
 
         //Import the map text in the input field
-        public void importTextField()
+        public void importFromTextField()
         {
-            //Clear the existing map objects
+            //Disable the UI, shortcuts, and drag select
+            canvasGroup.blocksRaycasts = false;
+            EditorManager.Instance.shortcutsEnabled = false;
+            DragSelect.Instance.enabled = false;
+            //Show the importing text
+            importingMessage.SetActive(true);
+
+            //Clear the old map before loading the new one
             MapManager.Instance.clearMap();
             //Import the map script in the text field
-            MapManager.Instance.loadMap(textArea.text);
+            StartCoroutine(MapManager.Instance.loadMap(importTextAreaComponent.text, progressTextComponent, totalTextComponent, endImport));
+            
             //Clear the import text area
-            textArea.clearText();
+            importTextAreaComponent.clearText();
             //Hide the import popup
-            togglePopup();
+            toggleImportPopup();
+        }
+
+        //Prepares the editor for use after importing
+        private void endImport()
+        {
+            //Enable the UI, shortcuts, and drag select
+            canvasGroup.blocksRaycasts = true;
+            EditorManager.Instance.shortcutsEnabled = true;
+            DragSelect.Instance.enabled = true;
+            //Hide the importing text
+            importingMessage.SetActive(false);
         }
     }
 }

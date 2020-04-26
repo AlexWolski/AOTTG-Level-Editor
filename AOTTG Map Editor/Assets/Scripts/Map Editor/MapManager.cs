@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace MapEditor
 {
@@ -17,13 +18,6 @@ namespace MapEditor
         [SerializeField] private GameObject copiedObjectsRoot;
         //A reference to the empty map to add objects to
         [SerializeField] private GameObject mapRoot;
-        //A refrence to the canvas object
-        [SerializeField] private GameObject canvas;
-        //The canvas group component attached to the canvas
-        private CanvasGroup canvasGroup;
-        //References to the UI objects to be displayed when importing or exporting
-        [SerializeField] private GameObject importText;
-        [SerializeField] private GameObject exportText;
         //A reference to the billboard prefab
         [SerializeField] private GameObject billboardPrefab;
 
@@ -53,8 +47,8 @@ namespace MapEditor
         public event OnDeleteEvent OnDelete;
         #endregion
 
-        //Static properties to access private instance data members
         #region Properties
+        //Static properties to access private instance data members
         public Dictionary<GameObject, MapObject> ObjectScriptTable
         {
             get { return Instance.objectScriptTable; }
@@ -79,8 +73,6 @@ namespace MapEditor
 
             //Insantiate the script table
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
-            //Get a reference to the canvas group
-            canvasGroup = canvas.GetComponent<CanvasGroup>();
             //Calcualte the delay between each frame while loading in milliseconds
             loadingDelay = 1f / loadingFPS * 1000;
         }
@@ -196,12 +188,8 @@ namespace MapEditor
             //Wait until the pasted objects are rendered
             yield return new WaitForEndOfFrame();
 
-            //Enable the UI and shortcuts
-            canvasGroup.blocksRaycasts = true;
-            EditorManager.Instance.shortcutsEnabled = true;
-
             //Notify listners that the copied objects were pasted
-            OnPaste?.Invoke(ref ObjectSelection.Instance.getSelectable());
+            OnImport?.Invoke(ref ObjectSelection.Instance.getSelectable());
         }
 
         private IEnumerator InvokeOnPaste()
@@ -228,21 +216,12 @@ namespace MapEditor
 
             //Iterate over all children objects and delete them
             foreach (Transform child in Instance.mapRoot.GetComponentInChildren<Transform>())
-                GameObject.Destroy(child.gameObject);
-        }
-
-        public void loadMap(string mapScript)
-        {
-            //Disable the UI and shortcuts
-            canvasGroup.blocksRaycasts = false;
-            EditorManager.Instance.shortcutsEnabled = false;
-
-            //Load the map in a coroutine
-            StartCoroutine(loadMapRoutine(mapScript));
+                Destroy(child.gameObject);
         }
 
         //Parse the given map script and load the map
-        private IEnumerator loadMapRoutine(string mapScript)
+        //Accepts additional parameters for outputing loading progress, total amount of map objects, and a callback function
+        public IEnumerator loadMap(string mapScript, Text progressText = null, Text totalText = null, Action callback = null)
         {
             //Used to keep track of how much time has elapsed between frames
             System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
@@ -262,6 +241,9 @@ namespace MapEditor
             {
                 try
                 {
+                    //Display how many objects have been loaded
+                    progressText.text = scriptIndex.ToString();
+
                     //If the object script starts with '//' ignore it
                     if (parsedMap[scriptIndex].StartsWith("//"))
                         continue;
@@ -287,6 +269,8 @@ namespace MapEditor
                 //Check if enough time has passed to start a new frame
                 if (stopWatch.ElapsedMilliseconds > loadingDelay)
                 {
+                    //Update the total number of objects in the script
+                    totalText.text = parsedMap.Length.ToString();
                     //Return from the corouting and render a frame
                     yield return null;
                     //Start counting the elapsed time from zero
@@ -299,6 +283,8 @@ namespace MapEditor
 
             //Notify listners that a map was loaded at the end of the frame
             StartCoroutine(InvokeOnImport());
+            //Run the callback method
+            callback();
         }
 
         //Add the given object to the map hierarchy and make it selectable

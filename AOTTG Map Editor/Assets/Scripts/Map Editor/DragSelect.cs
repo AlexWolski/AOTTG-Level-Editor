@@ -85,7 +85,7 @@ namespace MapEditor
             canvasComponent = canvas.GetComponent<Canvas>();
 
             //Add listners to save map object verticies when needed
-            MapManager.Instance.OnImport += saveBoundingBoxes;
+            MapManager.Instance.OnImport += onImport;
             MapManager.Instance.OnPaste += saveBoundingBoxes;
             MapManager.Instance.OnDelete += removeBoundingBoxes;
             EditorManager.Instance.OnChangeMode += onModeChange;
@@ -94,6 +94,13 @@ namespace MapEditor
         #endregion
 
         #region Event Handlers
+        //Clear the current bounding boxes and create new ones for the the imported objects
+        private void onImport(ref HashSet<GameObject> mapObjects)
+        {
+            clearObjectVerticies();
+            saveBoundingBoxes(ref mapObjects);
+        }
+
         //Save or clear the bounding boxes based on the new mode
         private void onModeChange(EditorMode prevMode, EditorMode newMode)
         {

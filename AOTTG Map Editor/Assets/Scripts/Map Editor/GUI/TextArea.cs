@@ -15,6 +15,8 @@ namespace MapEditor
         [SerializeField] private GameObject textObject;
         //Toggles the ability to delete the text area contents using key inputs
         [SerializeField] private bool canDelete = false;
+        //Toggles the ability to paste new content into the text area
+        [SerializeField] private bool canPaste = false;
 
         //The image component attached to this game object
         private Image imageComponent;
@@ -68,7 +70,7 @@ namespace MapEditor
             {
                 if (Input.GetKeyDown(KeyCode.C))
                     copyFromTextArea();
-                else if (Input.GetKeyDown(KeyCode.V))
+                else if (canPaste && Input.GetKeyDown(KeyCode.V))
                     pasteToTextArea();
             }
 
