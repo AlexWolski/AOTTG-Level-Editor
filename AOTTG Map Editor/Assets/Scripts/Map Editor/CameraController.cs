@@ -31,7 +31,8 @@ namespace MapEditor
         #endregion
 
         //If the editor is in fly mode, translate and rotate the camera
-        private void LateUpdate()
+        //Running in Update isntead of LateUpdate so that the camrea updates before the selection handle
+        private void Update()
         {
             if (EditorManager.Instance.currentMode == EditorMode.Fly)
             {

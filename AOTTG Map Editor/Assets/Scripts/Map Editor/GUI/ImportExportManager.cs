@@ -50,7 +50,12 @@ namespace MapEditor
         public void toggleImportPopup()
         {
             importPopup.SetActive(!importPopup.activeSelf);
-            toggleMode();
+
+            //When the popup is enabled, make sure the text area is not in focus
+            if (importPopup.activeSelf)
+                importTextAreaComponent.setFocused(false);
+
+                toggleMode();
         }
 
         //Hide or show the export popup screen
@@ -60,7 +65,10 @@ namespace MapEditor
 
             //If the export popup was enabled, export the map script and set it as the text area content
             if (exportPopup.activeSelf)
+            {
+                exportTextAreaComponent.setFocused(false);
                 exportTextAreaComponent.text = MapManager.Instance.ToString();
+            }
 
             toggleMode();
         }

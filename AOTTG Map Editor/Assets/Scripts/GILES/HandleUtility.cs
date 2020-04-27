@@ -8,18 +8,15 @@ namespace MapEditor
 	 */
 	public class HandleUtility
 	{
-		//The the octant that the point is in relative to the given origin
-		public static Vector3 getViewOctant(Vector3 point, Vector3 origin)
+		//The the octant that the point is in relative to the world origin
+		public static Vector3 getViewOctant(Vector3 point)
 		{
-			//Get the point's position relative to the origin
-			Vector3 octant = point - origin;
-
 			//Store the sign of each component
 			for (int i = 0; i< 3; i++)
-				octant[i] = -Mathf.Sign(octant[i]);
+				point[i] = Mathf.Sign(point[i]);
 
 			//Return a representation of the octant
-			return octant;
+			return point;
 		}
 
         /**
@@ -126,18 +123,10 @@ namespace MapEditor
 				return delta * scale * ( (lhs.y-rhs.y) > 0f ? 1f : -1f );
 		}
 
-		/**
-		 * Return the screen to world space ratio for this point in world space.
-		 */
-		public static float GetHandleSize(Vector3 position)
+		//Return the size of the handle based on the camera position, handle position, and handle size
+		public static float GetHandleSize(Vector3 handlePos, Vector3 cameraPos, float handleSize)
 		{
-			Camera cam = Camera.main;
-			if(!cam) return 1f;
-            Transform t = cam.transform;
-			float z = Vector3.Dot(position-t.position, cam.transform.forward);
-			Vector3 lhs = cam.WorldToScreenPoint(t.position + (t.forward * z));
-			Vector3 rhs = cam.WorldToScreenPoint(t.position + (t.right + t.forward * z));
-			return 1f/(lhs-rhs).magnitude;
+			return Vector3.Distance(cameraPos, handlePos) / 100f * handleSize;
 		}
 
 		/**

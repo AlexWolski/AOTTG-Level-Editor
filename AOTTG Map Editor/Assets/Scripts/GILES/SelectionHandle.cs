@@ -34,14 +34,14 @@ namespace MapEditor
         [SerializeField] private Material HandleTransparentMaterial;
 
         //The sizes for the tool handle meshes
-        [SerializeField] private const float handleBoxSize = .25f;
-        [SerializeField] private float handleSize = 90f;
-        public const float capSize = .07f;
+        [SerializeField] private float handleBoxSize = .25f;
+        [SerializeField] private float handleSize = 10f;
+        [SerializeField] private float capSize = .07f;
 
         //The width around the tool handle that can be interacted with
-        [SerializeField] const int handleInteractWidth = 10;
+        [SerializeField] int handleInteractWidth = 10;
         //The padding around the edges of the window past which the mouse will be moved back into the window
-        [SerializeField] const int windowPadding = 5;
+        [SerializeField] int windowPadding = 5;
 
         //The current tool. Default is translate tool
         public Tool currentTool { get; private set; } = Tool.Translate;
@@ -116,7 +116,7 @@ namespace MapEditor
 
             //Hide the handle by default
             hidden = true;
-            parentTransform = Instance.gameObject.GetComponent<Transform>();
+            parentTransform = gameObject.GetComponent<Transform>();
             mainCamera = Camera.main;
 
             //Instantiate the adjustable speed classes
@@ -261,9 +261,14 @@ namespace MapEditor
         //Get the octant to display the planes in based on camera position and tool dragging status
         private Vector3 getViewOctant()
         {
-            //If the tool is not being dragged, use the current octant
+            //If the tool is not being dragged, calculate the current octant
             if (!draggingHandle)
-                return HandleUtility.getViewOctant(parentTransform.position, mainCamera.transform.position);
+            {
+                //Convert the camera position to the local position of the tool handle
+                Vector3 localCameraPos = parentTransform.InverseTransformPoint(mainCamera.transform.position);
+                //Calculate the current octant
+                return HandleUtility.getViewOctant(localCameraPos);
+            }
 
             //If it is being dragged, use the octant the camera was in before the drag
             return previousOctant;
@@ -709,16 +714,16 @@ namespace MapEditor
 
             if (currentTool == Tool.Translate || currentTool == Tool.Scale)
             {
-                float sceneHandleSize = HandleUtility.GetHandleSize(parentTransform.position);
+                float handleScreenSize = HandleUtility.GetHandleSize(parentTransform.position, mainCamera.transform.position, handleSize);
 
                 // cen
                 Vector2 cen = mainCamera.WorldToScreenPoint(parentTransform.position);
                 // up
-                Vector2 up = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.up + parentTransform.up * capSize * 4f) * (sceneHandleSize * Instance.handleSize)));
+                Vector2 up = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.up + parentTransform.up * capSize * 4f) * handleScreenSize));
                 // right
-                Vector2 right = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.right + parentTransform.right * capSize * 4f) * (sceneHandleSize * Instance.handleSize)));
+                Vector2 right = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.right + parentTransform.right * capSize * 4f) * handleScreenSize));
                 // forward
-                Vector2 forward = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.forward + parentTransform.forward * capSize * 4f) * (sceneHandleSize * Instance.handleSize)));
+                Vector2 forward = mainCamera.WorldToScreenPoint((parentTransform.position + (parentTransform.forward + parentTransform.forward * capSize * 4f) * handleScreenSize));
                 // First check if the plane boxes have been activated
                 Vector2 p_right = (cen + ((right - cen) * viewOctant.x) * handleBoxSize);
                 Vector2 p_up = (cen + ((up - cen) * viewOctant.y) * handleBoxSize);
@@ -843,8 +848,8 @@ namespace MapEditor
 
         private void RebuildGizmoMatrix()
         {
-            float handleSize = HandleUtility.GetHandleSize(parentTransform.position);
-            Matrix4x4 scale = Matrix4x4.Scale(Vector3.one * handleSize * Instance.handleSize);
+            float handleScreenSize = HandleUtility.GetHandleSize(parentTransform.position, mainCamera.transform.position, handleSize);
+            Matrix4x4 scale = Matrix4x4.Scale(Vector3.one * handleScreenSize);
 
             handleMatrix = parentTransform.localToWorldMatrix * scale;
         }
@@ -878,9 +883,9 @@ namespace MapEditor
         private void CreateHandleTriangleMesh(ref Mesh mesh, Vector3 scale)
         {
             if (currentTool == Tool.Translate)
-                HandleMesh.CreateTriangleMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, Instance.ConeMesh, handleBoxSize, capSize);
+                HandleMesh.CreateTriangleMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, ConeMesh, handleBoxSize, capSize);
             else if (currentTool == Tool.Scale)
-                HandleMesh.CreateTriangleMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, Instance.CubeMesh, handleBoxSize, capSize);
+                HandleMesh.CreateTriangleMesh(ref mesh, parentTransform, scale, viewOctant, mainCamera, CubeMesh, handleBoxSize, capSize);
         }
         #endregion
     }
