@@ -78,6 +78,15 @@ namespace MapEditor
         }
         #endregion
 
+        #region Events
+        //If the game loses focus and a button is pressed down, unpress it
+        private void OnApplicationFocus(bool focus)
+        {
+            if (!focus && currentState == buttonState.pressed)
+                unselect();
+        }
+        #endregion
+
         #region Button Methods
         //Change the image and state to selected
         private void select()

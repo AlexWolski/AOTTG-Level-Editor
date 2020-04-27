@@ -22,10 +22,6 @@ namespace MapEditor
         private Vector3 selectionAverage;
         //The sum of the points of all the selected objects for calculating the average
         private Vector3 positionSum;
-
-        //Determines if objects can be selected by clicking on them
-        //False when the tool handle is being dragged or the drag selection box is active
-        private bool canSelect = false;
         #endregion
 
         #region Instantiation
@@ -45,24 +41,6 @@ namespace MapEditor
 
             //Add listners to events in the SelectionHandle class
             SelectionHandle.Instance.OnHandleMove += editSelection;
-            SelectionHandle.Instance.OnHandleBegin += disableSelection;
-            SelectionHandle.Instance.OnHandleFinish += enableSelection;
-
-            //Add listners to events in the DragSelect class
-            DragSelect.Instance.OnDragStart += disableSelection;
-            DragSelect.Instance.OnDragEnd += enableSelection;
-        }
-        #endregion
-
-        #region Drag Event Listners
-        private void disableSelection()
-        {
-            canSelect = true;
-        }
-
-        private void enableSelection()
-        {
-            canSelect = false;
         }
         #endregion
 
@@ -72,7 +50,7 @@ namespace MapEditor
             //Check for an object selection if in edit mode and nothing is being dragged
             if (EditorManager.Instance.currentMode == EditorMode.Edit &&
                 EditorManager.Instance.shortcutsEnabled &&
-                !canSelect)
+                EditorManager.Instance.cursorAvailable)
                 checkSelect();
         }
 

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace MapEditor
 {
@@ -10,6 +11,8 @@ namespace MapEditor
         //A hidden variable to hold the current mode
         private EditorMode currentModeValue;
         public bool shortcutsEnabled { get; set; }
+        //Determines if the mouse is captured by a class or is available to use
+        public bool cursorAvailable { get; private set; }
 
         //A property for accessing the current mode variable
         public EditorMode currentMode
@@ -26,9 +29,15 @@ namespace MapEditor
             }
         }
 
+
         //Event to notify listners when the mode changes
         public delegate void OnChangeModeEvent(EditorMode prevMode, EditorMode newMode);
         public event OnChangeModeEvent OnChangeMode;
+        //Event to notify listners when the cursor is captured or released
+        public delegate void OnCursorCapturedEvent();
+        public event OnCursorCapturedEvent OnCursorCaptured;
+        public delegate void OnCursorReleasedEvent();
+        public event OnCursorReleasedEvent OnCursorReleased;
 
         void Awake()
         {
@@ -68,6 +77,27 @@ namespace MapEditor
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
+        }
+
+        //Locks the cursor until the caller is finished using it
+        //Returns true if the cursor was succesfully captured, and false if it wasn't available
+        public bool captureCursor()
+        {
+            if (cursorAvailable)
+            {
+                cursorAvailable = false;
+                OnCursorCaptured?.Invoke();
+                return true;
+            }
+
+            return false;
+        }
+
+        //Make the cursor available again to use
+        public void releaseCursor()
+        {
+            cursorAvailable = true;
+            OnCursorReleased?.Invoke();
         }
     }
 }

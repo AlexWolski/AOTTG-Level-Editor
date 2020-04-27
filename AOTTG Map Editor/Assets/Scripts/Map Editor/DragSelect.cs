@@ -94,6 +94,16 @@ namespace MapEditor
         #endregion
 
         #region Event Handlers
+        //If the game loses focus, end the selection
+        private void OnApplicationFocus(bool focus)
+        {
+            if (!focus)
+            {
+                endDrag();
+                StartCoroutine(InvokeOnDragEndEvent());
+            }
+        }
+
         //Clear the current bounding boxes and create new ones for the the imported objects
         private void onImport(ref HashSet<GameObject> mapObjects)
         {
@@ -125,22 +135,13 @@ namespace MapEditor
             saveBoundingBoxes(ref ObjectSelection.Instance.getSelection());
         }
 
-        //Disable the drag select box
-        private void endDrag()
-        {
-            //Release the old selected object set
-            originalSeleciton = null;
-            //Disable the drag section box
-            dragSelectBox.SetActive(false);
-            mouseDown = false;
-            dragging = false;
-        }
-
         private IEnumerator InvokeOnDragEndEvent()
         {
             //Wait until the end of the frame so that the OnHandleFinish event doesn't overlap with the OnMouseUp event
             yield return new WaitForEndOfFrame();
 
+            //After dragging the handle, release the cursor
+            EditorManager.Instance.releaseCursor();
             //Notify all listners that the selection drag box was disabled
             OnDragEnd?.Invoke();
         }
@@ -167,32 +168,15 @@ namespace MapEditor
                 //Update the drag selection box while the mouse is held down
                 else if (Input.GetMouseButton(0))
                 {
-                    //If the escapse key was pressed, revert the seleciton to what it was before
+                    //If the escapse key was pressed, cancel the selection
                     if (Input.GetKeyDown(KeyCode.Escape))
-                    {
-                        //Deselect all of the currently selected objects
-                        ObjectSelection.Instance.deselectAll();
-
-                        //Select the previously selected objects
-                        foreach (GameObject mapObject in originalSeleciton)
-                            ObjectSelection.Instance.selectObject(mapObject);
-
-                        //Disable the drag selection box
-                        endDrag();
-                    }
+                        cancelSelection();
 
                     mousePosition = Input.mousePosition;
 
                     //If the drag selection box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag selection box
                     if (mouseDown && !dragging && (mousePosition - dragStartPosition).magnitude > deadzone)
-                    {
-                        //Save the currently selecited objects
-                        originalSeleciton = new HashSet<GameObject>(ObjectSelection.Instance.getSelection());
-                        //Enable the drag selection box
-                        dragSelectBox.SetActive(true);
-                        dragging = true;
-                        OnDragStart?.Invoke();
-                    }
+                        startDrag();
 
                     //If the drag selection box is enabled, update the box and check for selected objects
                     if (dragging)
@@ -203,6 +187,46 @@ namespace MapEditor
                     }
                 }
             }
+        }
+
+        //Enable the drag selection box
+        private void startDrag()
+        {
+            //Save the currently selecited objects
+            originalSeleciton = new HashSet<GameObject>(ObjectSelection.Instance.getSelection());
+            //Enable the drag selection box
+            dragSelectBox.SetActive(true);
+            dragging = true;
+
+            //Capture the cursor while dragging
+            EditorManager.Instance.captureCursor();
+            //Notify all listners that the tool handle was activated
+            OnDragStart?.Invoke();
+        }
+
+        //Disable the drag select box
+        private void endDrag()
+        {
+            //Release the old selected object set
+            originalSeleciton = null;
+            //Disable the drag section box
+            dragSelectBox.SetActive(false);
+            mouseDown = false;
+            dragging = false;
+        }
+
+        //Revert the selection to how it was before the drag selection
+        private void cancelSelection()
+        {
+            //Deselect all of the currently selected objects
+            ObjectSelection.Instance.deselectAll();
+
+            //Select the previously selected objects
+            foreach (GameObject mapObject in originalSeleciton)
+                ObjectSelection.Instance.selectObject(mapObject);
+
+            //Disable the drag selection box
+            endDrag();
         }
 
         //Update the position and size of the drag selection box
@@ -302,14 +326,22 @@ namespace MapEditor
                         break;
 
                     case DragSelectMode.additive:
+                        //If the object was in the original selection, ignore it
+                        if (originalSeleciton.Contains(mapObject))
+                            continue;
+
                         //Select the object if it is in the selection box
                         if (inDragBox)
                             ObjectSelection.Instance.selectObject(mapObject);
+                        //Otherwise, deselect it
+                        else
+                            ObjectSelection.Instance.deselectObject(mapObject);
+
                         break;
 
                     case DragSelectMode.subtractive:
-                        //Deselect the object if it is in the selection box
-                        if (inDragBox)
+                        //Deselect the object if it is a part of the original selection and is in the selection box
+                        if (originalSeleciton.Contains(mapObject) && inDragBox)
                             ObjectSelection.Instance.deselectObject(mapObject);
                         break;
                 }

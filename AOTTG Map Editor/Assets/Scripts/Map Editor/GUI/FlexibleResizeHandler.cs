@@ -36,16 +36,36 @@ namespace MapEditor
             rectStartSize = new Vector2(0, 0);
             parentCanvas = GetComponentInParent<Canvas>();
             cursorHotSpot = new Vector2(ewResizeImage.width / 2, ewResizeImage.height / 2);
+
+            //Listen for when the the cursor is released
+            EditorManager.Instance.OnCursorReleased += onCursorReleased;
+        }
+
+        //If the game loses focus, reset the cursor and window
+        private void OnApplicationFocus(bool focus)
+        {
+            if (!focus)
+            {
+                Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
+                resizeBoxHover = false;
+                resizeBoxPressed = false;
+            }
+        }
+
+        //If the cursor is over the resize box when released from another class, set the cursor
+        private void onCursorReleased()
+        {
+            if(resizeBoxHover)
+                Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
         }
 
         public void OnPointerEnter(PointerEventData data)
         {
-            //Don't enter dragging mode if the tool handle is being dragged
-            if (!SelectionHandle.Instance.getDragging())
-            {
+            resizeBoxHover = true;
+
+            //Don't chagne the cursor if the tool handle is being dragged
+            if (EditorManager.Instance.cursorAvailable)
                 Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
-                resizeBoxHover = true;
-            }
         }
 
         public void OnPointerExit(PointerEventData data)

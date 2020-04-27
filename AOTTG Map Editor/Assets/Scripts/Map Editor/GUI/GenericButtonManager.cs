@@ -36,6 +36,13 @@ namespace MapEditor
             mouseDown = false;
         }
 
+        //If the game loses focus and a button is pressed down, unpress it
+        private void OnApplicationFocus(bool focus)
+        {
+            if (!focus && currentState == buttonState.pressed)
+                unpress();
+        }
+
         //Change the image and state to pressed
         private void press()
         {

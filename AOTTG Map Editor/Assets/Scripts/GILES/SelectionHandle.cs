@@ -87,7 +87,7 @@ namespace MapEditor
         private AdjustableSpeed scaleSpeed;
 
         //The maximum distance away from the origin an object can be
-        [SerializeField] private float maxDistance = 1000000000f;
+        [SerializeField] private float maxDistance = 10000000f;
 
         //Determines if the handle is being interacted with or not
         private bool draggingHandle;
@@ -621,6 +621,8 @@ namespace MapEditor
                 currCursorDist = getMouseHandleDist(currentMousePosition);
             }
 
+            //Capture the cursor while dragging
+            EditorManager.Instance.captureCursor();
             //Notify all listners that the tool handle was activated
             OnHandleBegin?.Invoke();
         }
@@ -694,7 +696,9 @@ namespace MapEditor
         {
             //Wait until the end of the frame so that the OnHandleFinish event doesn't overlap with the OnMouseUp event
             yield return new WaitForEndOfFrame();
-            
+
+            //After dragging the handle, release the cursor
+            EditorManager.Instance.releaseCursor();
             //Notify all listners that the handle is no longer being interacted with
             OnHandleFinish?.Invoke();
         }
