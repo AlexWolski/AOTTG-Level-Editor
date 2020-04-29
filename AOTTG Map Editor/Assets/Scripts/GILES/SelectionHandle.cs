@@ -111,8 +111,6 @@ namespace MapEditor
             //Set this script as the only instance of the SelectionHandle script
             if (Instance == null)
                 Instance = this;
-            else
-                Destroy(gameObject);
 
             //Hide the handle by default
             hidden = true;

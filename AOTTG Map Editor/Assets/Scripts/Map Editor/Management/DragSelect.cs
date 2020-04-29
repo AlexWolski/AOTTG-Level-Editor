@@ -69,8 +69,6 @@ namespace MapEditor
             //Set this script as the only instance of the ObjectSelection script
             if (Instance == null)
                 Instance = this;
-            else
-                Destroy(gameObject);
         }
 
         private void Start()
@@ -105,10 +103,10 @@ namespace MapEditor
         }
 
         //Clear the current bounding boxes and create new ones for the the imported objects
-        private void onImport(ref HashSet<GameObject> mapObjects)
+        private void onImport(HashSet<GameObject> mapObjects)
         {
             clearObjectVerticies();
-            saveBoundingBoxes(ref mapObjects);
+            saveBoundingBoxes(mapObjects);
         }
 
         //Save or clear the bounding boxes based on the new mode
@@ -122,7 +120,7 @@ namespace MapEditor
                 projectionMatrix = mainCamera.projectionMatrix;
 
                 //Save the bounding box of all selectable objects
-                saveBoundingBoxes(ref ObjectSelection.Instance.getSelectable());
+                saveBoundingBoxes(ObjectSelection.Instance.getSelectable());
             }
             //If the new mode is fly mode, then clear the verticies
             else if (newMode == EditorMode.Fly)
@@ -132,7 +130,7 @@ namespace MapEditor
         //Saves the bounding boxes of the currently updated objects
         private void saveSelectedBBs()
         {
-            saveBoundingBoxes(ref ObjectSelection.Instance.getSelection());
+            saveBoundingBoxes(ObjectSelection.Instance.getSelection());
         }
 
         private IEnumerator InvokeOnDragEndEvent()
@@ -147,8 +145,91 @@ namespace MapEditor
         }
         #endregion
 
+        #region Edit Commands
+        //Replace the previous selection with what was in the drag select box
+        private class ReplaceSelection : EditCommand
+        {
+            private GameObject[] previousSelection;
+            private GameObject[] selectedObjects;
+
+            public ReplaceSelection()
+            {
+                previousSelection = Instance.originalSeleciton.ToArray();
+                selectedObjects = ObjectSelection.Instance.getSelection().ToArray();
+            }
+
+            //Select only the new seleciton
+            public override void executeEdit()
+            {
+                ObjectSelection.Instance.deselectAll();
+
+                foreach (GameObject mapObject in selectedObjects)
+                    ObjectSelection.Instance.selectObject(mapObject);
+            }
+
+            //Select only the original selection
+            public override void revertEdit()
+            {
+                ObjectSelection.Instance.deselectAll();
+
+                foreach (GameObject mapObject in previousSelection)
+                    ObjectSelection.Instance.selectObject(mapObject);
+            }
+        }
+
+        //Add the objects in the drag select box to the current selection
+        private class AddSelection : EditCommand
+        {
+            private GameObject[] selectedObjects;
+
+            //Store the objects that were newly selected
+            public AddSelection()
+            {
+                selectedObjects = ObjectSelection.Instance.getSelection()
+                                  .ExcludeToArray(Instance.originalSeleciton);
+            }
+
+            public override void executeEdit()
+            {
+                foreach (GameObject mapObject in selectedObjects)
+                    ObjectSelection.Instance.selectObject(mapObject);
+            }
+
+            public override void revertEdit()
+            {
+                foreach (GameObject mapObject in selectedObjects)
+                    ObjectSelection.Instance.deselectObject(mapObject);
+            }
+        }
+
+        //Remove the objects in the drag select box from the selection
+        private class RemoveSelection : EditCommand
+        {
+            private GameObject[] removedObjects;
+
+            //Store the objects that were removed
+            public RemoveSelection()
+            {
+                removedObjects = Instance.originalSeleciton
+                                  .ExcludeToArray(ObjectSelection.Instance.getSelection());
+            }
+
+            public override void executeEdit()
+            {
+                foreach (GameObject mapObject in removedObjects)
+                    ObjectSelection.Instance.deselectObject(mapObject);
+            }
+
+            public override void revertEdit()
+            {
+                foreach (GameObject mapObject in removedObjects)
+                    ObjectSelection.Instance.selectObject(mapObject);
+            }
+        }
+        #endregion
+
         #region Update
-        private void LateUpdate()
+        private void Update()
         {
             //If in edit mode and the selection handle is not being dragged, update the drag selection box
             if (EditorManager.Instance.currentMode == EditorMode.Edit && !SelectionHandle.Instance.getDragging())
@@ -207,6 +288,26 @@ namespace MapEditor
         //Disable the drag select box
         private void endDrag()
         {
+            //If the drag select box isn't active, skip the drag ending process
+            if (!dragging)
+                return;
+
+            //Create a command for the selection and add it to the history
+            switch (selectMode)
+            {
+                case DragSelectMode.replace:
+                    EditHistory.Instance.addCommand(new ReplaceSelection());
+                    break;
+
+                case DragSelectMode.additive:
+                    EditHistory.Instance.addCommand(new AddSelection());
+                    break;
+
+                case DragSelectMode.subtractive:
+                    EditHistory.Instance.addCommand(new RemoveSelection());
+                    break;
+            }
+
             //Release the old selected object set
             originalSeleciton = null;
             //Disable the drag section box
@@ -351,7 +452,7 @@ namespace MapEditor
 
         #region Bounding Box Methods
         //Store the screen space bounding box of the given map objects
-        private void saveBoundingBoxes(ref HashSet<GameObject> mapObjects)
+        private void saveBoundingBoxes(HashSet<GameObject> mapObjects)
         {
             //Iterate through the selectable objects
             foreach (GameObject mapObject in mapObjects)
@@ -393,7 +494,7 @@ namespace MapEditor
         }
 
         //Removes the bounding boxes for the given list of map objects 
-        private void removeBoundingBoxes(ref HashSet<GameObject> deletedObjects)
+        private void removeBoundingBoxes(HashSet<GameObject> deletedObjects)
         {
             //Remove all of the bounding boxes for the objects that were deleted
             foreach (GameObject mapObject in deletedObjects)

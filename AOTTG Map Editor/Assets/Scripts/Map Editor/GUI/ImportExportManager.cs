@@ -110,6 +110,8 @@ namespace MapEditor
             canvasGroup.blocksRaycasts = true;
             EditorManager.Instance.shortcutsEnabled = true;
             DragSelect.Instance.enabled = true;
+            //Clear the command history
+            EditHistory.Instance.resetHistory();
             //Hide the importing text
             importingMessage.SetActive(false);
         }

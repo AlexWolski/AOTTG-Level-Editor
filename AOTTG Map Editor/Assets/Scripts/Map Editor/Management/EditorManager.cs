@@ -44,8 +44,6 @@ namespace MapEditor
             //Set this script as the only instance of the EditorManger script
             if (Instance == null)
                 Instance = this;
-            else
-                Destroy(gameObject);
 
             //Set the screen resolution
             Screen.fullScreen = false;
@@ -54,6 +52,7 @@ namespace MapEditor
             //The editor is in edit mode by default
             currentMode = EditorMode.Edit;
             shortcutsEnabled = true;
+            cursorAvailable = true;
         }
 
         private void Update()

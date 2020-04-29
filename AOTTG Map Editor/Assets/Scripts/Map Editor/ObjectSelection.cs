@@ -30,8 +30,6 @@ namespace MapEditor
             //Set this script as the only instance of the ObjectSelection script
             if (Instance == null)
                 Instance = this;
-            else
-                Destroy(gameObject);
         }
 
         private void Start()
@@ -57,6 +55,9 @@ namespace MapEditor
         //Test if any objects were clicked
         private void checkSelect()
         {
+            //Stores the command that needs to be executed
+            EditCommand selectionCommand = null;
+
             //If the left control key is held, check for shortcuts
             if (Input.GetKey(KeyCode.LeftControl))
             {
@@ -64,13 +65,13 @@ namespace MapEditor
                 if (Input.GetKeyDown(KeyCode.A))
                 {
                     if (selectedObjects.Count > 0)
-                        deselectAll();
+                        selectionCommand = new DeselectAll();
                     else
-                        selectAll();
+                        selectionCommand = new SelectAll();
                 }
                 //If 'control + I' is pressed, invert the current selection
                 if (Input.GetKeyDown(KeyCode.I))
-                    invertSelection();
+                    selectionCommand = new InvertSelection();
             }
 
             //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected
@@ -87,7 +88,7 @@ namespace MapEditor
                     {
                         //If the left control key isn't held down, deselect all objects
                         if (!Input.GetKey(KeyCode.LeftControl))
-                            deselectAll();
+                            selectionCommand = new DeselectAll();
 
                         //Skil the non-selectable object
                         return;
@@ -98,24 +99,26 @@ namespace MapEditor
 
                     //If left control is not held, deselect all objects and select the clicked object
                     if (!Input.GetKey(KeyCode.LeftControl))
-                    {
-                        deselectAll();
-
-                        //Select the object that was clicked on
-                        selectObject(parentObject);
-                    }
+                        selectionCommand = new SelectReplace(parentObject);
                     //If left control is held, select or deselect the object based on if its currently selected
                     else
                     {
                         if (!selectedObjects.Contains(parentObject))
-                            selectObject(parentObject);
+                            selectionCommand = new SelectAdditive(parentObject);
                         else
-                            deselectObject(parentObject);
+                            selectionCommand = new DeselectObject(parentObject);
                     }
                 }
                 //If no objects were clicked and left control is not held, deselect all objects
                 else if (!Input.GetKey(KeyCode.LeftControl))
-                    deselectAll();
+                    selectionCommand = new DeselectAll();
+            }
+
+            //If a selection was made, execute its associated command and add it to the history
+            if (selectionCommand != null)
+            {
+                selectionCommand.executeEdit();
+                EditHistory.Instance.addCommand(selectionCommand);
             }
         }
 
@@ -128,7 +131,7 @@ namespace MapEditor
                 case Tool.Translate:
                     //Get the position displacement and translate the selected objects
                     Vector3 posDisplacement = SelectionHandle.Instance.getPosDisplacement();
-                    TransformTools.TranslateSelection(ref Instance.selectedObjects, posDisplacement);
+                    TransformTools.TranslateSelection(Instance.selectedObjects, posDisplacement);
 
                     //Update the selection average
                     positionSum += posDisplacement * selectedObjects.Count;
@@ -141,15 +144,129 @@ namespace MapEditor
                     float angle = SelectionHandle.Instance.getRotDisplacement(out rotationAxis);
 
                     //Rotate the selected objects around the seleciton average
-                    TransformTools.RotateSelection(ref Instance.selectedObjects, selectionAverage, rotationAxis, angle);
+                    TransformTools.RotateSelection(Instance.selectedObjects, selectionAverage, rotationAxis, angle);
                     break;
 
                 case Tool.Scale:
                     //Get the scale displacement and scale the selected objects
                     Vector3 scaleDisplacement = SelectionHandle.Instance.getScaleDisplacement();
-                    TransformTools.ScaleSelection(ref Instance.selectedObjects, selectionAverage, scaleDisplacement, false);
+                    TransformTools.ScaleSelection(Instance.selectedObjects, selectionAverage, scaleDisplacement, false);
                     break;
             }
+        }
+        #endregion
+
+        #region Edit Commands
+        //Add an object to the current selection
+        private class SelectAdditive : EditCommand
+        {
+            private GameObject selectedObject;
+
+            public SelectAdditive(GameObject selectedObject)
+            {
+                this.selectedObject = selectedObject;
+            }
+
+            public override void executeEdit() { Instance.selectObject(selectedObject); }
+            public override void revertEdit() { Instance.deselectObject(selectedObject); }
+        }
+
+        //Deselect the current selection and select a single object
+        private class SelectReplace : EditCommand
+        {
+            private GameObject selectedObject;
+            private GameObject[] previousSelection;
+
+            public SelectReplace(GameObject selectedObject)
+            {
+                this.selectedObject = selectedObject;
+                previousSelection = Instance.selectedObjects.ToArray();
+            }
+
+            //Deselect all map objects and select the new object
+            public override void executeEdit()
+            {
+                Instance.deselectAll();
+                Instance.selectObject(selectedObject);
+            }
+
+            //Deselect the new object and re-select the objects that were previously selected
+            public override void revertEdit()
+            {
+                Instance.deselectObject(selectedObject);
+
+                foreach (GameObject mapObject in previousSelection)
+                    Instance.selectObject(mapObject);
+            }
+        }
+
+        private class SelectAll : EditCommand
+        {
+            //The objects that were previously unselected
+            private GameObject[] unselectedObjects;
+
+            public SelectAll()
+            {
+                //Find the unselected objects by excluding the selected objects from a set of all objects
+                unselectedObjects = Instance.selectableObjects.ExcludeToArray(Instance.selectedObjects);
+            }
+
+            //Select the objects that aren't selected
+            public override void executeEdit()
+            {
+                foreach (GameObject mapObject in unselectedObjects)
+                    Instance.selectObject(mapObject);
+            }
+
+            //Deselect the objects that weren't previously selected
+            public override void revertEdit()
+            {
+                foreach (GameObject mapObject in unselectedObjects)
+                    Instance.deselectObject(mapObject);
+            }
+        }
+
+        private class DeselectObject : EditCommand
+        {
+            private GameObject deselectedObject;
+
+            public DeselectObject(GameObject deselectedObject)
+            {
+                this.deselectedObject = deselectedObject;
+            }
+
+            public override void executeEdit() { Instance.deselectObject(deselectedObject); }
+            public override void revertEdit() { Instance.selectObject(deselectedObject); }
+        }
+
+        private class DeselectAll : EditCommand
+        {
+            private GameObject[] previousSelection;
+
+            public DeselectAll()
+            {
+                previousSelection = new GameObject[Instance.selectedObjects.Count];
+                Instance.selectedObjects.CopyTo(previousSelection);
+            }
+
+            //Deselect all objects
+            public override void executeEdit()
+            {
+                Instance.deselectAll();
+            }
+
+            //Select all of the previously selected objects
+            public override void revertEdit()
+            {
+                foreach (GameObject mapObject in previousSelection)
+                    Instance.selectObject(mapObject);
+            }
+        }
+
+        private class InvertSelection : EditCommand
+        {
+            public override void executeEdit() { Instance.invertSelection(); }
+            public override void revertEdit() { Instance.invertSelection(); }
         }
         #endregion
 
@@ -210,12 +327,6 @@ namespace MapEditor
 
             //Hide the tool handle
             SelectionHandle.Instance.hide();
-        }
-
-        //Return a reference to the selection average
-        public ref Vector3 getSelectionAverage()
-        {
-            return ref Instance.selectionAverage;
         }
         #endregion
 
@@ -324,36 +435,6 @@ namespace MapEditor
             resetToolHandleRotation();
         }
 
-        //Resets both the selected and selectable object lists
-        public void resetSelection()
-        {
-            selectedObjects.Clear();
-            selectableObjects.Clear();
-            removeAverageAll();
-        }
-
-        //Remove any selected objects from both the selected and selectable objects lists
-        //Returns a the selected objects list. Caller is expected to reset it after use
-        public ref HashSet<GameObject> removeSelected()
-        {
-            //If all of the objects are selected, reset just the selectable objects list
-            if (selectedObjects.Count == selectableObjects.Count)
-                selectableObjects.Clear();
-            //If a subset of objects are selected, remove just the selected objects from the selectable list
-            else
-            {
-                //Remove all of the selected objects from the selectable list
-                foreach (GameObject mapObject in selectedObjects)
-                    selectableObjects.Remove(mapObject);
-            }
-
-            //Reset the selection average
-            removeAverageAll();
-
-            //Return a reference to the selected objects list
-            return ref Instance.selectedObjects;
-        }
-
         //Deselect the current seleciton and select all other objects
         public void invertSelection()
         {
@@ -373,14 +454,46 @@ namespace MapEditor
                 selectObject(mapObject);
         }
 
-        public ref HashSet<GameObject> getSelection()
+        //Resets both the selected and selectable object lists
+        public void resetSelection()
         {
-            return ref Instance.selectedObjects;
+            selectedObjects.Clear();
+            selectableObjects.Clear();
+            removeAverageAll();
         }
 
-        public ref HashSet<GameObject> getSelectable()
+        //Remove any selected objects from both the selected and selectable objects lists
+        //Returns a the selected objects list. Caller is expected to reset it after use
+        public HashSet<GameObject> removeSelected()
         {
-            return ref Instance.selectableObjects;
+            //If all of the objects are selected, reset just the selectable objects list
+            if (selectedObjects.Count == selectableObjects.Count)
+                selectableObjects.Clear();
+            //If a subset of objects are selected, remove just the selected objects from the selectable list
+            else
+            {
+                //Remove all of the selected objects from the selectable list
+                foreach (GameObject mapObject in selectedObjects)
+                    selectableObjects.Remove(mapObject);
+            }
+
+            //Reset the selection average
+            removeAverageAll();
+
+            //Return a reference to the selected objects list
+            return Instance.selectedObjects;
+        }
+        #endregion
+
+        #region Selection Getters
+        public HashSet<GameObject> getSelection()
+        {
+            return Instance.selectedObjects;
+        }
+
+        public HashSet<GameObject> getSelectable()
+        {
+            return Instance.selectableObjects;
         }
         #endregion
 

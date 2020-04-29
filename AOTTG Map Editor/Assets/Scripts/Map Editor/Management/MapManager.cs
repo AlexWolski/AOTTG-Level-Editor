@@ -37,13 +37,13 @@ namespace MapEditor
         #endregion
 
         #region Delegates
-        public delegate void OnImportEvent(ref HashSet<GameObject> imported);
+        public delegate void OnImportEvent(HashSet<GameObject> imported);
         public event OnImportEvent OnImport;
 
-        public delegate void OnPasteEvent(ref HashSet<GameObject> pastedObjects);
+        public delegate void OnPasteEvent(HashSet<GameObject> pastedObjects);
         public event OnPasteEvent OnPaste;
 
-        public delegate void OnDeleteEvent(ref HashSet<GameObject> deletedObjects);
+        public delegate void OnDeleteEvent(HashSet<GameObject> deletedObjects);
         public event OnDeleteEvent OnDelete;
         #endregion
 
@@ -68,8 +68,6 @@ namespace MapEditor
         {
             if (Instance == null)
                 Instance = this;
-            else
-                Destroy(gameObject);
 
             //Insantiate the script table
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
@@ -79,15 +77,15 @@ namespace MapEditor
         #endregion
 
         #region Update
-        void LateUpdate()
+        void Update()
         {
             //If the game is in edit mode, check for keyboard shortcut inputs
             if (EditorManager.Instance.currentMode == EditorMode.Edit)
             {
-                //Check delete keys
+                //Check the delete keys
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
                     deleteSelection();
-                //Check for shortcuts that require the control key to be pressed down
+                //Check for copy & paste shortcuts
                 else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
                 {
                     if (Input.GetKeyDown(KeyCode.C))
@@ -102,7 +100,7 @@ namespace MapEditor
         private void copySelection()
         {
             //Get a reference to the list of selected objects
-            ref HashSet<GameObject> selectedObjects = ref ObjectSelection.Instance.getSelection();
+            HashSet<GameObject> selectedObjects = ObjectSelection.Instance.getSelection();
 
             //If there aren't any objects to copy, return
             if (selectedObjects.Count == 0)
@@ -165,7 +163,7 @@ namespace MapEditor
         private void deleteSelection()
         {
             //Get a reference to the selected objects list
-            ref HashSet<GameObject> selectedObjects = ref ObjectSelection.Instance.removeSelected();
+            HashSet<GameObject> selectedObjects = ObjectSelection.Instance.removeSelected();
 
             //Remove each selected object from the script table and destroy the object
             foreach (GameObject mapObject in selectedObjects)
@@ -175,7 +173,7 @@ namespace MapEditor
             }
 
             //Notify listners that the selected objects were deleted
-            OnDelete?.Invoke(ref selectedObjects);
+            OnDelete?.Invoke(selectedObjects);
 
             //Reset the selected objects lsit
             selectedObjects.Clear();
@@ -189,7 +187,7 @@ namespace MapEditor
             yield return new WaitForEndOfFrame();
 
             //Notify listners that the copied objects were pasted
-            OnImport?.Invoke(ref ObjectSelection.Instance.getSelectable());
+            OnImport?.Invoke(ObjectSelection.Instance.getSelectable());
         }
 
         private IEnumerator InvokeOnPaste()
@@ -198,7 +196,7 @@ namespace MapEditor
             yield return new WaitForEndOfFrame();
 
             //Notify listners that the copied objects were pasted
-            OnPaste?.Invoke(ref ObjectSelection.Instance.getSelection());
+            OnPaste?.Invoke(ObjectSelection.Instance.getSelection());
         }
         #endregion
 
