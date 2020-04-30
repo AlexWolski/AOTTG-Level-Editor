@@ -11,7 +11,6 @@ namespace MapEditor
         #region Data Members
         //A self-reference to the singleton instance of this script
         public static ObjectSelection Instance { get; private set; }
-
         private Camera mainCamera;
 
         //A hash set containing the objects that can be selected
@@ -79,27 +78,31 @@ namespace MapEditor
             {
                 RaycastHit hit;
                 Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+                bool rayHit = Physics.Raycast(ray, out hit, Mathf.Infinity);
 
-                //If an object was clicked, select it
-                if (Physics.Raycast(ray, out hit, Mathf.Infinity))
+                //Check if nothing was hit or the hit object isn't selectable
+                if(!rayHit || hit.transform.gameObject.tag != "Selectable")
                 {
-                    //If the object isn't selectable, don't select it
-                    if (hit.transform.gameObject.tag != "Selectable")
-                    {
-                        //If the left control key isn't held down, deselect all objects
-                        if (!Input.GetKey(KeyCode.LeftControl))
-                            selectionCommand = new DeselectAll();
-
-                        //Skil the non-selectable object
-                        return;
-                    }
-
+                    //If not in additive mode and there is a selection, deselect all
+                    if(!Input.GetKey(KeyCode.LeftControl) && Instance.selectedObjects.Count > 0)
+                        selectionCommand = new DeselectAll();
+                }
+                //If an object was clicked, select it
+                else
+                {
                     //Select the parent of the object
                     GameObject parentObject = getParent(hit.transform.gameObject);
 
                     //If left control is not held, deselect all objects and select the clicked object
                     if (!Input.GetKey(KeyCode.LeftControl))
+                    {
+                        //If the clicked object is already the only selected object, skip it
+                        if (Instance.selectedObjects.Count == 1 &&
+                            Instance.selectedObjects.Contains(parentObject))
+                            return;
+
                         selectionCommand = new SelectReplace(parentObject);
+                    }
                     //If left control is held, select or deselect the object based on if its currently selected
                     else
                     {
@@ -109,9 +112,6 @@ namespace MapEditor
                             selectionCommand = new DeselectObject(parentObject);
                     }
                 }
-                //If no objects were clicked and left control is not held, deselect all objects
-                else if (!Input.GetKey(KeyCode.LeftControl))
-                    selectionCommand = new DeselectAll();
             }
 
             //If a selection was made, execute its associated command and add it to the history
@@ -348,19 +348,36 @@ namespace MapEditor
         //Add the given object to the selectable objects list
         public void addSelectable(GameObject objectToAdd)
         {
-            if(!selectableObjects.Contains(objectToAdd))
-                selectableObjects.Add(getParent(objectToAdd));
+            selectableObjects.Add(getParent(objectToAdd));
         }
 
         //Remove the given object from both the selectable and selected objects lists
-        public void removeSelectable(GameObject objectToAdd)
+        public void removeSelectable(GameObject objectToRemove)
         {
-            //If the object is selected, deselect it
-            if (selectedObjects.Contains(objectToAdd))
-                deselectObject(objectToAdd);
-
+            //Deselect the object
+            deselectObject(objectToRemove);
             //Remove the object from the selectable objects list
-            selectableObjects.Remove(getParent(objectToAdd));
+            selectableObjects.Remove(getParent(objectToRemove));
+        }
+
+        //Remove any selected objects from both the selected and selectable objects lists
+        public HashSet<GameObject> removeSelected()
+        {
+            //Remove the selected objects from the selectable set
+            selectableObjects.ExceptWith(Instance.selectedObjects);
+
+            //Clone the selected objects set
+            HashSet<GameObject> originalSelection = new HashSet<GameObject>(Instance.selectedObjects);
+
+            //Deselect each object
+            foreach (GameObject mapObject in originalSelection)
+                deselectObject(mapObject);
+
+            //Reset the selection average
+            removeAverageAll();
+
+            //Return a reference to the selected objects list
+            return originalSelection;
         }
 
         public void selectObject(GameObject objectToSelect)
@@ -461,34 +478,17 @@ namespace MapEditor
             selectableObjects.Clear();
             removeAverageAll();
         }
-
-        //Remove any selected objects from both the selected and selectable objects lists
-        //Returns a the selected objects list. Caller is expected to reset it after use
-        public HashSet<GameObject> removeSelected()
-        {
-            //If all of the objects are selected, reset just the selectable objects list
-            if (selectedObjects.Count == selectableObjects.Count)
-                selectableObjects.Clear();
-            //If a subset of objects are selected, remove just the selected objects from the selectable list
-            else
-            {
-                //Remove all of the selected objects from the selectable list
-                foreach (GameObject mapObject in selectedObjects)
-                    selectableObjects.Remove(mapObject);
-            }
-
-            //Reset the selection average
-            removeAverageAll();
-
-            //Return a reference to the selected objects list
-            return Instance.selectedObjects;
-        }
         #endregion
 
         #region Selection Getters
         public HashSet<GameObject> getSelection()
         {
             return Instance.selectedObjects;
+        }
+
+        public int getSelectionCount()
+        {
+            return Instance.selectedObjects.Count;
         }
 
         public HashSet<GameObject> getSelectable()

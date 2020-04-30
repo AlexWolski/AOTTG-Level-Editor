@@ -292,20 +292,27 @@ namespace MapEditor
             if (!dragging)
                 return;
 
-            //Create a command for the selection and add it to the history
-            switch (selectMode)
+            //Get the current selection after the drag select
+            HashSet<GameObject> currentSelection = ObjectSelection.Instance.getSelection();
+
+            //Don't save a command if the selection is identical before and after the drag
+            if (!currentSelection.SetEquals(originalSeleciton))
             {
-                case DragSelectMode.replace:
-                    EditHistory.Instance.addCommand(new ReplaceSelection());
-                    break;
+                //Create a command for the selection and add it to the history
+                switch (selectMode)
+                {
+                    case DragSelectMode.replace:
+                        EditHistory.Instance.addCommand(new ReplaceSelection());
+                        break;
 
-                case DragSelectMode.additive:
-                    EditHistory.Instance.addCommand(new AddSelection());
-                    break;
+                    case DragSelectMode.additive:
+                        EditHistory.Instance.addCommand(new AddSelection());
+                        break;
 
-                case DragSelectMode.subtractive:
-                    EditHistory.Instance.addCommand(new RemoveSelection());
-                    break;
+                    case DragSelectMode.subtractive:
+                        EditHistory.Instance.addCommand(new RemoveSelection());
+                        break;
+                }
             }
 
             //Release the old selected object set

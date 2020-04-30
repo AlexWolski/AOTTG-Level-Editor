@@ -14,8 +14,12 @@ namespace MapEditor
         //A self-reference to the singleton instance of this script
         public static MapManager Instance { get; private set; }
 
-        //A reference to the empty gameobject that contains all of the copied objects
+        //A reference to the root for all copied objects
         [SerializeField] private GameObject copiedObjectsRoot;
+        //Determines if there are copied objects saved
+        private bool selectionCopied = false;
+        //A reference to the root for all deleted objects
+        [SerializeField] private GameObject deletedObjectsRoot;
         //A reference to the empty map to add objects to
         [SerializeField] private GameObject mapRoot;
         //A reference to the billboard prefab
@@ -79,23 +83,112 @@ namespace MapEditor
         #region Update
         void Update()
         {
+            //Stores the command that needs to be executed
+            EditCommand editCommand = null;
+
             //If the game is in edit mode, check for keyboard shortcut inputs
             if (EditorManager.Instance.currentMode == EditorMode.Edit)
             {
                 //Check the delete keys
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
-                    deleteSelection();
+                {
+                    //Only create a delete command if there are any selected objects
+                    if (ObjectSelection.Instance.getSelectionCount() > 0)
+                    {
+                        editCommand = new DeleteSelection();
+                        editCommand.executeEdit();
+                    }
+                }
                 //Check for copy & paste shortcuts
                 else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
                 {
                     if (Input.GetKeyDown(KeyCode.C))
                         copySelection();
                     else if (Input.GetKeyDown(KeyCode.V))
-                        pasteSelection();
+                    {
+                        //Only paste if there are any copied objects
+                        if (selectionCopied)
+                        {
+                            pasteSelection();
+                            editCommand = new PasteSelection();
+                        }
+                    }
                 }
+
+                //If a selection was made, add it to the history
+                if (editCommand != null)
+                    EditHistory.Instance.addCommand(editCommand);
+            }
+        }
+        #endregion
+
+        #region Edit Commands
+        //Delete and undelete the pasted objects
+        private class PasteSelection : EditCommand
+        {
+            private GameObject[] pastedObjects;
+
+            //Store the pasted objects (must be called after the objects are pasted)
+            public PasteSelection()
+            {
+                this.pastedObjects = ObjectSelection.Instance.getSelection().ToArray();
+            }
+
+            //Undelete the pasted objects (must have been deleted first)
+            public override void executeEdit()
+            {
+                Instance.undeleteObjects(pastedObjects);
+            }
+
+            //Remove the pasted objects by deleting them
+            public override void revertEdit()
+            {
+                Instance.deleteSelection();
             }
         }
 
+        //Delete the selected objects
+        private class DeleteSelection : EditCommand
+        {
+            private GameObject[] deletedObjects;
+            private bool deleted;
+
+            public DeleteSelection()
+            {
+                //Save the objects to be deleted
+                deletedObjects = ObjectSelection.Instance.getSelection().ToArray();
+                //The objects haven't been deleted yet
+                deleted = false;
+            }
+
+            //Destructor to delete the saved deleted objects 
+            ~DeleteSelection()
+            {
+                //Destroy the objects if they were deleted when the command instance was destroyed
+               if (deleted)
+                {
+                    foreach (GameObject mapObject in deletedObjects)
+                        Destroy(mapObject);
+                }
+            }
+
+            //Delete the current selection
+            public override void executeEdit()
+            {
+                Instance.deleteSelection();
+                deleted = true;
+            }
+
+            //Undelete the objects that were deleted
+            public override void revertEdit()
+            {
+                Instance.undeleteObjects(deletedObjects);
+                deleted = false;
+            }
+        }
+        #endregion
+
+        #region Copy/Paste/Delete Methods
         //Copy a selection by cloning all of the selected objects and storing them
         private void copySelection()
         {
@@ -126,6 +219,8 @@ namespace MapEditor
                 //Set the object as the child of the copied objects root
                 objectClone.transform.parent = Instance.copiedObjectsRoot.transform;
             }
+
+            selectionCopied = true;
         }
 
         //Paste the copied objects by instantiating them
@@ -159,24 +254,36 @@ namespace MapEditor
         }
 
         //Delete the selected objects
-        //To-Do: store deleted objects so the delete can be undone
         private void deleteSelection()
         {
-            //Get a reference to the selected objects list
+            //Deselect the selection and get a reference
             HashSet<GameObject> selectedObjects = ObjectSelection.Instance.removeSelected();
 
-            //Remove each selected object from the script table and destroy the object
-            foreach (GameObject mapObject in selectedObjects)
+            //Move the objects under the deleted objects root and hide them
+            foreach (GameObject objectToDelete in selectedObjects)
             {
-                ObjectScriptTable.Remove(mapObject);
-                destroyObject(mapObject);
+                objectToDelete.transform.parent = Instance.deletedObjectsRoot.transform;
+                objectToDelete.SetActive(false);
             }
 
             //Notify listners that the selected objects were deleted
             OnDelete?.Invoke(selectedObjects);
+        }
 
-            //Reset the selected objects lsit
-            selectedObjects.Clear();
+        //Add the given objects back into the game
+        private void undeleteObjects(GameObject[] deletedObjects)
+        {
+            //Make all the deleted objects selectable
+            foreach(GameObject gameObject in deletedObjects)
+                ObjectSelection.Instance.addSelectable(gameObject);
+
+            //Activate the object, move it back into the level, and select it
+            foreach (GameObject mapObject in deletedObjects)
+            {
+                mapObject.SetActive(true);
+                mapObject.transform.parent = Instance.mapRoot.transform;
+                ObjectSelection.Instance.selectObject(mapObject);
+            }
         }
         #endregion
 
@@ -393,7 +500,7 @@ namespace MapEditor
         #endregion
 
         #region Parser Helpers
-        //Check if the object exists. Then disable and destroy it
+        //If the object exists, disable and destroy it
         private static void destroyObject(GameObject objectToDestroy)
         {
             if (objectToDestroy)
