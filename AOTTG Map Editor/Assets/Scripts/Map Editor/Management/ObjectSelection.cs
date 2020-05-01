@@ -37,126 +37,12 @@ namespace MapEditor
             mainCamera = Camera.main;
 
             //Add listners to events in the SelectionHandle class
+            SelectionHandle.Instance.OnHandleFinish += endSelection;
             SelectionHandle.Instance.OnHandleMove += editSelection;
         }
         #endregion
 
-        #region Update Selection Methods
-        private void Update()
-        {
-            //Check for an object selection if in edit mode and nothing is being dragged
-            if (EditorManager.Instance.currentMode == EditorMode.Edit &&
-                EditorManager.Instance.shortcutsEnabled &&
-                EditorManager.Instance.cursorAvailable)
-                checkSelect();
-        }
-
-        //Test if any objects were clicked
-        private void checkSelect()
-        {
-            //Stores the command that needs to be executed
-            EditCommand selectionCommand = null;
-
-            //If the left control key is held, check for shortcuts
-            if (Input.GetKey(KeyCode.LeftControl))
-            {
-                //If 'control + A' is pressed, either select or deselect all based on if anything is currently selected
-                if (Input.GetKeyDown(KeyCode.A))
-                {
-                    if (selectedObjects.Count > 0)
-                        selectionCommand = new DeselectAll();
-                    else
-                        selectionCommand = new SelectAll();
-                }
-                //If 'control + I' is pressed, invert the current selection
-                if (Input.GetKeyDown(KeyCode.I))
-                    selectionCommand = new InvertSelection();
-            }
-
-            //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected
-            if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject(-1))
-            {
-                RaycastHit hit;
-                Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
-                bool rayHit = Physics.Raycast(ray, out hit, Mathf.Infinity);
-
-                //Check if nothing was hit or the hit object isn't selectable
-                if(!rayHit || hit.transform.gameObject.tag != "Selectable")
-                {
-                    //If not in additive mode and there is a selection, deselect all
-                    if(!Input.GetKey(KeyCode.LeftControl) && Instance.selectedObjects.Count > 0)
-                        selectionCommand = new DeselectAll();
-                }
-                //If an object was clicked, select it
-                else
-                {
-                    //Select the parent of the object
-                    GameObject parentObject = getParent(hit.transform.gameObject);
-
-                    //If left control is not held, deselect all objects and select the clicked object
-                    if (!Input.GetKey(KeyCode.LeftControl))
-                    {
-                        //If the clicked object is already the only selected object, skip it
-                        if (Instance.selectedObjects.Count == 1 &&
-                            Instance.selectedObjects.Contains(parentObject))
-                            return;
-
-                        selectionCommand = new SelectReplace(parentObject);
-                    }
-                    //If left control is held, select or deselect the object based on if its currently selected
-                    else
-                    {
-                        if (!selectedObjects.Contains(parentObject))
-                            selectionCommand = new SelectAdditive(parentObject);
-                        else
-                            selectionCommand = new DeselectObject(parentObject);
-                    }
-                }
-            }
-
-            //If a selection was made, execute its associated command and add it to the history
-            if (selectionCommand != null)
-            {
-                selectionCommand.executeEdit();
-                EditHistory.Instance.addCommand(selectionCommand);
-            }
-        }
-
-        //Update the position, rotation, or scale of the object selections based on the tool handle
-        private void editSelection()
-        {
-            //Determine which tool was used and call the respective transform
-            switch (SelectionHandle.Instance.currentTool)
-            {
-                case Tool.Translate:
-                    //Get the position displacement and translate the selected objects
-                    Vector3 posDisplacement = SelectionHandle.Instance.getPosDisplacement();
-                    TransformTools.TranslateSelection(Instance.selectedObjects, posDisplacement);
-
-                    //Update the selection average
-                    positionSum += posDisplacement * selectedObjects.Count;
-                    selectionAverage += posDisplacement;
-                    break;
-
-                case Tool.Rotate:
-                    //Get the angle and axis and to rotate around
-                    Vector3 rotationAxis;
-                    float angle = SelectionHandle.Instance.getRotDisplacement(out rotationAxis);
-
-                    //Rotate the selected objects around the seleciton average
-                    TransformTools.RotateSelection(Instance.selectedObjects, selectionAverage, rotationAxis, angle);
-                    break;
-
-                case Tool.Scale:
-                    //Get the scale displacement and scale the selected objects
-                    Vector3 scaleDisplacement = SelectionHandle.Instance.getScaleDisplacement();
-                    TransformTools.ScaleSelection(Instance.selectedObjects, selectionAverage, scaleDisplacement, false);
-                    break;
-            }
-        }
-        #endregion
-
-        #region Edit Commands
+        #region Selection Edit Commands
         //Add an object to the current selection
         private class SelectAdditive : EditCommand
         {
@@ -270,6 +156,273 @@ namespace MapEditor
         }
         #endregion
 
+        #region Transform Edit Commands
+        private class TranslateSelection : EditCommand
+        {
+            private Vector3 displacement;
+            private Vector3 negativeDisplacement;
+
+            public TranslateSelection(Vector3 posDisplacement)
+            {
+                //Save the displacement
+                this.displacement = posDisplacement;
+
+                //Negate the displacement and store it
+                negativeDisplacement = new Vector3();
+
+                for (int axis = 0; axis < 3; axis++)
+                    negativeDisplacement[axis] = -displacement[axis];
+            }
+
+            public override void executeEdit()
+            {
+                TransformTools.TranslateSelection(Instance.selectedObjects, displacement);
+
+                //Update the selection average
+                Instance.translateSelectionAverage(displacement);
+                SelectionHandle.Instance.Position = Instance.selectionAverage;
+            }
+
+            public override void revertEdit()
+            {
+                TransformTools.TranslateSelection(Instance.selectedObjects, negativeDisplacement);
+
+                //Update the selection average
+                Instance.translateSelectionAverage(negativeDisplacement);
+                SelectionHandle.Instance.Position = Instance.selectionAverage;
+            }
+        }
+
+        private class RotateSelection : EditCommand
+        {
+            private Quaternion startRotation;
+            private Quaternion endRotation;
+
+            private float angleDisplacement;
+            private Vector3 rotationAxis;
+
+            public RotateSelection(Quaternion originalRotation, Quaternion currentRotation)
+            {
+                startRotation = originalRotation;
+                endRotation = currentRotation;
+
+                //Calculate the displacement
+                Quaternion rotDisplacement = Quaternion.Inverse(originalRotation) * currentRotation;
+                //Store the angle and axis of rotation
+                rotDisplacement.ToAngleAxis(out angleDisplacement, out rotationAxis);
+
+                //Multiply the rotation axis by the original rotation to get the axis relative to the handle
+                rotationAxis = originalRotation * rotationAxis;
+            }
+
+            public override void executeEdit()
+            {
+                TransformTools.RotateSelection(Instance.selectedObjects, Instance.selectionAverage, rotationAxis, angleDisplacement);
+                SelectionHandle.Instance.Rotation = endRotation;
+            }
+
+            public override void revertEdit()
+            {
+                TransformTools.RotateSelection(Instance.selectedObjects, Instance.selectionAverage, rotationAxis, -angleDisplacement);
+                SelectionHandle.Instance.Rotation = startRotation;
+            }
+        }
+
+        private class ScaleSelection : EditCommand
+        {
+            private Vector3 scaleUpFactor;
+            private Vector3 scaleDownFactor;
+
+            public ScaleSelection(Vector3 scaleUpFactor)
+            {
+                this.scaleUpFactor = scaleUpFactor;
+
+                //Calculate the scale down factor
+                scaleDownFactor = new Vector3();
+
+                for (int axis = 0; axis < 3; axis++)
+                    scaleDownFactor[axis] = 1f / scaleUpFactor[axis];
+            }
+
+            public override void executeEdit()
+            {
+                TransformTools.ScaleSelection(Instance.selectedObjects, Instance.selectionAverage, scaleUpFactor, false);
+            }
+
+            public override void revertEdit()
+            {
+                TransformTools.ScaleSelection(Instance.selectedObjects, Instance.selectionAverage, scaleDownFactor, false);
+            }
+        }
+        #endregion
+
+        #region Update Selection Methods
+        private void Update()
+        {
+            //Check for an object selection if in edit mode and nothing is being dragged
+            if (EditorManager.Instance.currentMode == EditorMode.Edit &&
+                EditorManager.Instance.shortcutsEnabled &&
+                EditorManager.Instance.cursorAvailable)
+                checkSelect();
+        }
+
+        //Test if any objects were clicked
+        private void checkSelect()
+        {
+            //Stores the command that needs to be executed
+            EditCommand selectionCommand = null;
+
+            //If the left control key is held, check for shortcuts
+            if (Input.GetKey(KeyCode.LeftControl))
+            {
+                //If 'control + A' is pressed, either select or deselect all based on if anything is currently selected
+                if (Input.GetKeyDown(KeyCode.A))
+                {
+                    if (selectedObjects.Count > 0)
+                        selectionCommand = new DeselectAll();
+                    else
+                        selectionCommand = new SelectAll();
+                }
+                //If 'control + I' is pressed, invert the current selection
+                if (Input.GetKeyDown(KeyCode.I))
+                    selectionCommand = new InvertSelection();
+            }
+
+            //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected
+            if (Input.GetMouseButtonUp(0) && !EventSystem.current.IsPointerOverGameObject(-1))
+            {
+                RaycastHit hit;
+                Ray ray = mainCamera.ScreenPointToRay(Input.mousePosition);
+                bool rayHit = Physics.Raycast(ray, out hit, Mathf.Infinity);
+
+                //Check if nothing was hit or the hit object isn't selectable
+                if(!rayHit || hit.transform.gameObject.tag != "Selectable")
+                {
+                    //If not in additive mode and there is a selection, deselect all
+                    if(!Input.GetKey(KeyCode.LeftControl) && Instance.selectedObjects.Count > 0)
+                        selectionCommand = new DeselectAll();
+                }
+                //If an object was clicked, select it
+                else
+                {
+                    //Select the parent of the object
+                    GameObject parentObject = getParent(hit.transform.gameObject);
+
+                    //If left control is not held, deselect all objects and select the clicked object
+                    if (!Input.GetKey(KeyCode.LeftControl))
+                    {
+                        //If the clicked object is already the only selected object, skip it
+                        if (Instance.selectedObjects.Count == 1 &&
+                            Instance.selectedObjects.Contains(parentObject))
+                            return;
+
+                        selectionCommand = new SelectReplace(parentObject);
+                    }
+                    //If left control is held, select or deselect the object based on if its currently selected
+                    else
+                    {
+                        if (!selectedObjects.Contains(parentObject))
+                            selectionCommand = new SelectAdditive(parentObject);
+                        else
+                            selectionCommand = new DeselectObject(parentObject);
+                    }
+                }
+            }
+
+            //If a selection was made, execute its associated command and add it to the history
+            if (selectionCommand != null)
+            {
+                selectionCommand.executeEdit();
+                EditHistory.Instance.addCommand(selectionCommand);
+            }
+        }
+        #endregion
+
+        #region Event Handler Methods
+        //When the handle is released, create a command 
+        private void endSelection()
+        {
+            //The command to be executed
+            EditCommand transformCommand = null;
+
+            switch (SelectionHandle.Instance.currentTool)
+            {
+                case Tool.Translate:
+                    //Get the translation displacement from the selection handle
+                    Vector3 posDisplacement = SelectionHandle.Instance.Position -
+                                           SelectionHandle.Instance.getStartPosition();
+                    
+                    //If the handle wasn't moved, don't create a command
+                    if(posDisplacement.magnitude == 0)
+                        return;
+
+                    //Otherwise, create a translate command
+                    transformCommand = new TranslateSelection(posDisplacement);
+                    break;
+
+                case Tool.Rotate:
+                    //Get the previous and current rotation of the selection handle
+                    Quaternion originalRotation = SelectionHandle.Instance.getStartRotation();
+                    Quaternion currentRotation = SelectionHandle.Instance.Rotation;
+
+                    //If the handle wasn't rotated, dont create a command
+                    if (originalRotation == currentRotation)
+                        return;
+
+                    //Otherwise, create a rotation command
+                    transformCommand = new RotateSelection(originalRotation, currentRotation);
+                    break;
+
+                default:
+                    //Get the current scale of the tool handle
+                    Vector3 scaleFactor = SelectionHandle.Instance.getEndScale();
+
+                    //If the selection wasn't scaled, don't create a command
+                    if (scaleFactor == Vector3.one)
+                        return;
+
+                    //Otherwise, create a scale command
+                    transformCommand = new ScaleSelection(scaleFactor);
+                    break;
+            }
+
+            if (transformCommand != null)
+                EditHistory.Instance.addCommand(transformCommand);
+        }
+
+        //Update the position, rotation, or scale of the object selections based on the tool handle
+        private void editSelection()
+        {
+            //Determine which tool was used and call the respective transform
+            switch (SelectionHandle.Instance.currentTool)
+            {
+                case Tool.Translate:
+                    //Get the position displacement and translate the selected objects
+                    Vector3 posDisplacement = SelectionHandle.Instance.getPosDisplacement();
+                    TransformTools.TranslateSelection(Instance.selectedObjects, posDisplacement);
+
+                    //Update the selection average
+                    translateSelectionAverage(posDisplacement);
+                    break;
+
+                case Tool.Rotate:
+                    //Get the angle and axis and to rotate around
+                    Vector3 rotationAxis;
+                    float angle = SelectionHandle.Instance.getRotDisplacement(out rotationAxis);
+
+                    //Rotate the selected objects around the seleciton average
+                    TransformTools.RotateSelection(Instance.selectedObjects, selectionAverage, rotationAxis, angle);
+                    break;
+
+                case Tool.Scale:
+                    //Get the scale displacement and scale the selected objects
+                    Vector3 scaleDisplacement = SelectionHandle.Instance.getScaleDisplacement();
+                    TransformTools.ScaleSelection(Instance.selectedObjects, selectionAverage, scaleDisplacement, false);
+                    break;
+            }
+        }
+        #endregion
+
         #region Selection Average Methods
         //Add a point to the total average
         private void addAveragePoint(Vector3 point)
@@ -277,7 +430,7 @@ namespace MapEditor
             //Add the point to the total and update the average
             positionSum += point;
             selectionAverage = positionSum / selectedObjects.Count;
-            SelectionHandle.Instance.setPosition(selectionAverage);
+            SelectionHandle.Instance.Position = selectionAverage;
 
             //If the tool handle is not active, activate it
             SelectionHandle.Instance.show();
@@ -295,7 +448,7 @@ namespace MapEditor
 
             //Average the points
             selectionAverage = positionSum / selectableObjects.Count;
-            SelectionHandle.Instance.setPosition(selectionAverage);
+            SelectionHandle.Instance.Position = selectionAverage;
 
             //If the tool handle is not active, activate it
             SelectionHandle.Instance.show();
@@ -311,7 +464,7 @@ namespace MapEditor
             if (selectedObjects.Count != 0)
             {
                 selectionAverage = positionSum / selectedObjects.Count;
-                SelectionHandle.Instance.setPosition(selectionAverage);
+                SelectionHandle.Instance.Position = selectionAverage;
             }
             //Otherwise, disable the tool handle
             else
@@ -327,6 +480,13 @@ namespace MapEditor
 
             //Hide the tool handle
             SelectionHandle.Instance.hide();
+        }
+
+        //Updates the average when the whole selection is translated by the same amount
+        private void translateSelectionAverage(Vector3 displacement)
+        {
+            positionSum += displacement * Instance.selectedObjects.Count;
+            selectionAverage += displacement;
         }
         #endregion
 
@@ -513,11 +673,11 @@ namespace MapEditor
             {
                 GameObject[] selectedArray = new GameObject[1];
                 selectedObjects.CopyTo(selectedArray, 0);
-                SelectionHandle.Instance.setRotation(selectedArray[0].transform.rotation);
+                SelectionHandle.Instance.Rotation = selectedArray[0].transform.rotation;
             }
             //Otherwise reset the rotation
             else
-                SelectionHandle.Instance.setRotation(Quaternion.identity);
+                SelectionHandle.Instance.Rotation = Quaternion.identity;
         }
         #endregion
 

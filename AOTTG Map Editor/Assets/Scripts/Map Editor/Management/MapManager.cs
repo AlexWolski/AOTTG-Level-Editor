@@ -80,48 +80,6 @@ namespace MapEditor
         }
         #endregion
 
-        #region Update
-        void Update()
-        {
-            //Stores the command that needs to be executed
-            EditCommand editCommand = null;
-
-            //If the game is in edit mode, check for keyboard shortcut inputs
-            if (EditorManager.Instance.currentMode == EditorMode.Edit)
-            {
-                //Check the delete keys
-                if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
-                {
-                    //Only create a delete command if there are any selected objects
-                    if (ObjectSelection.Instance.getSelectionCount() > 0)
-                    {
-                        editCommand = new DeleteSelection();
-                        editCommand.executeEdit();
-                    }
-                }
-                //Check for copy & paste shortcuts
-                else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
-                {
-                    if (Input.GetKeyDown(KeyCode.C))
-                        copySelection();
-                    else if (Input.GetKeyDown(KeyCode.V))
-                    {
-                        //Only paste if there are any copied objects
-                        if (selectionCopied)
-                        {
-                            pasteSelection();
-                            editCommand = new PasteSelection();
-                        }
-                    }
-                }
-
-                //If a selection was made, add it to the history
-                if (editCommand != null)
-                    EditHistory.Instance.addCommand(editCommand);
-            }
-        }
-        #endregion
-
         #region Edit Commands
         //Delete and undelete the pasted objects
         private class PasteSelection : EditCommand
@@ -165,7 +123,7 @@ namespace MapEditor
             ~DeleteSelection()
             {
                 //Destroy the objects if they were deleted when the command instance was destroyed
-               if (deleted)
+                if (deleted)
                 {
                     foreach (GameObject mapObject in deletedObjects)
                         Destroy(mapObject);
@@ -184,6 +142,48 @@ namespace MapEditor
             {
                 Instance.undeleteObjects(deletedObjects);
                 deleted = false;
+            }
+        }
+        #endregion
+
+        #region Update
+        void Update()
+        {
+            //Stores the command that needs to be executed
+            EditCommand editCommand = null;
+
+            //If the game is in edit mode, check for keyboard shortcut inputs
+            if (EditorManager.Instance.currentMode == EditorMode.Edit)
+            {
+                //Check the delete keys
+                if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
+                {
+                    //Only create a delete command if there are any selected objects
+                    if (ObjectSelection.Instance.getSelectionCount() > 0)
+                    {
+                        editCommand = new DeleteSelection();
+                        editCommand.executeEdit();
+                    }
+                }
+                //Check for copy & paste shortcuts
+                else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
+                {
+                    if (Input.GetKeyDown(KeyCode.C))
+                        copySelection();
+                    else if (Input.GetKeyDown(KeyCode.V))
+                    {
+                        //Only paste if there are any copied objects
+                        if (selectionCopied)
+                        {
+                            pasteSelection();
+                            editCommand = new PasteSelection();
+                        }
+                    }
+                }
+
+                //If a selection was made, add it to the history
+                if (editCommand != null)
+                    EditHistory.Instance.addCommand(editCommand);
             }
         }
         #endregion
