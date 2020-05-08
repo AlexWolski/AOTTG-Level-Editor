@@ -22,8 +22,6 @@ namespace MapEditor
         [SerializeField] private GameObject deletedObjectsRoot;
         //A reference to the empty map to add objects to
         [SerializeField] private GameObject mapRoot;
-        //A reference to the billboard prefab
-        [SerializeField] private GameObject billboardPrefab;
 
         //References to the large and small map boundaries
         [SerializeField] private GameObject smallMapBounds;
@@ -354,12 +352,7 @@ namespace MapEditor
                         continue;
 
                     //Parse the object script and create a new map object
-                    MapObject mapObjectScript;
-                    GameObject newMapObject = loadObject(parsedMap[scriptIndex], out mapObjectScript);
-
-                    //If the object is defined, add it to the map hierarchy and make it selectable
-                    if (newMapObject)
-                        addObjectToMap(newMapObject, mapObjectScript);
+                    loadMapObject(parsedMap[scriptIndex]);
                 }
                 catch (Exception e)
                 {
@@ -415,55 +408,30 @@ namespace MapEditor
         }
 
         //Parse the given object script and instantiate a new GameObject with the data
-        private GameObject loadObject(string objectScript, out MapObject mapObjectScript)
+        private void loadMapObject(string objectScript)
         {
             //Seperate the object script by comma
-            string[] parsedObject = objectScript.Split(',');
+            string[] parsedScript = objectScript.Split(',');
             //The GameObject loaded from RCAssets corresponding to the object name
             GameObject newObject = null;
-            //The type of the object
-            objectType type;
 
             try
             {
                 //If the script is "map,disableBounds" then set a flag to disable the map boundries and skip the object
-                if (parsedObject[0].StartsWith("map") && parsedObject[1].StartsWith("disablebounds"))
+                if (parsedScript[0].StartsWith("map") && parsedScript[1].StartsWith("disablebounds"))
                 {
                     BoundsDisabled = true;
                     enableLargeMapBounds(true);
-                    mapObjectScript = null;
 
-                    return null;
+                    return;
                 }
 
                 //If the length of the string is too short, raise an error
-                if (parsedObject.Length < 9)
+                if (parsedScript.Length < 9)
                     throw new Exception("Too few elements in object script");
 
-                //Parse the object type
-                type = MapObject.parseType(parsedObject[0]);
-
-                //Use the object name to load the asset
-                newObject = createMapObject(type, parsedObject[1]);
-                //Get the MapObject script attached to the new GameObject
-                mapObjectScript = newObject.GetComponent<MapObject>();
-
-                //Use the parsedObject array to set the reset of the properties of the object
-                mapObjectScript.loadProperties(parsedObject);
-
-                //Check if the object is a region
-                if (type == objectType.misc && parsedObject[1] == "region")
-                {
-                    //Give the region a default rotation
-                    mapObjectScript.Rotation = Quaternion.identity;
-
-                    //intantiate a billboard and set it as a child of the region
-                    GameObject billboard = Instantiate(Instance.billboardPrefab);
-                    billboard.GetComponent<TextMesh>().text = mapObjectScript.RegionName;
-                    billboard.transform.parent = newObject.transform;
-                }
-
-                return newObject;
+                //Use the object scripte to create the map object
+                createMapObject(parsedScript);
             }
             //If there was an error converting an element to a float, destroy the object and pass a new exception to the caller
             catch (FormatException)
@@ -501,7 +469,7 @@ namespace MapEditor
 
         #region Parser Helpers
         //If the object exists, disable and destroy it
-        private static void destroyObject(GameObject objectToDestroy)
+        private void destroyObject(GameObject objectToDestroy)
         {
             if (objectToDestroy)
             {
@@ -511,29 +479,29 @@ namespace MapEditor
         }
 
         //Toggle between the small and large map bounds being active
-        private static void enableLargeMapBounds(bool enabled)
+        private void enableLargeMapBounds(bool enabled)
         {
             Instance.smallMapBounds.SetActive(!enabled);
             Instance.largeMapBounds.SetActive(enabled);
         }
 
         //Load the GameObject from RCAssets with the corresponding object name and attach a MapObject script to it
-        private static GameObject createMapObject(objectType type, string objectName)
+        private GameObject createMapObject(string[] parsedScript)
         {
             //The GameObject loaded from RCAssets corresponding to the object name
             GameObject newObject;
 
+            //Store the object type and name from the parsed script
+            objectType type = MapObject.parseType(parsedScript[0]);
+            string objectName = parsedScript[1];
+
             //If the object is a vanilla object, instantiate it from the vanilla assets
             if (type == objectType.@base)
-            {
                 newObject = AssetManager.instantiateVanillaObject(objectName);
-            }
-            //If the object is a barrier or region, instantiate editor version
+            //If the object is a barrier or region, instantiate the editor version
             else if (objectName == "barrier" || objectName == "region")
-            {
                 newObject = AssetManager.instantiateRcObject(objectName + "Editor");
-            }
-            //Otherwise, instantiate the object from teh RC assets
+            //Otherwise, instantiate the object from RC assets
             else
                 newObject = AssetManager.instantiateRcObject(objectName);
 
@@ -542,9 +510,29 @@ namespace MapEditor
                 throw new Exception("The object '" + objectName + "' does not exist");
 
             //Attatch the MapObject script to the new object
-            MapObject mapObjectScript = newObject.AddComponent<MapObject>();
+            MapObject mapObjectScript;
+
+            //Attach the appropriate Map Object script based on the object type and name
+            if (type == objectType.spawnpoint)
+                mapObjectScript = newObject.AddComponent<SpawnPointObject>();
+            else if(type == objectType.photon && objectName.StartsWith("spawn"))
+                mapObjectScript = newObject.AddComponent<SpawnerObject>();
+            else if(type == objectType.racing)
+                mapObjectScript = newObject.AddComponent<RacingObject>();
+            else if(objectName.StartsWith("region"))
+                mapObjectScript = newObject.AddComponent<RegionObject>();
+            else if (objectName.StartsWith("barrier"))
+                mapObjectScript = newObject.AddComponent<BarrierObject>();
+            else
+                mapObjectScript = newObject.AddComponent<TexturedObject>();
+
             //Set the type of the mapObject
             mapObjectScript.Type = type;
+
+            //Use the parsedObject array to set the reset of the properties of the object
+            mapObjectScript.loadProperties(parsedScript);
+            //Add the object to the hierarchy and store its script
+            addObjectToMap(newObject, mapObjectScript);
 
             //Return the new object 
             return newObject;
