@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -30,6 +31,8 @@ namespace MapEditor
         //Cached transformation matricies for the camera
         Matrix4x4 worldToViewMatrix;
         Matrix4x4 projectionMatrix;
+        //Stores the screen resolution to detect changes in window size
+        Vector2 prevResolution;
 
         //Variables for managing the drag selection box
         private bool mouseDown = false;
@@ -69,6 +72,9 @@ namespace MapEditor
             //Set this script as the only instance of the ObjectSelection script
             if (Instance == null)
                 Instance = this;
+
+            //Store the screen resolution
+            prevResolution = new Vector2(Screen.width, Screen.height);
         }
 
         private void Start()
@@ -270,6 +276,17 @@ namespace MapEditor
             }
         }
 
+        //If the screen was resized, scale the bounding boxes and reset the stored resolution
+        private void LateUpdate()
+        {
+            if (prevResolution.x != Screen.width || prevResolution.y != Screen.height)
+            {
+                scaleBoundingBoxes();
+                prevResolution.x = Screen.width;
+                prevResolution.y = Screen.height;
+            }
+        }
+
         //Enable the drag selection box
         private void startDrag()
         {
@@ -451,6 +468,7 @@ namespace MapEditor
                         //Deselect the object if it is a part of the original selection and is in the selection box
                         if (originalSeleciton.Contains(mapObject) && inDragBox)
                             ObjectSelection.Instance.deselectObject(mapObject);
+
                         break;
                 }
             }
@@ -509,14 +527,41 @@ namespace MapEditor
                     boundingBoxTable.Remove(mapObject);
         }
 
+        //Scale the bounding boxes to match the new resolution
+        private void scaleBoundingBoxes()
+        {
+            //Calculate the factor by which the screen was scaled
+            //The screen only scales when the height is changed
+            float scaleFactor = Screen.height / prevResolution.y;
+
+            //Update all bounding boxes in the table
+            foreach (GameObject mapObject in boundingBoxTable.Keys.ToList())
+            {
+                //Get the unscaled bounding box
+                Tuple<Vector2, Vector2> boundingBox = boundingBoxTable[mapObject];
+
+                //Calculate the x position of the center of the screen before and after the resize
+                float prevScreenCenterX = prevResolution.x / 2;
+                float newScreenCenterX = Screen.width / 2;
+
+                //Translate the x positions so that the x axis aligns with the center of the screen,
+                //scale the positions, and translate the positions back
+                float newTopLeftXPos = newScreenCenterX + ((boundingBox.Item1.x - prevScreenCenterX) * scaleFactor);
+                float newBottomRightXPos = newScreenCenterX + ((boundingBox.Item2.x - prevScreenCenterX) * scaleFactor);
+
+                //Calculate the scaled bounding box
+                Vector2 topLeftScaled = new Vector2(newTopLeftXPos, boundingBox.Item1.y * scaleFactor);
+                Vector2 bottomRightScaled = new Vector2(newBottomRightXPos, boundingBox.Item2.y * scaleFactor);
+
+                //Replace the unscaled bounding box with the scaled one
+                boundingBoxTable[mapObject] = new Tuple<Vector2, Vector2> (topLeftScaled, bottomRightScaled);
+            }
+        }
+
         //Return a list of screen space verticies for the meshes of the given game object
         private Tuple<Vector2, Vector2> get2DBoundingBox(GameObject mapObject)
         {
             Matrix4x4 localToScreenMatrix = calculateLocalToScreenMatrix(mapObject);
-
-            //Calculate the screen space dimensions
-            float scaledWidth = Screen.width / canvasComponent.scaleFactor;
-            float scaledHeight = Screen.height / canvasComponent.scaleFactor;
 
             //Used to find the bounding box of the object
             bool firstVertex = true;
@@ -535,8 +580,8 @@ namespace MapEditor
                     Vector2 screenVertex = localToScreenMatrix.MultiplyPoint(localVertex);
 
                     //If any of the verticies is offscreen, return null
-                    if (screenVertex.x < 0 || screenVertex.x > scaledWidth ||
-                        screenVertex.y < 0 || screenVertex.y > scaledHeight)
+                    if (screenVertex.x < 0 || screenVertex.x > Screen.width ||
+                        screenVertex.y < 0 || screenVertex.y > Screen.height)
                         return null;
 
                     //If this is the first vertex, use it to initialize the bounds
