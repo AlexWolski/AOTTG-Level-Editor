@@ -10,10 +10,7 @@ namespace MapEditor
     //A singleton class for creating and deleting map objects
     public class MapManager : MonoBehaviour
     {
-        #region Data Members
-        //A self-reference to the singleton instance of this script
-        public static MapManager Instance { get; private set; }
-
+        #region Fields
         //A reference to the root for all copied objects
         [SerializeField] private GameObject copiedObjectsRoot;
         //Determines if there are copied objects saved
@@ -32,24 +29,16 @@ namespace MapEditor
         //The maximum amount of time a coroutine can run before returning. Calculated from minimum loading frame rate
         private float loadingDelay;
 
-        //A dictionary mapping gameobjects to MapObject scripts
-        public Dictionary<GameObject, MapObject> objectScriptTable { get; private set; }
+        //A dictionary mapping game objects to MapObject scripts
+        public Dictionary<GameObject, MapObject> objectScriptTable;
         //Determines if the small map bounds have been disabled or not
         private bool boundsDisabled;
         #endregion
 
-        #region Delegates
-        public delegate void OnImportEvent(HashSet<GameObject> imported);
-        public event OnImportEvent OnImport;
-
-        public delegate void OnPasteEvent(HashSet<GameObject> pastedObjects);
-        public event OnPasteEvent OnPaste;
-
-        public delegate void OnDeleteEvent(HashSet<GameObject> deletedObjects);
-        public event OnDeleteEvent OnDelete;
-        #endregion
-
         #region Properties
+        //A self-reference to the singleton instance of this script
+        public static MapManager Instance { get; private set; }
+
         //Static properties to access private instance data members
         public Dictionary<GameObject, MapObject> ObjectScriptTable
         {
@@ -64,6 +53,17 @@ namespace MapEditor
         }
         #endregion
 
+        #region Delegates
+        public delegate void OnImportEvent(HashSet<GameObject> imported);
+        public event OnImportEvent OnImport;
+
+        public delegate void OnPasteEvent(HashSet<GameObject> pastedObjects);
+        public event OnPasteEvent OnPaste;
+
+        public delegate void OnDeleteEvent(HashSet<GameObject> deletedObjects);
+        public event OnDeleteEvent OnDelete;
+        #endregion
+
         #region Initialization
         //Set this script as the only instance of the MapManager script
         void Awake()
@@ -71,54 +71,54 @@ namespace MapEditor
             if (Instance == null)
                 Instance = this;
 
-            //Insantiate the script table
+            //Instantiate the script table
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
-            //Calcualte the delay between each frame while loading in milliseconds
+            //Calculate the delay between each frame while loading in milliseconds
             loadingDelay = 1f / loadingFPS * 1000;
         }
         #endregion
 
         #region Edit Commands
         //Delete and undelete the pasted objects
-        private class PasteSelection : EditCommand
+        private class PasteSelectionCommand : EditCommand
         {
             private GameObject[] pastedObjects;
 
             //Store the pasted objects (must be called after the objects are pasted)
-            public PasteSelection()
+            public PasteSelectionCommand()
             {
-                this.pastedObjects = ObjectSelection.Instance.getSelection().ToArray();
+                this.pastedObjects = ObjectSelection.Instance.GetSelection().ToArray();
             }
 
             //Undelete the pasted objects (must have been deleted first)
-            public override void executeEdit()
+            public override void ExecuteEdit()
             {
-                Instance.undeleteObjects(pastedObjects);
+                Instance.UndeleteObjects(pastedObjects);
             }
 
             //Remove the pasted objects by deleting them
-            public override void revertEdit()
+            public override void RevertEdit()
             {
-                Instance.deleteSelection();
+                Instance.DeleteSelection();
             }
         }
 
         //Delete the selected objects
-        private class DeleteSelection : EditCommand
+        private class DeleteSelectionCommand : EditCommand
         {
             private GameObject[] deletedObjects;
             private bool deleted;
 
-            public DeleteSelection()
+            public DeleteSelectionCommand()
             {
                 //Save the objects to be deleted
-                deletedObjects = ObjectSelection.Instance.getSelection().ToArray();
+                deletedObjects = ObjectSelection.Instance.GetSelection().ToArray();
                 //The objects haven't been deleted yet
                 deleted = false;
             }
 
             //Destructor to delete the saved deleted objects 
-            ~DeleteSelection()
+            ~DeleteSelectionCommand()
             {
                 //Destroy the objects if they were deleted when the command instance was destroyed
                 if (deleted)
@@ -129,16 +129,16 @@ namespace MapEditor
             }
 
             //Delete the current selection
-            public override void executeEdit()
+            public override void ExecuteEdit()
             {
-                Instance.deleteSelection();
+                Instance.DeleteSelection();
                 deleted = true;
             }
 
             //Undelete the objects that were deleted
-            public override void revertEdit()
+            public override void RevertEdit()
             {
-                Instance.undeleteObjects(deletedObjects);
+                Instance.UndeleteObjects(deletedObjects);
                 deleted = false;
             }
         }
@@ -151,47 +151,47 @@ namespace MapEditor
             EditCommand editCommand = null;
 
             //If the game is in edit mode, check for keyboard shortcut inputs
-            if (EditorManager.Instance.currentMode == EditorMode.Edit)
+            if (EditorManager.Instance.CurrentMode == EditorMode.Edit)
             {
                 //Check the delete keys
                 if (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete))
                 {
                     //Only create a delete command if there are any selected objects
-                    if (ObjectSelection.Instance.getSelectionCount() > 0)
+                    if (ObjectSelection.Instance.GetSelectionCount() > 0)
                     {
-                        editCommand = new DeleteSelection();
-                        editCommand.executeEdit();
+                        editCommand = new DeleteSelectionCommand();
+                        editCommand.ExecuteEdit();
                     }
                 }
                 //Check for copy & paste shortcuts
                 else if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
                 {
                     if (Input.GetKeyDown(KeyCode.C))
-                        copySelection();
+                        CopySelection();
                     else if (Input.GetKeyDown(KeyCode.V))
                     {
                         //Only paste if there are any copied objects
                         if (selectionCopied)
                         {
-                            pasteSelection();
-                            editCommand = new PasteSelection();
+                            PasteSelection();
+                            editCommand = new PasteSelectionCommand();
                         }
                     }
                 }
 
                 //If a selection was made, add it to the history
                 if (editCommand != null)
-                    EditHistory.Instance.addCommand(editCommand);
+                    EditHistory.Instance.AddCommand(editCommand);
             }
         }
         #endregion
 
-        #region Copy/Paste/Delete Methods
+        #region Shortcut Methods
         //Copy a selection by cloning all of the selected objects and storing them
-        private void copySelection()
+        private void CopySelection()
         {
             //Get a reference to the list of selected objects
-            HashSet<GameObject> selectedObjects = ObjectSelection.Instance.getSelection();
+            HashSet<GameObject> selectedObjects = ObjectSelection.Instance.GetSelection();
 
             //If there aren't any objects to copy, return
             if (selectedObjects.Count == 0)
@@ -213,7 +213,7 @@ namespace MapEditor
                 //Get a reference to the cloned object's MapObject script
                 MapObject mapObjectScript = objectClone.GetComponent<MapObject>();
                 //Copy the values of the original map object script
-                mapObjectScript.copyValues(mapObject.GetComponent<MapObject>());
+                mapObjectScript.CopyValues(mapObject.GetComponent<MapObject>());
                 //Set the object as the child of the copied objects root
                 objectClone.transform.parent = Instance.copiedObjectsRoot.transform;
             }
@@ -222,12 +222,12 @@ namespace MapEditor
         }
 
         //Paste the copied objects by instantiating them
-        private void pasteSelection()
+        private void PasteSelection()
         {
             //Temporary GameObject to enable cloned objects before storing them
             GameObject objectClone;
             //Reset the current selection
-            ObjectSelection.Instance.deselectAll();
+            ObjectSelection.Instance.DeselectAll();
 
             //Loop through all of the copied objects
             foreach (Transform copiedObject in Instance.copiedObjectsRoot.transform)
@@ -238,24 +238,24 @@ namespace MapEditor
                 //Get a reference to the cloned object's MapObject script
                 MapObject mapObjectScript = objectClone.GetComponent<MapObject>();
                 //Copy the values of the original map object script
-                mapObjectScript.copyValues(copiedObject.GetComponent<MapObject>());
+                mapObjectScript.CopyValues(copiedObject.GetComponent<MapObject>());
                 //Add the object to the map and make it selectable
-                addObjectToMap(objectClone, mapObjectScript);
-                ObjectSelection.Instance.selectObject(objectClone);
+                AddObjectToMap(objectClone, mapObjectScript);
+                ObjectSelection.Instance.SelectObject(objectClone);
             }
 
             //Once the selection is pasted, change the tool type to translate
-            ToolButtonManager.setTool(Tool.Translate);
+            ToolButtonManager.SetTool(Tool.Translate);
 
-            //Notify listners that the copied objects were pasted at the end of the frame
+            //Notify listeners that the copied objects were pasted at the end of the frame
             StartCoroutine(InvokeOnPaste());
         }
 
         //Delete the selected objects
-        private void deleteSelection()
+        private void DeleteSelection()
         {
             //Deselect the selection and get a reference
-            HashSet<GameObject> selectedObjects = ObjectSelection.Instance.removeSelected();
+            HashSet<GameObject> selectedObjects = ObjectSelection.Instance.RemoveSelected();
 
             //Move the objects under the deleted objects root and hide them
             foreach (GameObject objectToDelete in selectedObjects)
@@ -264,23 +264,23 @@ namespace MapEditor
                 objectToDelete.SetActive(false);
             }
 
-            //Notify listners that the selected objects were deleted
+            //Notify listeners that the selected objects were deleted
             OnDelete?.Invoke(selectedObjects);
         }
 
         //Add the given objects back into the game
-        private void undeleteObjects(GameObject[] deletedObjects)
+        private void UndeleteObjects(GameObject[] deletedObjects)
         {
             //Make all the deleted objects selectable
             foreach(GameObject gameObject in deletedObjects)
-                ObjectSelection.Instance.addSelectable(gameObject);
+                ObjectSelection.Instance.AddSelectable(gameObject);
 
             //Activate the object, move it back into the level, and select it
             foreach (GameObject mapObject in deletedObjects)
             {
                 mapObject.SetActive(true);
                 mapObject.transform.parent = Instance.mapRoot.transform;
-                ObjectSelection.Instance.selectObject(mapObject);
+                ObjectSelection.Instance.SelectObject(mapObject);
             }
         }
         #endregion
@@ -291,8 +291,8 @@ namespace MapEditor
             //Wait until the pasted objects are rendered
             yield return new WaitForEndOfFrame();
 
-            //Notify listners that the copied objects were pasted
-            OnImport?.Invoke(ObjectSelection.Instance.getSelectable());
+            //Notify listeners that the copied objects were pasted
+            OnImport?.Invoke(ObjectSelection.Instance.GetSelectable());
         }
 
         private IEnumerator InvokeOnPaste()
@@ -300,8 +300,8 @@ namespace MapEditor
             //Wait until the pasted objects are rendered
             yield return new WaitForEndOfFrame();
 
-            //Notify listners that the copied objects were pasted
-            OnPaste?.Invoke(ObjectSelection.Instance.getSelection());
+            //Notify listeners that the copied objects were pasted
+            OnPaste?.Invoke(ObjectSelection.Instance.GetSelection());
         }
         #endregion
 
@@ -310,12 +310,12 @@ namespace MapEditor
         public void clearMap()
         {
             //Remove all deleted objects from the selection lists
-            ObjectSelection.Instance.resetSelection();
+            ObjectSelection.Instance.ResetSelection();
             //Reset the hash table for MapObject scripts
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
             //Reset the boundaries disabled flag and activate the small bounds
             BoundsDisabled = false;
-            enableLargeMapBounds(false);
+            EnableLargeMapBounds(false);
 
             //Iterate over all children objects and delete them
             foreach (Transform child in Instance.mapRoot.GetComponentInChildren<Transform>())
@@ -323,8 +323,8 @@ namespace MapEditor
         }
 
         //Parse the given map script and load the map
-        //Accepts additional parameters for outputing loading progress, total amount of map objects, and a callback function
-        public IEnumerator loadMap(string mapScript, Text progressText = null, Text totalText = null, Action callback = null)
+        //Accepts additional parameters for outputting loading progress, total amount of map objects, and a callback function
+        public IEnumerator LoadMap(string mapScript, Text progressText = null, Text totalText = null, Action callback = null)
         {
             //Used to keep track of how much time has elapsed between frames
             System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();
@@ -336,7 +336,7 @@ namespace MapEditor
             mapScript = mapScript.Replace("\t", "");
             mapScript = mapScript.Replace(" ", "");
 
-            //Seperate the map by semicolon
+            //Separate the map by semicolon
             string[] parsedMap = mapScript.Split(new[] { ';' }, StringSplitOptions.RemoveEmptyEntries);
 
             //Create each object and add it to the map
@@ -352,7 +352,7 @@ namespace MapEditor
                         continue;
 
                     //Parse the object script and create a new map object
-                    loadMapObject(parsedMap[scriptIndex]);
+                    LoadMapObject(parsedMap[scriptIndex]);
                 }
                 catch (Exception e)
                 {
@@ -369,7 +369,7 @@ namespace MapEditor
                 {
                     //Update the total number of objects in the script
                     totalText.text = parsedMap.Length.ToString();
-                    //Return from the corouting and render a frame
+                    //Return from the coroutine and render a frame
                     yield return null;
                     //Start counting the elapsed time from zero
                     stopWatch.Restart();
@@ -379,28 +379,28 @@ namespace MapEditor
                     stopWatch.Start();
             }
 
-            //Notify listners that a map was loaded at the end of the frame
+            //Notify listeners that a map was loaded at the end of the frame
             StartCoroutine(InvokeOnImport());
             //Run the callback method
             callback();
         }
 
         //Add the given object to the map hierarchy and make it selectable
-        private void addObjectToMap(GameObject objectToAdd, MapObject objectScript)
+        private void AddObjectToMap(GameObject objectToAdd, MapObject objectScript)
         {
             //Make the new object a child of the map root.
             objectToAdd.transform.parent = Instance.mapRoot.transform;
             //Make the new object selectable
-            ObjectSelection.Instance.addSelectable(objectToAdd);
+            ObjectSelection.Instance.AddSelectable(objectToAdd);
             //Add the object and its MapObject script to the dictionary
             ObjectScriptTable.Add(objectToAdd, objectScript);
         }
 
         //Remove the given object to the map hierarchy and make object selection script
-        private void removeObjectFromMap(GameObject objectToRemove)
+        private void RemoveObjectFromMap(GameObject objectToRemove)
         {
             //Remove the object from the object selection script
-            ObjectSelection.Instance.removeSelectable(objectToRemove);
+            ObjectSelection.Instance.RemoveSelectable(objectToRemove);
             //Remove the object from the script dictionary
             ObjectScriptTable.Remove(objectToRemove);
             //Delete the object itself
@@ -408,20 +408,20 @@ namespace MapEditor
         }
 
         //Parse the given object script and instantiate a new GameObject with the data
-        private void loadMapObject(string objectScript)
+        private void LoadMapObject(string objectScript)
         {
-            //Seperate the object script by comma
+            //Separate the object script by comma
             string[] parsedScript = objectScript.Split(',');
             //The GameObject loaded from RCAssets corresponding to the object name
             GameObject newObject = null;
 
             try
             {
-                //If the script is "map,disableBounds" then set a flag to disable the map boundries and skip the object
+                //If the script is "map,disableBounds" then set a flag to disable the map boundaries and skip the object
                 if (parsedScript[0].StartsWith("map") && parsedScript[1].StartsWith("disablebounds"))
                 {
                     BoundsDisabled = true;
-                    enableLargeMapBounds(true);
+                    EnableLargeMapBounds(true);
 
                     return;
                 }
@@ -430,19 +430,19 @@ namespace MapEditor
                 if (parsedScript.Length < 9)
                     throw new Exception("Too few elements in object script");
 
-                //Use the object scripte to create the map object
-                createMapObject(parsedScript);
+                //Use the object script to create the map object
+                CreateMapObject(parsedScript);
             }
             //If there was an error converting an element to a float, destroy the object and pass a new exception to the caller
             catch (FormatException)
             {
-                destroyObject(newObject);
-                throw new Exception("Error conveting data");
+                DestroyObject(newObject);
+                throw new Exception("Error converting data");
             }
             //If there are any other errors, destroy the object and pass them back up to the caller
             catch (Exception e)
             {
-                destroyObject(newObject);
+                DestroyObject(newObject);
                 throw e;
             }
         }
@@ -469,7 +469,7 @@ namespace MapEditor
 
         #region Parser Helpers
         //If the object exists, disable and destroy it
-        private void destroyObject(GameObject objectToDestroy)
+        private void DestroyObject(GameObject objectToDestroy)
         {
             if (objectToDestroy)
             {
@@ -479,45 +479,45 @@ namespace MapEditor
         }
 
         //Toggle between the small and large map bounds being active
-        private void enableLargeMapBounds(bool enabled)
+        private void EnableLargeMapBounds(bool enabled)
         {
             Instance.smallMapBounds.SetActive(!enabled);
             Instance.largeMapBounds.SetActive(enabled);
         }
 
         //Load the GameObject from RCAssets with the corresponding object name and attach a MapObject script to it
-        private GameObject createMapObject(string[] parsedScript)
+        private GameObject CreateMapObject(string[] parsedScript)
         {
             //The GameObject loaded from RCAssets corresponding to the object name
             GameObject newObject;
 
             //Store the object type and name from the parsed script
-            objectType type = MapObject.parseType(parsedScript[0]);
+            ObjectType type = MapObject.ParseType(parsedScript[0]);
             string objectName = parsedScript[1];
 
             //If the object is a vanilla object, instantiate it from the vanilla assets
-            if (type == objectType.@base)
-                newObject = AssetManager.instantiateVanillaObject(objectName);
+            if (type == ObjectType.@base)
+                newObject = AssetManager.InstantiateVanillaObject(objectName);
             //If the object is a barrier or region, instantiate the editor version
             else if (objectName == "barrier" || objectName == "region")
-                newObject = AssetManager.instantiateRcObject(objectName + "Editor");
+                newObject = AssetManager.InstantiateRcObject(objectName + "Editor");
             //Otherwise, instantiate the object from RC assets
             else
-                newObject = AssetManager.instantiateRcObject(objectName);
+                newObject = AssetManager.InstantiateRcObject(objectName);
 
             //If the object name wasn't valid, raise an error
             if (!newObject)
                 throw new Exception("The object '" + objectName + "' does not exist");
 
-            //Attatch the MapObject script to the new object
+            //Attach the MapObject script to the new object
             MapObject mapObjectScript;
 
             //Attach the appropriate Map Object script based on the object type and name
-            if (type == objectType.spawnpoint)
+            if (type == ObjectType.spawnpoint)
                 mapObjectScript = newObject.AddComponent<SpawnPointObject>();
-            else if(type == objectType.photon && objectName.StartsWith("spawn"))
+            else if(type == ObjectType.photon && objectName.StartsWith("spawn"))
                 mapObjectScript = newObject.AddComponent<SpawnerObject>();
-            else if(type == objectType.racing)
+            else if(type == ObjectType.racing)
                 mapObjectScript = newObject.AddComponent<RacingObject>();
             else if(objectName.StartsWith("region"))
                 mapObjectScript = newObject.AddComponent<RegionObject>();
@@ -530,9 +530,9 @@ namespace MapEditor
             mapObjectScript.Type = type;
 
             //Use the parsedObject array to set the reset of the properties of the object
-            mapObjectScript.loadProperties(parsedScript);
+            mapObjectScript.LoadProperties(parsedScript);
             //Add the object to the hierarchy and store its script
-            addObjectToMap(newObject, mapObjectScript);
+            AddObjectToMap(newObject, mapObjectScript);
 
             //Return the new object 
             return newObject;

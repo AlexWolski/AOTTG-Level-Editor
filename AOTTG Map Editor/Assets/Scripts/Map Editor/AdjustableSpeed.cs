@@ -2,7 +2,7 @@
 
 namespace MapEditor
 {
-    //A class for storing and retriving multiple speed values
+    //A class for storing and retrieving multiple speed values
     public class AdjustableSpeed
     {
         //The three speeds the camera can move at
@@ -29,7 +29,7 @@ namespace MapEditor
         }
 
         //Set the speed based on if control or shift is held
-        public float getSpeed()
+        public float GetSpeed()
         {
             if (slowSpeedEnabled && Input.GetKey(KeyCode.LeftShift) && !Input.GetKey(KeyCode.LeftControl))
                 return slowSpeed;

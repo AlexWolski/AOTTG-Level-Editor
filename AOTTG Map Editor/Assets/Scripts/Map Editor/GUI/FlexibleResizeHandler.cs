@@ -16,10 +16,10 @@ namespace MapEditor
         IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler,
         IDragHandler, IEndDragHandler
     {
-        public HandlerType Type;
-        public RectTransform Target;
-        public Vector2 MinDimensions;
-        public Vector2 MaxDimensions;
+        public HandlerType type;
+        public RectTransform target;
+        public Vector2 minDimensions;
+        public Vector2 maxDimensions;
 
         private static Canvas parentCanvas;
         private Vector2 dragStartPoint;
@@ -37,7 +37,7 @@ namespace MapEditor
             parentCanvas = GetComponentInParent<Canvas>();
             cursorHotSpot = new Vector2(ewResizeImage.width / 2, ewResizeImage.height / 2);
 
-            //Listen for when the the cursor is released
+            //Listen for when the cursor is released
             EditorManager.Instance.OnCursorReleased += onCursorReleased;
         }
 
@@ -63,8 +63,8 @@ namespace MapEditor
         {
             resizeBoxHover = true;
 
-            //Don't chagne the cursor if the tool handle is being dragged
-            if (EditorManager.Instance.cursorAvailable)
+            //Don't change the cursor if the tool handle is being dragged
+            if (EditorManager.Instance.CursorAvailable)
                 Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
         }
 
@@ -80,7 +80,7 @@ namespace MapEditor
         {
             PointerEventData ped = (PointerEventData)data;
             dragStartPoint.Set(ped.position.x, ped.position.y);
-            rectStartSize.Set(Target.rect.width, Target.rect.height);
+            rectStartSize.Set(target.rect.width, target.rect.height);
             resizeBoxPressed = true;
         }
 
@@ -95,7 +95,7 @@ namespace MapEditor
             RectTransform.Edge? horizontalEdge = null;
             RectTransform.Edge? verticalEdge = null;
 
-            switch (Type)
+            switch (type)
             {
                 case HandlerType.Right:
                     horizontalEdge = RectTransform.Edge.Left;
@@ -115,22 +115,22 @@ namespace MapEditor
             if (horizontalEdge != null)
             {
                 if (horizontalEdge == RectTransform.Edge.Right)
-                    Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
-                        Mathf.Clamp(rectStartSize.x - (ped.position.x - dragStartPoint.x) / parentCanvas.scaleFactor, MinDimensions.x, MaxDimensions.x));
+                    target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
+                        Mathf.Clamp(rectStartSize.x - (ped.position.x - dragStartPoint.x) / parentCanvas.scaleFactor, minDimensions.x, maxDimensions.x));
                 else
-                    Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
-                        Mathf.Clamp(rectStartSize.x + (ped.position.x - dragStartPoint.x) / parentCanvas.scaleFactor, MinDimensions.x, MaxDimensions.x));
+                    target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
+                        Mathf.Clamp(rectStartSize.x + (ped.position.x - dragStartPoint.x) / parentCanvas.scaleFactor, minDimensions.x, maxDimensions.x));
             }
             if (verticalEdge != null)
             {
                 if (verticalEdge == RectTransform.Edge.Top)
-                    Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)verticalEdge,
-                        Screen.height - Target.position.y - Target.pivot.y * Target.rect.height,
-                        Mathf.Clamp(Target.rect.height - ped.delta.y, MinDimensions.y, MaxDimensions.y));
+                    target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)verticalEdge,
+                        Screen.height - target.position.y - target.pivot.y * target.rect.height,
+                        Mathf.Clamp(target.rect.height - ped.delta.y, minDimensions.y, maxDimensions.y));
                 else
-                    Target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)verticalEdge,
-                        Target.position.y - Target.pivot.y * Target.rect.height,
-                        Mathf.Clamp(Target.rect.height + ped.delta.y, MinDimensions.y, MaxDimensions.y));
+                    target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)verticalEdge,
+                        target.position.y - target.pivot.y * target.rect.height,
+                        Mathf.Clamp(target.rect.height + ped.delta.y, minDimensions.y, maxDimensions.y));
             }
         }
 

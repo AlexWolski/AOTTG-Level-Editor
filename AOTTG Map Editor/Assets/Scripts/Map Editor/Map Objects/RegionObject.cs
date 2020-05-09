@@ -38,7 +38,7 @@ namespace MapEditor
         #region Initialization
         private void Awake()
         {
-            //Intantiate a billboard and set it as a child of the region
+            //Instantiate a billboard and set it as a child of the region
             GameObject billboard = Instantiate((GameObject)Resources.Load(billboardPrefabPath));
             billboard.transform.parent = gameObject.transform;
 
@@ -47,21 +47,21 @@ namespace MapEditor
         }
 
         //Copy the values from the given object
-        public void copyValues(RegionObject originalObject)
+        public void CopyValues(RegionObject originalObject)
         {
-            base.copyValues(originalObject);
+            base.CopyValues(originalObject);
 
             RegionName = originalObject.RegionName;
         }
 
         //Sets all of the object properties except for the type based on the parsed object script
-        public override void loadProperties(string[] properties)
+        public override void LoadProperties(string[] properties)
         {
-            base.loadProperties(properties);
+            base.LoadProperties(properties);
 
             RegionName = properties[2];
-            Scale = parseVector3(properties[3], properties[4], properties[5]);
-            Position = parseVector3(properties[6], properties[7], properties[8]);
+            Scale = ParseVector3(properties[3], properties[4], properties[5]);
+            Position = ParseVector3(properties[6], properties[7], properties[8]);
             Rotation = Quaternion.identity;
         }
         #endregion
@@ -70,7 +70,7 @@ namespace MapEditor
         //If the object was rotated, set it back to the default rotation
         private void LateUpdate()
         {
-            if (transform.hasChanged)
+            if (transform.hasChanged && SelectionHandle.Instance.Tool == Tool.Rotate)
             {
                 transform.rotation = Quaternion.identity;
                 transform.hasChanged = false;
@@ -89,7 +89,7 @@ namespace MapEditor
             //Append the object type and name to the script
             scriptBuilder.Append(FullTypeName + "," + ObjectName + "," + RegionName);
             //Append the transform values
-            scriptBuilder.Append("," + vector3ToString(Scale) + "," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";");
+            scriptBuilder.Append("," + Vector3ToString(Scale) + "," + Vector3ToString(Position) + "," + QuaternionToString(Rotation) + ";");
 
             //Get the script string and return it
             return scriptBuilder.ToString();

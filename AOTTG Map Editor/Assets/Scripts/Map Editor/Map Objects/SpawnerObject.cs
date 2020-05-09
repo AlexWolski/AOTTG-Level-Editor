@@ -9,7 +9,7 @@ namespace MapEditor
         #region Properties
         //The amount of time until the titan spawns
         public float SpawnTimer { get; set; }
-        //Determines if the the spawner will continue to spawn titans
+        //Determines if the spawner will continue to spawn titans
         public bool EndlessSpawn { get; set; }
 
         //Prevent the spawner from being scaled
@@ -29,20 +29,20 @@ namespace MapEditor
 
         #region Initialization
         //Copy the values from the given object
-        public void copyValues(SpawnerObject originalObject)
+        public void CopyValues(SpawnerObject originalObject)
         {
             SpawnTimer = originalObject.SpawnTimer;
             EndlessSpawn = originalObject.EndlessSpawn;
         }
 
         //Sets all of the object properties except for the type based on the parsed object script
-        public override void loadProperties(string[] properties)
+        public override void LoadProperties(string[] properties)
         {
-            base.loadProperties(properties);
+            base.LoadProperties(properties);
 
             SpawnTimer = Convert.ToSingle(properties[2]);
             EndlessSpawn = (Convert.ToInt32(properties[3]) != 0);
-            Position = parseVector3(properties[4], properties[5], properties[6]);
+            Position = ParseVector3(properties[4], properties[5], properties[6]);
             Rotation = Quaternion.identity;
         }
         #endregion
@@ -51,7 +51,7 @@ namespace MapEditor
         //If the object was rotated, set it back to the default rotation
         private void LateUpdate()
         {
-            if (transform.hasChanged)
+            if (transform.hasChanged && SelectionHandle.Instance.Tool == Tool.Rotate)
             {
                 transform.rotation = Quaternion.identity;
                 transform.hasChanged = false;
@@ -70,9 +70,9 @@ namespace MapEditor
             //Append the object type and name to the script
             scriptBuilder.Append(FullTypeName + "," + ObjectName);
             //Append the titan spawning settings
-            scriptBuilder.Append("," + SpawnTimer + "," + boolToString(EndlessSpawn));
+            scriptBuilder.Append("," + SpawnTimer + "," + BoolToString(EndlessSpawn));
             //Append the transform values
-            scriptBuilder.Append("," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";");
+            scriptBuilder.Append("," + Vector3ToString(Position) + "," + QuaternionToString(Rotation) + ";");
 
             //Get the script string and return it
             return scriptBuilder.ToString();

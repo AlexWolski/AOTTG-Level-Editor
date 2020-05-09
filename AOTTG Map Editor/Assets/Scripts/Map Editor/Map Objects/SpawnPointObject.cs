@@ -23,11 +23,11 @@ namespace MapEditor
 
         #region Initialization
         //Sets all of the object properties except for the type based on the parsed object script
-        public override void loadProperties(string[] properties)
+        public override void LoadProperties(string[] properties)
         {
-            base.loadProperties(properties);
+            base.LoadProperties(properties);
 
-            Position = parseVector3(properties[2], properties[3], properties[4]);
+            Position = ParseVector3(properties[2], properties[3], properties[4]);
             Rotation = Quaternion.identity;
         }
         #endregion
@@ -36,7 +36,7 @@ namespace MapEditor
         //If the object was rotated, set it back to the default rotation
         private void LateUpdate()
         {
-            if (transform.hasChanged)
+            if (transform.hasChanged && SelectionHandle.Instance.Tool == Tool.Rotate)
             {
                 transform.rotation = Quaternion.identity;
                 transform.hasChanged = false;
@@ -55,7 +55,7 @@ namespace MapEditor
             //Append the object type and name to the script
             scriptBuilder.Append(FullTypeName + "," + ObjectName);
             //Append the transform values
-            scriptBuilder.Append("," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";");
+            scriptBuilder.Append("," + Vector3ToString(Position) + "," + QuaternionToString(Rotation) + ";");
 
             //Get the script string and return it
             return scriptBuilder.ToString();

@@ -9,10 +9,10 @@ namespace MapEditor
     IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler
     {
         //A list of the states the button can be in
-        private enum buttonState
+        private enum ButtonState
         {
-            unpressed,
-            pressed
+            Unpressed,
+            Pressed
         }
 
         //The images used for the button
@@ -22,7 +22,7 @@ namespace MapEditor
         [SerializeField] private UnityEvent onClick;
 
         //The current state of the button
-        private buttonState currentState;
+        private ButtonState currentState;
         //Determine if the left mouse button is currently pressed or not
         private static bool mouseDown;
         //The button script that is currently pressed down
@@ -32,14 +32,14 @@ namespace MapEditor
         void Awake()
         {
             //The button is unselected by default
-            currentState = buttonState.unpressed;
+            currentState = ButtonState.Unpressed;
             mouseDown = false;
         }
 
         //If the game loses focus and a button is pressed down, unpress it
         private void OnApplicationFocus(bool focus)
         {
-            if (!focus && currentState == buttonState.pressed)
+            if (!focus && currentState == ButtonState.Pressed)
                 unpress();
         }
 
@@ -47,39 +47,39 @@ namespace MapEditor
         private void press()
         {
             gameObject.GetComponent<Image>().sprite = pressed;
-            currentState = buttonState.pressed;
+            currentState = ButtonState.Pressed;
         }
 
         //Change the image and state to unpressed
         private void unpress()
         {
             gameObject.GetComponent<Image>().sprite = unpressed;
-            currentState = buttonState.unpressed;
+            currentState = ButtonState.Unpressed;
         }
 
         //If this button was last pressed and the mouse moves over it, change to the pressed image
         public void OnPointerEnter(PointerEventData data)
         {
-            if (pressedButton == this && mouseDown && currentState == buttonState.unpressed)
+            if (pressedButton == this && mouseDown && currentState == ButtonState.Unpressed)
                 OnPointerDown(data);
         }
 
-        //If the button was pressed and the cursor moves off of the button, chagne to the unpressed image
+        //If the button was pressed and the cursor moves off of the button, change to the unpressed image
         public void OnPointerExit(PointerEventData data)
         {
-            if (currentState == buttonState.pressed)
+            if (currentState == ButtonState.Pressed)
                 unpress();
         }
 
-        //If the mouse is pressed down on the button and its not selected, chagne to the pressed image
+        //If the mouse is pressed down on the button and its not selected, change to the pressed image
         public void OnPointerDown(PointerEventData data)
         {
             mouseDown = true;
 
-            if (currentState == buttonState.unpressed)
+            if (currentState == ButtonState.Unpressed)
             {
                 gameObject.GetComponent<Image>().sprite = pressed;
-                currentState = buttonState.pressed;
+                currentState = ButtonState.Pressed;
                 pressedButton = this;
             }
         }
@@ -89,7 +89,7 @@ namespace MapEditor
         {
             mouseDown = false;
 
-            if (currentState == buttonState.pressed)
+            if (currentState == ButtonState.Pressed)
             {
                 unpress();
                 onClick.Invoke();

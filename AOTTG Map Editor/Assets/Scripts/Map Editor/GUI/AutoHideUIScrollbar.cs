@@ -8,7 +8,6 @@ namespace MapEditor
     [RequireComponent(typeof(ScrollRect))]
     public class AutoHideUIScrollbar : MonoBehaviour
     {
-
         public bool alsoDisableScrolling;
 
         private float disableRange = 0.99f;
@@ -21,7 +20,6 @@ namespace MapEditor
             public Scrollbar bar;
             public bool active;
         }
-
 
         void Start()
         {

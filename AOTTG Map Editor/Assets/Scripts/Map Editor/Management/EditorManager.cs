@@ -1,26 +1,24 @@
-﻿using System;
-using UnityEngine;
+﻿using UnityEngine;
 
 namespace MapEditor
 {
     //A singleton class for managing the current mode
     public class EditorManager : MonoBehaviour
     {
-        //A self-reference to the singleton instance of this script
-        public static EditorManager Instance { get; private set; }
+        #region Data Members
         //A hidden variable to hold the current mode
         private EditorMode currentModeValue;
-        public bool shortcutsEnabled { get; set; }
+
+        //A self-reference to the singleton instance of this script
+        public static EditorManager Instance { get; private set; }
+        public bool ShortcutsEnabled { get; set; }
         //Determines if the mouse is captured by a class or is available to use
-        public bool cursorAvailable { get; private set; }
+        public bool CursorAvailable { get; private set; }
 
         //A property for accessing the current mode variable
-        public EditorMode currentMode
+        public EditorMode CurrentMode
         {
-            get
-            {
-                return currentModeValue;
-            }
+            get { return currentModeValue; }
 
             set
             {
@@ -28,17 +26,20 @@ namespace MapEditor
                 currentModeValue = value;
             }
         }
+        #endregion
 
-
-        //Event to notify listners when the mode changes
+        #region Delegates
+        //Event to notify listeners when the mode changes
         public delegate void OnChangeModeEvent(EditorMode prevMode, EditorMode newMode);
         public event OnChangeModeEvent OnChangeMode;
-        //Event to notify listners when the cursor is captured or released
+        //Event to notify listeners when the cursor is captured or released
         public delegate void OnCursorCapturedEvent();
         public event OnCursorCapturedEvent OnCursorCaptured;
         public delegate void OnCursorReleasedEvent();
         public event OnCursorReleasedEvent OnCursorReleased;
+        #endregion
 
+        #region Initialization
         void Awake()
         {
             //Set this script as the only instance of the EditorManger script
@@ -50,41 +51,45 @@ namespace MapEditor
             Screen.SetResolution(800, 600, false);
 
             //The editor is in edit mode by default
-            currentMode = EditorMode.Edit;
-            shortcutsEnabled = true;
-            cursorAvailable = true;
+            CurrentMode = EditorMode.Edit;
+            ShortcutsEnabled = true;
+            CursorAvailable = true;
         }
+        #endregion
 
+        #region Update
         private void Update()
         {
             //If the x key is pressed and nothing is being dragged, toggle between edit and fly mode
-            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.getDragging() && !DragSelect.Instance.getDragging())
+            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.GetDragging() && !DragSelect.Instance.getDragging())
                 toggleFlyEditMode();
         }
 
         private void toggleFlyEditMode()
         {
-            if (currentMode == EditorMode.Fly)
+            if (CurrentMode == EditorMode.Fly)
             {
-                currentMode = EditorMode.Edit;
+                CurrentMode = EditorMode.Edit;
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
             }
-            else if (currentMode == EditorMode.Edit)
+            else if (CurrentMode == EditorMode.Edit)
             {
-                currentMode = EditorMode.Fly;
+                CurrentMode = EditorMode.Fly;
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
         }
+        #endregion
 
+        #region Cursor Methods
         //Locks the cursor until the caller is finished using it
-        //Returns true if the cursor was succesfully captured, and false if it wasn't available
-        public bool captureCursor()
+        //Returns true if the cursor was successfully captured, and false if it wasn't available
+        public bool CaptureCursor()
         {
-            if (cursorAvailable)
+            if (CursorAvailable)
             {
-                cursorAvailable = false;
+                CursorAvailable = false;
                 OnCursorCaptured?.Invoke();
                 return true;
             }
@@ -95,8 +100,9 @@ namespace MapEditor
         //Make the cursor available again to use
         public void releaseCursor()
         {
-            cursorAvailable = true;
+            CursorAvailable = true;
             OnCursorReleased?.Invoke();
         }
+        #endregion
     }
 }

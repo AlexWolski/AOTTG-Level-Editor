@@ -19,30 +19,30 @@ namespace MapEditor
         public string Material
         {
             get { return materialValue; }
-            set { materialValue = value; setMaterial(value); }
+            set { materialValue = value; SetMaterial(value); }
         }
 
         //How many times the texture will repeat in the x and y directions
         public Vector2 Tiling
         {
             get { return tilingValue; }
-            set { tilingValue = value; setTiling(value); }
+            set { tilingValue = value; SetTiling(value); }
         }
 
         //The color of the object, including opacity
         public Color Color
         {
             get { return colorValue; }
-            set { colorValue = value; setColor(colorValue); }
+            set { colorValue = value; SetColor(colorValue); }
         }
         #endregion
 
         #region Initialization
         //Copy the values from the given object
-        public void copyValues(TexturedObject originalObject)
+        public void CopyValues(TexturedObject originalObject)
         {
             //Copy the generic map object values
-            base.copyValues(originalObject);
+            base.CopyValues(originalObject);
 
             //Copy the texture related values
             materialValue = originalObject.Material;
@@ -54,7 +54,7 @@ namespace MapEditor
 
         #region Setters
         //Apply the given material as the new material of the object
-        private void setMaterial(string newMaterial)
+        private void SetMaterial(string newMaterial)
         {
             //Check if the new material is the default materials applied to the prefab
             if (newMaterial == "default")
@@ -79,7 +79,7 @@ namespace MapEditor
 
                     //Instantiate all of the default materials and assign them to the renderers
                     for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
-                        renderers[rendererIndex].material = AssetManager.loadRcMaterial(defaultMatNames[rendererIndex]);
+                        renderers[rendererIndex].material = AssetManager.LoadRcMaterial(defaultMatNames[rendererIndex]);
                 }
             }
             //Otherwise Apply the material to all of the children of the object
@@ -89,15 +89,15 @@ namespace MapEditor
                 {
                     //Don't apply the default material and don't apply the material to the particle system of supply stations
                     if (!(renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
-                        renderer.material = AssetManager.loadRcMaterial(newMaterial);
+                        renderer.material = AssetManager.LoadRcMaterial(newMaterial);
                 }
             }
         }
 
         //Resize the texture on the object
-        private void setTiling(Vector2 newTiling)
+        private void SetTiling(Vector2 newTiling)
         {
-            //If the material is the default on the gameobject, don't scale the texture
+            //If the material is the default on the game object, don't scale the texture
             if (materialValue == "default")
                 return;
 
@@ -107,7 +107,7 @@ namespace MapEditor
         }
 
         //Change the color of the material on the object
-        private void setColor(Color newColor)
+        private void SetColor(Color newColor)
         {
             //Iterate through all of the filters in the object
             foreach (MeshFilter filter in gameObject.GetComponentsInChildren<MeshFilter>())
@@ -128,24 +128,24 @@ namespace MapEditor
 
         #region Methods
         //Takes an array containing a parsed object script and set all of the variables except for the type
-        public override void loadProperties(string[] properties)
+        public override void LoadProperties(string[] properties)
         {
-            base.loadProperties(properties);
+            base.LoadProperties(properties);
 
             //If the script is too short, only parse the position and rotation
             if (properties.Length < 19)
-                loadPropertiesPartial(properties);
+                LoadPropertiesPartial(properties);
             //Otherwise parse all of the object info from the script
             else
-                loadPropertiesFull(properties);
+                LoadPropertiesFull(properties);
         }
 
         //Load the position and rotation from the object script, and set the texture information to a default value
-        private void loadPropertiesPartial(string[] properties)
+        private void LoadPropertiesPartial(string[] properties)
         {
             Scale = defaultScale;
-            Position = parseVector3(properties[2], properties[3], properties[4]);
-            Rotation = parseQuaternion(properties[5], properties[6], properties[7], properties[8]);
+            Position = ParseVector3(properties[2], properties[3], properties[4]);
+            Rotation = ParseQuaternion(properties[5], properties[6], properties[7], properties[8]);
 
             //Disable the color by default
             ColorEnabled = false;
@@ -179,10 +179,10 @@ namespace MapEditor
         }
 
         //Load all of the object properties from the object script
-        private void loadPropertiesFull(string[] properties)
+        private void LoadPropertiesFull(string[] properties)
         {
             Material = properties[2];
-            Scale = parseVector3(properties[3], properties[4], properties[5]);
+            Scale = ParseVector3(properties[3], properties[4], properties[5]);
             ColorEnabled = (Convert.ToInt32(properties[6]) != 0);
 
             //If the color is enabled, parse the color and set it
@@ -190,17 +190,17 @@ namespace MapEditor
             {
                 //If the transparent material is applied, parse the opacity and use it. Otherwise default to fully opaque
                 if (Material.StartsWith("transparent"))
-                    Color = parseColor(properties[7], properties[8], properties[9], Material.Substring(11));
+                    Color = ParseColor(properties[7], properties[8], properties[9], Material.Substring(11));
                 else
-                    Color = parseColor(properties[7], properties[8], properties[9], "1");
+                    Color = ParseColor(properties[7], properties[8], properties[9], "1");
             }
             //Otherwise, use white as a default color
             else
                 Color = Color.white;
 
-            Tiling = parseVector2(properties[10], properties[11]);
-            Position = parseVector3(properties[12], properties[13], properties[14]);
-            Rotation = parseQuaternion(properties[15], properties[16], properties[17], properties[18]);
+            Tiling = ParseVector2(properties[10], properties[11]);
+            Position = ParseVector3(properties[12], properties[13], properties[14]);
+            Rotation = ParseQuaternion(properties[15], properties[16], properties[17], properties[18]);
         }
 
         //Convert the map object into a script
@@ -213,9 +213,9 @@ namespace MapEditor
             //Append the object type and name to the script
             scriptBuilder.Append(FullTypeName + "," + ObjectName);
             //Append the material and scale values
-            scriptBuilder.Append("," + Material + "," + vector3ToString(Scale) + "," + boolToString(ColorEnabled) + "," + colorToString(Color) + "," + vector2ToString(Tiling));
+            scriptBuilder.Append("," + Material + "," + Vector3ToString(Scale) + "," + BoolToString(ColorEnabled) + "," + ColorToString(Color) + "," + Vector2ToString(Tiling));
             //Append the transform values
-            scriptBuilder.Append("," + vector3ToString(Position) + "," + quaternionToString(Rotation) + ";");
+            scriptBuilder.Append("," + Vector3ToString(Position) + "," + QuaternionToString(Rotation) + ";");
 
             //Get the script string and return it
             return scriptBuilder.ToString();

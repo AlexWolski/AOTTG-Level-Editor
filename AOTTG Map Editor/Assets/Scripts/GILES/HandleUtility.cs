@@ -8,8 +8,8 @@ namespace MapEditor
 	 */
 	public class HandleUtility
 	{
-		//The the octant that the point is in relative to the world origin
-		public static Vector3 getViewOctant(Vector3 point)
+		//Return the octant that the point is in relative to the world origin
+		public static Vector3 GetViewOctant(Vector3 point)
 		{
 			//Store the sign of each component
 			for (int i = 0; i< 3; i++)
@@ -60,8 +60,7 @@ namespace MapEditor
 		}
 
 		/**
-		 * Return the nearest point on each ray to the other ray.
-		 * \sa ClosestPointOnTwoLines
+		 * Return the nearest point on each ray to the other ray.=
 		 */
 		public static bool PointOnLine(Ray InLineA, Ray InLineB, out Vector3 OutPointA, out Vector3 OutPointB)
 		{
@@ -98,7 +97,7 @@ namespace MapEditor
 		/**
 		 * Converts a displacement on the screen to a vector in world space
 		 */
-		public static Vector3 screenVectorToWorld(Camera cam, Vector2 mouseDisplacement)
+		public static Vector3 ScreenVectorToWorld(Camera cam, Vector2 mouseDisplacement)
 		{
 			//Make a Vector3 representing the mouse movement in the local space of the camera
 			Vector3 localDisplacement = new Vector3(mouseDisplacement.x, mouseDisplacement.y, 0);
@@ -108,19 +107,17 @@ namespace MapEditor
 
 		/**
 		 * Calculates a signed float delta from a current and previous mouse position.
-		 * @param lhs Current mouse position.
-		 * @param rhs Previous mouse position.
 		 */
-		public static float CalcSignedMouseDelta(Vector2 lhs, Vector2 rhs)
+		public static float CalcSignedMouseDelta(Vector2 currMousePos, Vector2 prevMousePos)
 		{
-			float delta = Vector2.Distance(lhs, rhs);
+			float delta = Vector2.Distance(currMousePos, prevMousePos);
 			float scale = 1f / Mathf.Min(Screen.width, Screen.height);
 
 			// If horizontal movement is greater than vertical movement, use the X axis for sign.
-			if( Mathf.Abs(lhs.x - rhs.x) > Mathf.Abs(lhs.y - rhs.y) )
-				return delta * scale * ( (lhs.x-rhs.x) > 0f ? 1f : -1f );
+			if( Mathf.Abs(currMousePos.x - prevMousePos.x) > Mathf.Abs(currMousePos.y - prevMousePos.y) )
+				return delta * scale * ( (currMousePos.x-prevMousePos.x) > 0f ? 1f : -1f );
 			else
-				return delta * scale * ( (lhs.y-rhs.y) > 0f ? 1f : -1f );
+				return delta * scale * ( (currMousePos.y-prevMousePos.y) > 0f ? 1f : -1f );
 		}
 
 		//Return the size of the handle based on the camera position, handle position, and handle size

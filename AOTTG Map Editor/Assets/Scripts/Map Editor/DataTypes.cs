@@ -10,7 +10,8 @@
     }
 
     //A list of types an object can be
-    public enum objectType
+    //All lowercase instead of pascal case to match map script format
+    public enum ObjectType
     {
         //The '@' indicates that 'base' is a literal, not a keyword
         @base,

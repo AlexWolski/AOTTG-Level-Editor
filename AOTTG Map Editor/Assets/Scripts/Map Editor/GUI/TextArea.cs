@@ -31,13 +31,13 @@ namespace MapEditor
         private bool initialized = false;
 
         //A property for accessing the contents of the text component
-        public string text
+        public string Text
         {
             get { return textComponent.text; }
 
             set
             {
-                //If this funciton was called before initialization, call the start function
+                //If this function was called before initialization, call the start function
                 if (!initialized)
                     Start();
 
@@ -58,32 +58,32 @@ namespace MapEditor
             if (Input.GetMouseButtonUp(0))
             {
                 if (overTextArea)
-                    setFocused(true);
+                    SetFocused(true);
                 else
-                    setFocused(false);
+                    SetFocused(false);
             }
             else if (Input.GetKey(KeyCode.Escape))
-                setFocused(false);
+                SetFocused(false);
 
             //If ctrl + p or ctrl + c where pressed, copy or paste the text
             if (isFocused && Input.GetKey(KeyCode.LeftControl))
             {
                 if (Input.GetKeyDown(KeyCode.C))
-                    copyFromTextArea();
+                    CopyFromTextArea();
                 else if (canPaste && Input.GetKeyDown(KeyCode.V))
-                    pasteToTextArea();
+                    PasteToTextArea();
             }
 
             //If the delete or backspace key is pressed, clear the text
             if(canDelete && isFocused &&
               (Input.GetKeyDown(KeyCode.Backspace) || Input.GetKeyDown(KeyCode.Delete)))
             {
-                clearText();
+                ClearText();
             }
         }
 
         //Set the sprite image for the game object
-        public void setFocused(bool focused)
+        public void SetFocused(bool focused)
         {
             if (isFocused == focused)
                 return;
@@ -101,7 +101,7 @@ namespace MapEditor
         public void OnPointerExit(PointerEventData data) { overTextArea = false; }
 
         //Copy the contents of the text area to clipboard
-        public void copyFromTextArea()
+        public void CopyFromTextArea()
         {
             TextEditor te = new TextEditor();
             te.text = textComponent.text;
@@ -110,14 +110,14 @@ namespace MapEditor
         }
 
         //Paste the contents of the clipboard to the text area
-        public void pasteToTextArea()
+        public void PasteToTextArea()
         {
             TextEditor te = new TextEditor();
             te.Paste();
             textComponent.text = te.text;
         }
 
-        public void clearText()
+        public void ClearText()
         {
             textComponent.text = "";
         }

@@ -14,7 +14,7 @@ namespace MapEditor
 
         #region Properties
         //The type of the object
-        public objectType Type { get; set; }
+        public ObjectType Type { get; set; }
         //The actual type name specified in the map script
         public string FullTypeName { get; set; }
         //The specific object
@@ -24,7 +24,7 @@ namespace MapEditor
         public virtual Vector3 Scale
         {
             get { return scaleFactor; }
-            set { scaleFactor = value; scaleByFactor(value); }
+            set { scaleFactor = value; ScaleByFactor(value); }
         }
 
         public Vector3 Position
@@ -42,7 +42,7 @@ namespace MapEditor
 
         #region Initialization
         //Copy the values from the given object
-        public void copyValues(MapObject originalObject)
+        public void CopyValues(MapObject originalObject)
         {
             //Hidden data members
             defaultScale = originalObject.defaultScale;
@@ -59,25 +59,25 @@ namespace MapEditor
 
         #region Setters
         //Change the scale factor of the length, width, or height of the object
-        public void scaleByFactor(Vector3 scaleFactor)
+        public void ScaleByFactor(Vector3 scaleFactor)
         {
             gameObject.transform.localScale = new Vector3(defaultScale.x * scaleFactor.x, defaultScale.y * scaleFactor.y, defaultScale.z * scaleFactor.z);
         }
         #endregion
 
         #region Parsing Utility Methods
-        //Return the objectType assosiated with the given string
-        public static objectType parseType(string typeString)
+        //Return the objectType associated with the given string
+        public static ObjectType ParseType(string typeString)
         {
             //Make a string array containing the names of each type of object
-            string[] objectTypes = Enum.GetNames(typeof(objectType));
+            string[] objectTypes = Enum.GetNames(typeof(ObjectType));
 
             //Check if the string matches any of the types
             foreach (string objectType in objectTypes)
             {
                 //If the string matches a type, return that type
                 if (typeString.StartsWith(objectType))
-                    return (objectType)Enum.Parse(typeof(objectType), objectType);
+                    return (ObjectType)Enum.Parse(typeof(ObjectType), objectType);
             }
 
             //If the object type is not valid, raise an error
@@ -85,25 +85,25 @@ namespace MapEditor
         }
 
         //Create a Color object with the three given color values and opacity
-        protected static Color parseColor(string r, string g, string b, string a)
+        protected static Color ParseColor(string r, string g, string b, string a)
         {
             return new Color(Convert.ToSingle(r), Convert.ToSingle(g), Convert.ToSingle(b), Convert.ToSingle(a));
         }
 
         //Create a vector with the two given strings
-        protected static Vector2 parseVector2(string x, string y)
+        protected static Vector2 ParseVector2(string x, string y)
         {
             return new Vector2(Convert.ToSingle(x), Convert.ToSingle(y));
         }
 
         //Create a vector with the three given strings
-        protected static Vector3 parseVector3(string x, string y, string z)
+        protected static Vector3 ParseVector3(string x, string y, string z)
         {
             return new Vector3(Convert.ToSingle(x), Convert.ToSingle(y), Convert.ToSingle(z));
         }
 
         //Create a quaternion with the three given strings
-        protected static Quaternion parseQuaternion(string x, string y, string z, string w)
+        protected static Quaternion ParseQuaternion(string x, string y, string z, string w)
         {
             return new Quaternion(Convert.ToSingle(x), Convert.ToSingle(y), Convert.ToSingle(z), Convert.ToSingle(w));
         }
@@ -111,7 +111,7 @@ namespace MapEditor
 
         #region Exporting Utility Methods
         //Convert a boolean to the string 1 or 0
-        protected string boolToString(bool boolToStringify)
+        protected string BoolToString(bool boolToStringify)
         {
             if (boolToStringify)
                 return "1";
@@ -120,7 +120,7 @@ namespace MapEditor
         }
 
         //Convert a color to a script friendly string
-        protected string colorToString(Color colorToStrinfigy)
+        protected string ColorToString(Color colorToStrinfigy)
         {
             return colorToStrinfigy.r.ToString() + "," +
                    colorToStrinfigy.g.ToString() + "," +
@@ -128,13 +128,13 @@ namespace MapEditor
         }
 
         //Convert a vector2 to a script friendly string
-        protected string vector2ToString(Vector2 vectorToStringify)
+        protected string Vector2ToString(Vector2 vectorToStringify)
         {
             return vectorToStringify.x.ToString() + "," +
                    vectorToStringify.y.ToString();
         }
         //Convert a vector2 to a script friendly string
-        protected string vector3ToString(Vector3 vectorToStringify)
+        protected string Vector3ToString(Vector3 vectorToStringify)
         {
             return vectorToStringify.x.ToString() + "," +
                    vectorToStringify.y.ToString() + "," +
@@ -142,7 +142,7 @@ namespace MapEditor
         }
 
         //Convert a vector2 to a script friendly string
-        protected string quaternionToString(Quaternion quatToStringify)
+        protected string QuaternionToString(Quaternion quatToStringify)
         {
             return quatToStringify.x.ToString() + "," +
                    quatToStringify.y.ToString() + "," +
@@ -153,7 +153,7 @@ namespace MapEditor
 
         #region Methods
         //Sets all of the object properties except for the type based on the parsed object script
-        public virtual void loadProperties(string[] properties)
+        public virtual void LoadProperties(string[] properties)
         {
             //Store the full type
             FullTypeName = properties[0];

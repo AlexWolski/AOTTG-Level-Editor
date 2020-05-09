@@ -1,17 +1,16 @@
-﻿using System.Collections;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace MapEditor
 {
     public class ImportExportManager : MonoBehaviour
     {
-        //A refrence to the canvas object
+        //A reference to the canvas object
         [SerializeField] private GameObject canvas;
         //The canvas group component attached to the canvas
         private CanvasGroup canvasGroup;
 
-        //The Import popup
+        //The Import pop-up
         [SerializeField] private GameObject importPopup;
         //Displays the imported text
         [SerializeField] private GameObject importTextArea;
@@ -29,7 +28,7 @@ namespace MapEditor
         //The text component attached to the total text object
         private Text totalTextComponent;
 
-        //The export popup
+        //The export pop-up
         [SerializeField] private GameObject exportPopup;
         //Displays the exported text
         [SerializeField] private GameObject exportTextArea;
@@ -46,48 +45,48 @@ namespace MapEditor
             totalTextComponent = totalText.GetComponent<Text>();
         }
 
-        //Hide or show the import popup screen
-        public void toggleImportPopup()
+        //Hide or show the import pop-up screen
+        public void ToggleImportPopup()
         {
             importPopup.SetActive(!importPopup.activeSelf);
 
-            //When the popup is enabled, make sure the text area is not in focus
+            //When the pop-up is enabled, make sure the text area is not in focus
             if (importPopup.activeSelf)
-                importTextAreaComponent.setFocused(false);
+                importTextAreaComponent.SetFocused(false);
 
-                toggleMode();
+                ToggleMode();
         }
 
-        //Hide or show the export popup screen
-        public void toggleExportPopup()
+        //Hide or show the export pop-up screen
+        public void ToggleExportPopup()
         {
             exportPopup.SetActive(!exportPopup.activeSelf);
 
-            //If the export popup was enabled, export the map script and set it as the text area content
+            //If the export pop-up was enabled, export the map script and set it as the text area content
             if (exportPopup.activeSelf)
             {
-                exportTextAreaComponent.setFocused(false);
-                exportTextAreaComponent.text = MapManager.Instance.ToString();
+                exportTextAreaComponent.SetFocused(false);
+                exportTextAreaComponent.Text = MapManager.Instance.ToString();
             }
 
-            toggleMode();
+            ToggleMode();
         }
 
-        //Set the editor mode based on if the popups are enabled or not
-        private void toggleMode()
+        //Set the editor mode based on if the pop-ups are enabled or not
+        private void ToggleMode()
         {
             if(importPopup.activeSelf || exportPopup.activeSelf)
-                EditorManager.Instance.currentMode = EditorMode.UI;
+                EditorManager.Instance.CurrentMode = EditorMode.UI;
             else
-                EditorManager.Instance.currentMode = EditorMode.Edit;
+                EditorManager.Instance.CurrentMode = EditorMode.Edit;
         }
 
         //Import the map text in the input field
-        public void importFromTextField()
+        public void ImportFromTextField()
         {
             //Disable the UI, shortcuts, and drag select
             canvasGroup.blocksRaycasts = false;
-            EditorManager.Instance.shortcutsEnabled = false;
+            EditorManager.Instance.ShortcutsEnabled = false;
             DragSelect.Instance.enabled = false;
             //Show the importing text
             importingMessage.SetActive(true);
@@ -95,23 +94,23 @@ namespace MapEditor
             //Clear the old map before loading the new one
             MapManager.Instance.clearMap();
             //Import the map script in the text field
-            StartCoroutine(MapManager.Instance.loadMap(importTextAreaComponent.text, progressTextComponent, totalTextComponent, endImport));
+            StartCoroutine(MapManager.Instance.LoadMap(importTextAreaComponent.Text, progressTextComponent, totalTextComponent, EndImport));
             
             //Clear the import text area
-            importTextAreaComponent.clearText();
-            //Hide the import popup
-            toggleImportPopup();
+            importTextAreaComponent.ClearText();
+            //Hide the import pop-up
+            ToggleImportPopup();
         }
 
         //Prepares the editor for use after importing
-        private void endImport()
+        private void EndImport()
         {
             //Enable the UI, shortcuts, and drag select
             canvasGroup.blocksRaycasts = true;
-            EditorManager.Instance.shortcutsEnabled = true;
+            EditorManager.Instance.ShortcutsEnabled = true;
             DragSelect.Instance.enabled = true;
             //Clear the command history
-            EditHistory.Instance.resetHistory();
+            EditHistory.Instance.ResetHistory();
             //Hide the importing text
             importingMessage.SetActive(false);
         }

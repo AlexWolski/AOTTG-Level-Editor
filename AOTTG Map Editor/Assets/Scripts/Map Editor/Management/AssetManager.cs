@@ -9,31 +9,31 @@ namespace MapEditor
         private readonly static string vanillaPrefabFolder = "Vanilla Resources/Vanilla Prefabs/";
         private readonly static string vanillaMaterialFolder = "Vanilla Resources/Vanilla Materials/";
         //The locations of the RC resources
-        private readonly static string RcPrefabFolder = "RC Resources/RC Prefabs/";
-        private readonly static string RcMaterialFolder = "RC Resources/RC Materials/";
+        private readonly static string rcPrefabFolder = "RC Resources/RC Prefabs/";
+        private readonly static string rcMaterialFolder = "RC Resources/RC Materials/";
 
-        //Instantiate the vanilla object wtih the given name
-        public static GameObject instantiateVanillaObject(string objectName)
+        //Instantiate the vanilla object with the given name
+        public static GameObject InstantiateVanillaObject(string objectName)
         {
             GameObject newObject = Object.Instantiate(Resources.Load<GameObject>(vanillaPrefabFolder + objectName));
-            addObjectToMap(newObject);
+            AddObjectToMap(newObject);
 
             return newObject;
         }
 
-        //Instantiate the RC object wtih the given name
-        public static GameObject instantiateRcObject(string objectName)
+        //Instantiate the RC object with the given name
+        public static GameObject InstantiateRcObject(string objectName)
         {
-            GameObject newObject = Object.Instantiate(Resources.Load<GameObject>(RcPrefabFolder + objectName));
-            addObjectToMap(newObject);
+            GameObject newObject = Object.Instantiate(Resources.Load<GameObject>(rcPrefabFolder + objectName));
+            AddObjectToMap(newObject);
 
             return newObject;
         }
 
         //Make the given object selectable and tag it as a map object
-        private static void addObjectToMap(GameObject newObject)
+        private static void AddObjectToMap(GameObject newObject)
         {
-            //If the gameobject has a mesh, add the outline script
+            //If the game object has a mesh, add the outline script
             if (newObject.GetComponent<Renderer>() != null)
             {
                 newObject.AddComponent<Outline>();
@@ -53,15 +53,15 @@ namespace MapEditor
         }
 
         //Load the given vanilla material
-        public static Material loadVanillaMaterial(string materialName)
+        public static Material LoadVanillaMaterial(string materialName)
         {
             return Resources.Load<Material>(vanillaMaterialFolder + materialName + "/" + materialName);
         }
 
         //Load the given RC material
-        public static Material loadRcMaterial(string materialName)
+        public static Material LoadRcMaterial(string materialName)
         {
-            return Resources.Load<Material>(RcMaterialFolder + materialName + "/" + materialName);
+            return Resources.Load<Material>(rcMaterialFolder + materialName + "/" + materialName);
         }
     }
 }

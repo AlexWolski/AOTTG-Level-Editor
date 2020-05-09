@@ -6,11 +6,11 @@ namespace MapEditor
     //An abstract class that defines functions to do and undo edits
     public abstract class EditCommand
     {
-        public abstract void executeEdit();
-        public abstract void revertEdit();
+        public abstract void ExecuteEdit();
+        public abstract void RevertEdit();
     }
 
-    //Keeps a history of the exectued commands and enables undo/redo
+    //Keeps a history of the executed commands and enables undo/redo
     public class EditHistory : MonoBehaviour
     {
         //A self-reference to the singleton instance of this script
@@ -39,51 +39,51 @@ namespace MapEditor
                 {
                     //If ctrl + z is pressed without the shift key, undo
                     if (!Input.GetKey(KeyCode.LeftShift))
-                        Instance.undo();
+                        Instance.Undo();
                     //If the shift key is also held, redo
                     else
-                        Instance.redo();
+                        Instance.Redo();
                 }
                 else if (Input.GetKeyDown(KeyCode.Y))
-                    Instance.redo();
+                    Instance.Redo();
             }
         }
 
         //Add a command to the history
-        public void addCommand(EditCommand newCommand)
+        public void AddCommand(EditCommand newCommand)
         {
             executedCommands.Push(newCommand);
             revertedCommands.Clear();
         }
 
         //Clear the history of executed and reverted commands
-        public void resetHistory()
+        public void ResetHistory()
         {
             executedCommands = new Stack<EditCommand>();
             revertedCommands = new Stack<EditCommand>();
         }
 
         //Undo the changes made in the last command
-        public void undo()
+        public void Undo()
         {
             //If no commands have been executed yet, return
             if (executedCommands.Count == 0)
                 return;
 
             EditCommand lastExecuted = executedCommands.Pop();
-            lastExecuted.revertEdit();
+            lastExecuted.RevertEdit();
             revertedCommands.Push(lastExecuted);
         }
 
         //Reapply the changes that were last reverted
-        public void redo()
+        public void Redo()
         {
             //If no commands were reverted, return
             if (revertedCommands.Count == 0)
                 return;
 
             EditCommand lastReverted = revertedCommands.Pop();
-            lastReverted.executeEdit();
+            lastReverted.ExecuteEdit();
             executedCommands.Push(lastReverted);
         }
     }
