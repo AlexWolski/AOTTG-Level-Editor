@@ -251,6 +251,7 @@ namespace MapEditor
                 {
                     endDrag();
                     StartCoroutine(InvokeOnDragEndEvent());
+                    mouseDown = false;
                 }
                 //Update the drag selection box while the mouse is held down
                 else if (Input.GetMouseButton(0))

@@ -8,10 +8,12 @@ namespace MapEditor
         #region Fields
         //The underlying value for the RegionName property
         private string regionNameValue;
-        //The file path to the billboard prefab
-        private const string billboardPrefabPath = "Editor Resources/Editor Prefabs/Billboard";
         //The text component on the billboard script
         private TextMesh billboardContent;
+
+        //The two children game objects attached to the region object
+        private GameObject regionModel;
+        private GameObject billboardObject;
         #endregion
 
         #region Properties
@@ -33,17 +35,31 @@ namespace MapEditor
             get { return Quaternion.identity; }
             set { }
         }
+
+        //Scale the region model without scaling the billboard
+        public override Vector3 Scale
+        {
+            get { return regionModel.transform.localScale; }
+            set { regionModel.transform.localScale = value; }
+        }
         #endregion
 
         #region Initialization
         private void Awake()
         {
-            //Instantiate a billboard and set it as a child of the region
-            GameObject billboard = Instantiate((GameObject)Resources.Load(billboardPrefabPath));
-            billboard.transform.parent = gameObject.transform;
+            //Store references to the prefab's child objects
+            foreach (Transform childTransform in gameObject.transform)
+            {
+                GameObject childObject = childTransform.gameObject;
+
+                if (childObject.name == "Region Editor Model")
+                    regionModel = childObject;
+                else if (childObject.name == "Billboard")
+                    billboardObject = childObject;
+            }
 
             //Save a reference to the text mesh component
-            billboardContent = billboard.GetComponent<TextMesh>();
+            billboardContent = billboardObject.GetComponent<TextMesh>();
         }
 
         //Copy the values from the given object

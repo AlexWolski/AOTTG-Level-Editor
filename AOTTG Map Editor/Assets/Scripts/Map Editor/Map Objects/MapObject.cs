@@ -27,7 +27,7 @@ namespace MapEditor
             set { scaleFactor = value; ScaleByFactor(value); }
         }
 
-        public Vector3 Position
+        public virtual Vector3 Position
         {
             get { return transform.position; }
             set { gameObject.transform.position = value; }
