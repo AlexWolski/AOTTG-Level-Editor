@@ -562,8 +562,6 @@ namespace MapEditor
         //Return a list of screen space vertices for the meshes of the given game object
         private Tuple<Vector2, Vector2> get2DBoundingBox(GameObject mapObject)
         {
-            Matrix4x4 localToScreenMatrix = calculateLocalToScreenMatrix(mapObject);
-
             //Used to find the bounding box of the object
             bool firstVertex = true;
             float minX = 0;
@@ -574,6 +572,9 @@ namespace MapEditor
             //Iterate through all meshes in the map object and its children
             foreach (MeshFilter meshFilter in mapObject.GetComponentsInChildren<MeshFilter>())
             {
+                //Calculate the matrix that converts points in the game object's local space to world space
+                Matrix4x4 localToScreenMatrix = calculateLocalToScreenMatrix(meshFilter.gameObject);
+
                 //Convert the vertices of the mesh to screen space and store the position in a list
                 foreach (Vector3 localVertex in meshFilter.mesh.vertices)
                 {
