@@ -107,39 +107,23 @@ namespace MapEditor
         private class DeleteSelectionCommand : EditCommand
         {
             private GameObject[] deletedObjects;
-            private bool deleted;
 
             public DeleteSelectionCommand()
             {
                 //Save the objects to be deleted
                 deletedObjects = ObjectSelection.Instance.GetSelection().ToArray();
-                //The objects haven't been deleted yet
-                deleted = false;
-            }
-
-            //Destructor to delete the saved deleted objects 
-            ~DeleteSelectionCommand()
-            {
-                //Destroy the objects if they were deleted when the command instance was destroyed
-                if (deleted)
-                {
-                    foreach (GameObject mapObject in deletedObjects)
-                        Destroy(mapObject);
-                }
             }
 
             //Delete the current selection
             public override void ExecuteEdit()
             {
                 Instance.DeleteSelection();
-                deleted = true;
             }
 
             //Undelete the objects that were deleted
             public override void RevertEdit()
             {
                 Instance.UndeleteObjects(deletedObjects);
-                deleted = false;
             }
         }
         #endregion
@@ -317,8 +301,12 @@ namespace MapEditor
             BoundsDisabled = false;
             EnableLargeMapBounds(false);
 
-            //Iterate over all children objects and delete them
+            //Iterate over all children objects and destroy them
             foreach (Transform child in Instance.mapRoot.GetComponentInChildren<Transform>())
+                Destroy(child.gameObject);
+
+            //Iterate over all of the temporarily deleted objects and destroy them
+            foreach (Transform child in Instance.deletedObjectsRoot.GetComponentInChildren<Transform>())
                 Destroy(child.gameObject);
         }
 
@@ -458,9 +446,12 @@ namespace MapEditor
             if (BoundsDisabled)
                 scriptBuilder.AppendLine("map,disablebounds;");
 
-            //Append the script for each object to the map script
+            //Append the script for each active object to the map script
             foreach (MapObject objectScript in ObjectScriptTable.Values)
-                scriptBuilder.AppendLine(objectScript.ToString());
+            {
+                if(objectScript.gameObject.activeSelf)
+                    scriptBuilder.AppendLine(objectScript.ToString());
+            }
 
             //Get the script string and return it
             return scriptBuilder.ToString();
