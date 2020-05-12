@@ -92,6 +92,7 @@ namespace MapEditor
             MapManager.Instance.OnImport += onImport;
             MapManager.Instance.OnPaste += saveBoundingBoxes;
             MapManager.Instance.OnDelete += removeBoundingBoxes;
+            MapManager.Instance.OnUndelete += saveBoundingBoxes;
             EditorManager.Instance.OnChangeMode += onModeChange;
             SelectionHandle.Instance.OnHandleFinish += saveSelectedBBs;
         }

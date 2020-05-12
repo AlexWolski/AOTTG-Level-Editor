@@ -62,6 +62,9 @@ namespace MapEditor
 
         public delegate void OnDeleteEvent(HashSet<GameObject> deletedObjects);
         public event OnDeleteEvent OnDelete;
+
+        public delegate void OnUndeleteEvent(HashSet<GameObject> undeletedObjects);
+        public event OnUndeleteEvent OnUndelete;
         #endregion
 
         #region Initialization
@@ -266,6 +269,8 @@ namespace MapEditor
                 mapObject.transform.parent = Instance.mapRoot.transform;
                 ObjectSelection.Instance.SelectObject(mapObject);
             }
+
+            StartCoroutine(InvokeOnUndelete());
         }
         #endregion
 
@@ -286,6 +291,15 @@ namespace MapEditor
 
             //Notify listeners that the copied objects were pasted
             OnPaste?.Invoke(ObjectSelection.Instance.GetSelection());
+        }
+
+        private IEnumerator InvokeOnUndelete()
+        {
+            //Wait until the pasted objects are rendered
+            yield return new WaitForEndOfFrame();
+
+            //Notify listeners that the selected objects were undeleted
+            OnUndelete?.Invoke(ObjectSelection.Instance.GetSelection());
         }
         #endregion
 
