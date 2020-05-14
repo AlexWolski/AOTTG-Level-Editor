@@ -14,25 +14,22 @@ namespace MapEditor
         //A self-reference to the singleton instance of this script
         public static DragSelect Instance { get; private set; }
 
-        //The canvas game object
-        [SerializeField] private GameObject canvas;
-        //The Game Object that contains the selection box
+        //The unscaled canvas game object
+        [SerializeField] private GameObject unscaledCanvas;
+        //The RectTransform component of the unscaled canvas
+        private RectTransform canvasRect;
+        //The selection box image object under the unscaled canvas
         [SerializeField] private GameObject dragSelectBox;
-        //How many pixels the cursor has to move after the drag starts before the drag select starts
-        [SerializeField] private float deadzone = 5f;
-
         //The RectTransform component of the drag selection box game object
         private RectTransform dragBoxRect;
-        //A reference to the Canvas component
-        private Canvas canvasComponent;
+        //How many pixels the cursor has to move after the drag starts before the drag select starts
+        [SerializeField] private float deadzone = 5f;
 
         //A reference to the main camera in the scene
         private Camera mainCamera;
         //Cached transformation matrices for the camera
         Matrix4x4 worldToViewMatrix;
         Matrix4x4 projectionMatrix;
-        //Stores the screen resolution to detect changes in window size
-        Vector2 prevResolution;
 
         //Variables for managing the drag selection box
         private bool mouseDown = false;
@@ -72,29 +69,27 @@ namespace MapEditor
             //Set this script as the only instance of the ObjectSelection script
             if (Instance == null)
                 Instance = this;
-
-            //Store the screen resolution
-            prevResolution = new Vector2(Screen.width, Screen.height);
         }
 
         private void Start()
         {
             //Find and store the main camera in the scene
             mainCamera = Camera.main;
-
-            boundingBoxTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
-
+            //Get the rect representing the screen space of the unscaled canvas
+            canvasRect = unscaledCanvas.GetComponent<RectTransform>();
             //Get references to components on other game objects
             dragBoxRect = dragSelectBox.GetComponent<RectTransform>();
-            canvasComponent = canvas.GetComponent<Canvas>();
+            //Instantiate the dictionary containing the bounding boxes for on-screen objects
+            boundingBoxTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
 
             //Add listeners to save map object vertices when needed
-            MapManager.Instance.OnImport += onImport;
-            MapManager.Instance.OnPaste += saveBoundingBoxes;
-            MapManager.Instance.OnDelete += removeBoundingBoxes;
-            MapManager.Instance.OnUndelete += saveBoundingBoxes;
-            EditorManager.Instance.OnChangeMode += onModeChange;
-            SelectionHandle.Instance.OnHandleFinish += saveSelectedBBs;
+            MapManager.Instance.OnImport += OnImport;
+            MapManager.Instance.OnPaste += SaveBoundingBoxes;
+            MapManager.Instance.OnDelete += RemoveBoundingBoxes;
+            MapManager.Instance.OnUndelete += SaveBoundingBoxes;
+            EditorManager.Instance.OnChangeMode += OnModeChange;
+            EditorManager.Instance.OnResize += OnResize;
+            SelectionHandle.Instance.OnHandleFinish += SaveSelectedBBs;
         }
         #endregion
 
@@ -104,20 +99,20 @@ namespace MapEditor
         {
             if (!focus)
             {
-                endDrag();
+                EndDrag();
                 StartCoroutine(InvokeOnDragEndEvent());
             }
         }
 
         //Clear the current bounding boxes and create new ones for the imported objects
-        private void onImport(HashSet<GameObject> mapObjects)
+        private void OnImport(HashSet<GameObject> mapObjects)
         {
-            clearObjectVerticies();
-            saveBoundingBoxes(mapObjects);
+            ClearObjectVerticies();
+            SaveBoundingBoxes(mapObjects);
         }
 
         //Save or clear the bounding boxes based on the new mode
-        private void onModeChange(EditorMode prevMode, EditorMode newMode)
+        private void OnModeChange(EditorMode prevMode, EditorMode newMode)
         {
             //When the mode changes from fly to edit mode, save the bounding boxes of on-screen objects
             if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
@@ -127,17 +122,23 @@ namespace MapEditor
                 projectionMatrix = mainCamera.projectionMatrix;
 
                 //Save the bounding box of all selectable objects
-                saveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
+                SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
             }
             //If the new mode is fly mode, then clear the vertices
             else if (newMode == EditorMode.Fly)
-                clearObjectVerticies();
+                ClearObjectVerticies();
+        }
+
+        //When the screen is resized, calculate the new screen-to-canvas ratio and bounding boxes
+        private void OnResize(Vector2 prevResolution)
+        {
+            ScaleBoundingBoxes(prevResolution);
         }
 
         //Saves the bounding boxes of the currently updated objects
-        private void saveSelectedBBs()
+        private void SaveSelectedBBs()
         {
-            saveBoundingBoxes(ObjectSelection.Instance.GetSelection());
+            SaveBoundingBoxes(ObjectSelection.Instance.GetSelection());
         }
 
         private IEnumerator InvokeOnDragEndEvent()
@@ -146,7 +147,7 @@ namespace MapEditor
             yield return new WaitForEndOfFrame();
 
             //After dragging the handle, release the cursor
-            EditorManager.Instance.releaseCursor();
+            EditorManager.Instance.ReleaseCursor();
             //Notify all listeners that the selection drag box was disabled
             OnDragEnd?.Invoke();
         }
@@ -250,7 +251,7 @@ namespace MapEditor
                 //Disable the drag selection box when the mouse is released
                 else if (Input.GetMouseButtonUp(0))
                 {
-                    endDrag();
+                    EndDrag();
                     StartCoroutine(InvokeOnDragEndEvent());
                     mouseDown = false;
                 }
@@ -259,117 +260,39 @@ namespace MapEditor
                 {
                     //If the escapes key was pressed, cancel the selection
                     if (Input.GetKeyDown(KeyCode.Escape))
-                        cancelSelection();
+                        CancelSelection();
 
                     mousePosition = Input.mousePosition;
 
                     //If the drag selection box wasn't enabled yet and the cursor is outside of the dead zone, enable the drag selection box
                     if (mouseDown && !dragging && (mousePosition - dragStartPosition).magnitude > deadzone)
-                        startDrag();
+                        StartDrag();
 
                     //If the drag selection box is enabled, update the box and check for selected objects
                     if (dragging)
                     {
-                        updateDragRect();
-                        updateSelectMode();
-                        updateSelection();
+                        UpdateDragRect();
+                        UpdateSelectMode();
+                        UpdateSelection();
                     }
                 }
             }
         }
 
-        //If the screen was resized, scale the bounding boxes and reset the stored resolution
-        private void LateUpdate()
-        {
-            if (prevResolution.x != Screen.width || prevResolution.y != Screen.height)
-            {
-                scaleBoundingBoxes();
-                prevResolution.x = Screen.width;
-                prevResolution.y = Screen.height;
-            }
-        }
-
-        //Enable the drag selection box
-        private void startDrag()
-        {
-            //Save the currently selected objects
-            originalSeleciton = new HashSet<GameObject>(ObjectSelection.Instance.GetSelection());
-            //Enable the drag selection box
-            dragSelectBox.SetActive(true);
-            dragging = true;
-
-            //Capture the cursor while dragging
-            EditorManager.Instance.CaptureCursor();
-            //Notify all listeners that the tool handle was activated
-            OnDragStart?.Invoke();
-        }
-
-        //Disable the drag select box
-        private void endDrag()
-        {
-            //If the drag select box isn't active, skip the drag ending process
-            if (!dragging)
-                return;
-
-            //Get the current selection after the drag select
-            HashSet<GameObject> currentSelection = ObjectSelection.Instance.GetSelection();
-
-            //Don't save a command if the selection is identical before and after the drag
-            if (!currentSelection.SetEquals(originalSeleciton))
-            {
-                //Create a command for the selection and add it to the history
-                switch (selectMode)
-                {
-                    case DragSelectMode.replace:
-                        EditHistory.Instance.AddCommand(new ReplaceSelectionCommand());
-                        break;
-
-                    case DragSelectMode.additive:
-                        EditHistory.Instance.AddCommand(new AddSelectionCommand());
-                        break;
-
-                    case DragSelectMode.subtractive:
-                        EditHistory.Instance.AddCommand(new RemoveSelectionCommand());
-                        break;
-                }
-            }
-
-            //Release the old selected object set
-            originalSeleciton = null;
-            //Disable the drag section box
-            dragSelectBox.SetActive(false);
-            mouseDown = false;
-            dragging = false;
-        }
-
-        //Revert the selection to how it was before the drag selection
-        private void cancelSelection()
-        {
-            //Deselect all of the currently selected objects
-            ObjectSelection.Instance.DeselectAll();
-
-            //Select the previously selected objects
-            foreach (GameObject mapObject in originalSeleciton)
-                ObjectSelection.Instance.SelectObject(mapObject);
-
-            //Disable the drag selection box
-            endDrag();
-        }
-
         //Update the position and size of the drag selection box
-        private void updateDragRect()
+        private void UpdateDragRect()
         {
             //Calculate the dimensions of the drag selection box
             float width = Mathf.Abs(mousePosition.x - dragStartPosition.x);
             float height = Mathf.Abs(mousePosition.y - dragStartPosition.y);
 
             //Divide the dimensions of the box by the scale factor of the canvas to correct the width and height
-            dragBoxRect.sizeDelta = new Vector2(width, height) / canvasComponent.scaleFactor;
+            dragBoxRect.sizeDelta = new Vector2(width, height);
             dragBoxRect.position = (mousePosition + dragStartPosition) / 2f;
         }
 
         //Change how the drag box selects objects based on what keys are held
-        private void updateSelectMode()
+        private void UpdateSelectMode()
         {
             //Get which selection modifier keys are held down
             bool shiftHeld = Input.GetKey(KeyCode.LeftShift);
@@ -385,7 +308,7 @@ namespace MapEditor
         }
 
         //Check for any objects that were deselected or selected
-        private void updateSelection()
+        private void UpdateSelection()
         {
             //The bounds of the drag selection box
             float minX, maxX, minY, maxY;
@@ -477,17 +400,86 @@ namespace MapEditor
         }
         #endregion
 
+        #region Drag Select Methods
+        //Enable the drag selection box
+        private void StartDrag()
+        {
+            //Save the currently selected objects
+            originalSeleciton = new HashSet<GameObject>(ObjectSelection.Instance.GetSelection());
+            //Enable the drag selection box
+            dragSelectBox.SetActive(true);
+            dragging = true;
+
+            //Capture the cursor while dragging
+            EditorManager.Instance.CaptureCursor();
+            //Notify all listeners that the tool handle was activated
+            OnDragStart?.Invoke();
+        }
+
+        //Disable the drag select box
+        private void EndDrag()
+        {
+            //If the drag select box isn't active, skip the drag ending process
+            if (!dragging)
+                return;
+
+            //Get the current selection after the drag select
+            HashSet<GameObject> currentSelection = ObjectSelection.Instance.GetSelection();
+
+            //Don't save a command if the selection is identical before and after the drag
+            if (!currentSelection.SetEquals(originalSeleciton))
+            {
+                //Create a command for the selection and add it to the history
+                switch (selectMode)
+                {
+                    case DragSelectMode.replace:
+                        EditHistory.Instance.AddCommand(new ReplaceSelectionCommand());
+                        break;
+
+                    case DragSelectMode.additive:
+                        EditHistory.Instance.AddCommand(new AddSelectionCommand());
+                        break;
+
+                    case DragSelectMode.subtractive:
+                        EditHistory.Instance.AddCommand(new RemoveSelectionCommand());
+                        break;
+                }
+            }
+
+            //Release the old selected object set
+            originalSeleciton = null;
+            //Disable the drag section box
+            dragSelectBox.SetActive(false);
+            mouseDown = false;
+            dragging = false;
+        }
+
+        //Revert the selection to how it was before the drag selection
+        private void CancelSelection()
+        {
+            //Deselect all of the currently selected objects
+            ObjectSelection.Instance.DeselectAll();
+
+            //Select the previously selected objects
+            foreach (GameObject mapObject in originalSeleciton)
+                ObjectSelection.Instance.SelectObject(mapObject);
+
+            //Disable the drag selection box
+            EndDrag();
+        }
+        #endregion
+
         #region Bounding Box Methods
         //Store the screen space bounding box of the given map objects
-        private void saveBoundingBoxes(HashSet<GameObject> mapObjects)
+        private void SaveBoundingBoxes(HashSet<GameObject> mapObjects)
         {
             //Iterate through the selectable objects
             foreach (GameObject mapObject in mapObjects)
-                saveBoundingBox(mapObject);
+                SaveBoundingBox(mapObject);
         }
 
         //Save the screen space bounding of the given map object
-        private void saveBoundingBox(GameObject mapObject)
+        private void SaveBoundingBox(GameObject mapObject)
         {
             bool isVisible = false;
 
@@ -505,7 +497,7 @@ namespace MapEditor
             if (isVisible)
             {
                 //Get the vertices of the object in screen space
-                Tuple<Vector2, Vector2> boundingBox = get2DBoundingBox(mapObject);
+                Tuple<Vector2, Vector2> boundingBox = Get2DBoundingBox(mapObject);
 
                 //If the bounding box is off-screen, skip the object
                 if (boundingBox == null)
@@ -521,7 +513,7 @@ namespace MapEditor
         }
 
         //Removes the bounding boxes for the given list of map objects 
-        private void removeBoundingBoxes(HashSet<GameObject> deletedObjects)
+        private void RemoveBoundingBoxes(HashSet<GameObject> deletedObjects)
         {
             //Remove all of the bounding boxes for the objects that were deleted
             foreach (GameObject mapObject in deletedObjects)
@@ -530,7 +522,7 @@ namespace MapEditor
         }
 
         //Scale the bounding boxes to match the new resolution
-        private void scaleBoundingBoxes()
+        private void ScaleBoundingBoxes(Vector2 prevResolution)
         {
             //Calculate the factor by which the screen was scaled
             //The screen only scales when the height is changed
@@ -561,7 +553,7 @@ namespace MapEditor
         }
 
         //Return a list of screen space vertices for the meshes of the given game object
-        private Tuple<Vector2, Vector2> get2DBoundingBox(GameObject mapObject)
+        private Tuple<Vector2, Vector2> Get2DBoundingBox(GameObject mapObject)
         {
             //Used to find the bounding box of the object
             bool firstVertex = true;
@@ -574,7 +566,7 @@ namespace MapEditor
             foreach (MeshFilter meshFilter in mapObject.GetComponentsInChildren<MeshFilter>())
             {
                 //Calculate the matrix that converts points in the game object's local space to world space
-                Matrix4x4 localToScreenMatrix = calculateLocalToScreenMatrix(meshFilter.gameObject);
+                Matrix4x4 localToScreenMatrix = CalculateLocalToScreenMatrix(meshFilter.gameObject);
 
                 //Convert the vertices of the mesh to screen space and store the position in a list
                 foreach (Vector3 localVertex in meshFilter.mesh.vertices)
@@ -617,7 +609,7 @@ namespace MapEditor
         }
 
         //Create a transformation from the local space of the given game object to screen space
-        private Matrix4x4 calculateLocalToScreenMatrix(GameObject mapObject)
+        private Matrix4x4 CalculateLocalToScreenMatrix(GameObject mapObject)
         {
             //Get the local space to world space matrix
             Matrix4x4 localToWorldMatrix = mapObject.transform.localToWorldMatrix;
@@ -635,12 +627,12 @@ namespace MapEditor
         #endregion
 
         #region Public Methods
-        private void clearObjectVerticies()
+        private void ClearObjectVerticies()
         {
             boundingBoxTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
         }
 
-        public bool getDragging()
+        public bool GetDragging()
         {
             return dragging;
         }

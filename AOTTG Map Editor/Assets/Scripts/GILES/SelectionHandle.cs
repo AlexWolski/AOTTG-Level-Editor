@@ -792,7 +792,7 @@ namespace MapEditor
             yield return new WaitForEndOfFrame();
 
             //After dragging the handle, release the cursor
-            EditorManager.Instance.releaseCursor();
+            EditorManager.Instance.ReleaseCursor();
             //Notify all listeners that the handle is no longer being interacted with
             OnHandleFinish?.Invoke();
         }

@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿using System;
+using UnityEngine;
 
 namespace MapEditor
 {
@@ -8,6 +9,10 @@ namespace MapEditor
         #region Data Members
         //A hidden variable to hold the current mode
         private EditorMode currentModeValue;
+        //The resolution of the editor when it first launches
+        [SerializeField] private Vector2 defaultResolution = new Vector2(800, 800);
+        //Stores the screen resolution to detect changes in window size
+        private Vector2 prevResolution;
 
         //A self-reference to the singleton instance of this script
         public static EditorManager Instance { get; private set; }
@@ -32,7 +37,10 @@ namespace MapEditor
         //Event to notify listeners when the mode changes
         public delegate void OnChangeModeEvent(EditorMode prevMode, EditorMode newMode);
         public event OnChangeModeEvent OnChangeMode;
-        //Event to notify listeners when the cursor is captured or released
+        //Event to notify listeners when the screen is resized
+        public delegate void OnResizeEvent(Vector2 prevResolution);
+        public event OnResizeEvent OnResize;
+        //Events to notify listeners when the cursor is captured or released
         public delegate void OnCursorCapturedEvent();
         public event OnCursorCapturedEvent OnCursorCaptured;
         public delegate void OnCursorReleasedEvent();
@@ -48,7 +56,9 @@ namespace MapEditor
 
             //Set the screen resolution
             Screen.fullScreen = false;
-            Screen.SetResolution(800, 600, false);
+            Screen.SetResolution(Convert.ToInt32(defaultResolution.x), Convert.ToInt32(defaultResolution.y), false);
+            //Store the screen resolution
+            prevResolution = defaultResolution;
 
             //The editor is in edit mode by default
             CurrentMode = EditorMode.Edit;
@@ -61,11 +71,22 @@ namespace MapEditor
         private void Update()
         {
             //If the x key is pressed and nothing is being dragged, toggle between edit and fly mode
-            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.GetDragging() && !DragSelect.Instance.getDragging())
-                toggleFlyEditMode();
+            if (Input.GetKeyDown(KeyCode.X) && !SelectionHandle.Instance.GetDragging() && !DragSelect.Instance.GetDragging())
+                ToggleFlyEditMode();
         }
 
-        private void toggleFlyEditMode()
+        //If the screen was resized, notify listeners and reset the stored resolution
+        private void LateUpdate()
+        {
+            if (prevResolution.x != Screen.width || prevResolution.y != Screen.height)
+            {
+                OnResize?.Invoke(prevResolution);
+                prevResolution.x = Screen.width;
+                prevResolution.y = Screen.height;
+            }
+        }
+
+        private void ToggleFlyEditMode()
         {
             if (CurrentMode == EditorMode.Fly)
             {
@@ -98,7 +119,7 @@ namespace MapEditor
         }
 
         //Make the cursor available again to use
-        public void releaseCursor()
+        public void ReleaseCursor()
         {
             CursorAvailable = true;
             OnCursorReleased?.Invoke();
