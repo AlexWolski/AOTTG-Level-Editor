@@ -10,6 +10,9 @@ namespace MapEditor
         //The canvas group component attached to the canvas
         private CanvasGroup canvasGroup;
 
+        //The UI element that prevents interaction with anything except for the pop-up
+        [SerializeField] private GameObject raycastBlocker;
+
         //The Import pop-up
         [SerializeField] private GameObject importPopup;
         //Displays the imported text
@@ -54,7 +57,7 @@ namespace MapEditor
             if (importPopup.activeSelf)
                 importTextAreaComponent.SetFocused(false);
 
-                ToggleMode();
+            ToggleMode();
         }
 
         //Hide or show the export pop-up screen
@@ -75,10 +78,16 @@ namespace MapEditor
         //Set the editor mode based on if the pop-ups are enabled or not
         private void ToggleMode()
         {
-            if(importPopup.activeSelf || exportPopup.activeSelf)
+            if (importPopup.activeSelf || exportPopup.activeSelf)
+            {
                 EditorManager.Instance.CurrentMode = EditorMode.UI;
+                raycastBlocker.SetActive(true);
+            }
             else
+            {
                 EditorManager.Instance.CurrentMode = EditorMode.Edit;
+                raycastBlocker.SetActive(false);
+            }
         }
 
         //Import the map text in the input field
