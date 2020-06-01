@@ -16,25 +16,26 @@ namespace MapEditor
         IPointerEnterHandler, IPointerExitHandler, IPointerDownHandler, IPointerUpHandler,
         IDragHandler, IEndDragHandler
     {
+        private static Canvas ParentCanvas;
+        private static bool ResizeBoxPressed;
+        private static bool ResizeBoxHover;
+
         public HandlerType type;
         public RectTransform target;
         public Vector2 minDimensions;
         public Vector2 maxDimensions;
-
-        private static Canvas parentCanvas;
+        
         private Vector2 dragStartPoint;
         private Vector2 rectStartSize;
         [SerializeField]
         private Texture2D ewResizeImage;
         private Vector2 cursorHotSpot;
-        private static bool resizeBoxPressed;
-        private static bool resizeBoxHover;
 
         void Start()
         {
             dragStartPoint = new Vector2(0, 0);
             rectStartSize = new Vector2(0, 0);
-            parentCanvas = GetComponentInParent<Canvas>();
+            ParentCanvas = GetComponentInParent<Canvas>();
             cursorHotSpot = new Vector2(ewResizeImage.width / 2, ewResizeImage.height / 2);
 
             //Listen for when the cursor is released
@@ -47,21 +48,21 @@ namespace MapEditor
             if (!focus)
             {
                 Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
-                resizeBoxHover = false;
-                resizeBoxPressed = false;
+                ResizeBoxHover = false;
+                ResizeBoxPressed = false;
             }
         }
 
         //If the cursor is over the resize box when released from another class, set the cursor
         private void onCursorReleased()
         {
-            if(resizeBoxHover)
+            if(ResizeBoxHover)
                 Cursor.SetCursor(ewResizeImage, cursorHotSpot, CursorMode.ForceSoftware);
         }
 
         public void OnPointerEnter(PointerEventData data)
         {
-            resizeBoxHover = true;
+            ResizeBoxHover = true;
 
             //Don't change the cursor if the tool handle is being dragged
             if (EditorManager.Instance.CursorAvailable)
@@ -70,10 +71,10 @@ namespace MapEditor
 
         public void OnPointerExit(PointerEventData data)
         {
-            if (!resizeBoxPressed)
+            if (!ResizeBoxPressed)
                 Cursor.SetCursor(null, Vector2.zero, CursorMode.Auto);
 
-            resizeBoxHover = false;
+            ResizeBoxHover = false;
         }
 
         public void OnPointerDown(PointerEventData data)
@@ -81,12 +82,12 @@ namespace MapEditor
             PointerEventData ped = (PointerEventData)data;
             dragStartPoint.Set(ped.position.x, ped.position.y);
             rectStartSize.Set(target.rect.width, target.rect.height);
-            resizeBoxPressed = true;
+            ResizeBoxPressed = true;
         }
 
         public void OnPointerUp(PointerEventData data)
         {
-            resizeBoxPressed = false;
+            ResizeBoxPressed = false;
         }
 
         public void OnDrag(PointerEventData data)
@@ -116,10 +117,10 @@ namespace MapEditor
             {
                 if (horizontalEdge == RectTransform.Edge.Right)
                     target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
-                        Mathf.Clamp(rectStartSize.x - (ped.position.x - dragStartPoint.x) / parentCanvas.scaleFactor, minDimensions.x, maxDimensions.x));
+                        Mathf.Clamp(rectStartSize.x - (ped.position.x - dragStartPoint.x) / ParentCanvas.scaleFactor, minDimensions.x, maxDimensions.x));
                 else
                     target.SetInsetAndSizeFromParentEdge((RectTransform.Edge)horizontalEdge, 0,
-                        Mathf.Clamp(rectStartSize.x + (ped.position.x - dragStartPoint.x) / parentCanvas.scaleFactor, minDimensions.x, maxDimensions.x));
+                        Mathf.Clamp(rectStartSize.x + (ped.position.x - dragStartPoint.x) / ParentCanvas.scaleFactor, minDimensions.x, maxDimensions.x));
             }
             if (verticalEdge != null)
             {
@@ -136,7 +137,7 @@ namespace MapEditor
 
         public void OnEndDrag(PointerEventData data)
         {
-            if (!resizeBoxHover)
+            if (!ResizeBoxHover)
                 Cursor.SetCursor(null, cursorHotSpot, CursorMode.Auto);
         }
     }

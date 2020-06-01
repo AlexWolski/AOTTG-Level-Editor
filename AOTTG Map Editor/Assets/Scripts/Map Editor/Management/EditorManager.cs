@@ -7,6 +7,9 @@ namespace MapEditor
     public class EditorManager : MonoBehaviour
     {
         #region Data Members
+        //A self-reference to the singleton instance of this script
+        public static EditorManager Instance { get; private set; }
+
         //A hidden variable to hold the current mode
         private EditorMode currentModeValue;
         //The resolution of the editor when it first launches
@@ -14,8 +17,6 @@ namespace MapEditor
         //Stores the screen resolution to detect changes in window size
         private Vector2 prevResolution;
 
-        //A self-reference to the singleton instance of this script
-        public static EditorManager Instance { get; private set; }
         public bool ShortcutsEnabled { get; set; }
         //Determines if the mouse is captured by a class or is available to use
         public bool CursorAvailable { get; private set; }

@@ -6,18 +6,19 @@ namespace MapEditor
 	[System.Serializable]
 	public class TransformData : System.IEquatable<TransformData>, ISerializable
 	{
-        #region Fields
-        // If the matrix needs rebuilt, this will be true.  Used to delay expensive
-        // matrix construction until necessary (since t/r/s can change a lot before a
-        // matrix is needed).
-        private bool dirty = true;
+		#region Fields
+		public static readonly TransformData Identity = new TransformData(Vector3.zero, Quaternion.identity, Vector3.one);
+
+		// If the matrix needs rebuilt, this will be true.  Used to delay expensive
+		// matrix construction until necessary (since t/r/s can change a lot before a
+		// matrix is needed).
+		private bool dirty = true;
 
 		[SerializeField] private Vector3 position;
 		[SerializeField] private Quaternion rotation;
 		[SerializeField] private Vector3 scale;
 
 		private Matrix4x4 matrix;
-		public static readonly TransformData identity = new TransformData(Vector3.zero, Quaternion.identity, Vector3.one);
 		#endregion
 
 		#region Properties

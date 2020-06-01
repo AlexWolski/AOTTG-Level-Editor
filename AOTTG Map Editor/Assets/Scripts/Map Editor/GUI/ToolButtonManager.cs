@@ -17,6 +17,15 @@ namespace MapEditor
             Selected
         }
 
+        //Determines if the left mouse button is currently pressed or not
+        private static bool MouseDown;
+        //The button script that is currently pressed down
+        private static ToolButtonManager PressedButton;
+        //The button that is currently selected
+        private static ToolButtonManager SelectedButton;
+        //A dictionary mapping the different tools to their respective button scripts
+        private static Dictionary<Tool, ToolButtonManager> ToolTable = new Dictionary<Tool, ToolButtonManager>();
+
         //The images used for the button
         [SerializeField] private Sprite unselected;
         [SerializeField] private Sprite pressed;
@@ -31,16 +40,6 @@ namespace MapEditor
         [SerializeField] private Tool toolType;
         //The keyboard key that selects this button
         [SerializeField] private KeyCode shortCutKey;
-
-        //Determines if the left mouse button is currently pressed or not
-        private static bool mouseDown;
-        //The button script that is currently pressed down
-        private static ToolButtonManager pressedButton;
-        //The button that is currently selected
-        private static ToolButtonManager selectedButton;
-
-        //A dictionary mapping the different tools to their respective button scripts
-        private static Dictionary<Tool, ToolButtonManager> toolTable = new Dictionary<Tool, ToolButtonManager>();
         #endregion
 
         #region Initialization
@@ -51,7 +50,7 @@ namespace MapEditor
             imageScript = gameObject.GetComponent<Image>();
 
             //Add this button management script to the static table
-            toolTable.Add(toolType, this);
+            ToolTable.Add(toolType, this);
 
             //If this button is the one to be selected by default, select it
             if (currentState == ButtonState.Selected)
@@ -60,7 +59,7 @@ namespace MapEditor
             else
                 unselect();
 
-            mouseDown = false;
+            MouseDown = false;
         }
         #endregion
 
@@ -72,7 +71,7 @@ namespace MapEditor
                 EditorManager.Instance.ShortcutsEnabled  &&
                 Input.GetKeyDown(shortCutKey))
             {
-                selectedButton.unselect();
+                SelectedButton.unselect();
                 select();
             }
         }
@@ -94,7 +93,7 @@ namespace MapEditor
             //Set the button images
             imageScript.sprite = selected;
             currentState = ButtonState.Selected;
-            selectedButton = this;
+            SelectedButton = this;
             //Execute the action of the button
             action();
         }
@@ -116,8 +115,8 @@ namespace MapEditor
         public static void SetTool(Tool newTool)
         {
             //Unselect the currently active button and select the button for the new tool
-            selectedButton.unselect();
-            toolTable[newTool].select();
+            SelectedButton.unselect();
+            ToolTable[newTool].select();
         }
         #endregion
 
@@ -125,7 +124,7 @@ namespace MapEditor
         //If this button was last pressed and the mouse moves over it, change to the pressed image
         public void OnPointerEnter(PointerEventData data)
         {
-            if (pressedButton == this && mouseDown && currentState == ButtonState.Unselected)
+            if (PressedButton == this && MouseDown && currentState == ButtonState.Unselected)
                 OnPointerDown(data);
         }
 
@@ -139,24 +138,24 @@ namespace MapEditor
         //If the mouse is pressed down on the button and its not selected, change to the pressed image
         public void OnPointerDown(PointerEventData data)
         {
-            mouseDown = true;
+            MouseDown = true;
 
             if (currentState == ButtonState.Unselected)
             {
                 imageScript.sprite = pressed;
                 currentState = ButtonState.Pressed;
-                pressedButton = this;
+                PressedButton = this;
             }
         }
 
         //If this button is clicked, select it and unselect all other buttons
         public void OnPointerUp(PointerEventData data)
         {
-            mouseDown = false;
+            MouseDown = false;
 
             if (currentState == ButtonState.Pressed)
             {
-                selectedButton.unselect();
+                SelectedButton.unselect();
                 select();
             }
         }

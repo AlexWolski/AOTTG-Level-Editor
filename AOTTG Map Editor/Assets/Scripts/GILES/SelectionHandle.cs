@@ -116,7 +116,7 @@ namespace MapEditor
         //In how many directions is the handle able to move
         private int draggingAxes = 0;
         //The transform of the rotation handle used when using the rotate tool
-        private TransformData handleOrigin = TransformData.identity;
+        private TransformData handleOrigin = TransformData.Identity;
 
         //Determines if the handle should be displayed and interactable
         private bool hidden = false;

@@ -15,6 +15,11 @@ namespace MapEditor
             Pressed
         }
 
+        //Determine if the left mouse button is currently pressed or not
+        private static bool MouseDown;
+        //The button script that is currently pressed down
+        private static GenericButtonManager PressedButton;
+
         //The images used for the button
         [SerializeField] private Sprite unpressed;
         [SerializeField] private Sprite pressed;
@@ -23,17 +28,13 @@ namespace MapEditor
 
         //The current state of the button
         private ButtonState currentState;
-        //Determine if the left mouse button is currently pressed or not
-        private static bool mouseDown;
-        //The button script that is currently pressed down
-        private static GenericButtonManager pressedButton;
 
         //Initialize data members and set up the triggers
         void Awake()
         {
             //The button is unselected by default
             currentState = ButtonState.Unpressed;
-            mouseDown = false;
+            MouseDown = false;
         }
 
         //If the game loses focus and a button is pressed down, unpress it
@@ -60,7 +61,7 @@ namespace MapEditor
         //If this button was last pressed and the mouse moves over it, change to the pressed image
         public void OnPointerEnter(PointerEventData data)
         {
-            if (pressedButton == this && mouseDown && currentState == ButtonState.Unpressed)
+            if (PressedButton == this && MouseDown && currentState == ButtonState.Unpressed)
                 OnPointerDown(data);
         }
 
@@ -74,20 +75,20 @@ namespace MapEditor
         //If the mouse is pressed down on the button and its not selected, change to the pressed image
         public void OnPointerDown(PointerEventData data)
         {
-            mouseDown = true;
+            MouseDown = true;
 
             if (currentState == ButtonState.Unpressed)
             {
                 gameObject.GetComponent<Image>().sprite = pressed;
                 currentState = ButtonState.Pressed;
-                pressedButton = this;
+                PressedButton = this;
             }
         }
 
         //If this button is clicked, unpress the button and invoke the 'on click' function
         public void OnPointerUp(PointerEventData data)
         {
-            mouseDown = false;
+            MouseDown = false;
 
             if (currentState == ButtonState.Pressed)
             {

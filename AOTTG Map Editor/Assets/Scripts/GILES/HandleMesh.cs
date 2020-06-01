@@ -8,9 +8,9 @@ namespace MapEditor
 	 */
 	public static class HandleMesh
 	{
-        static readonly Color red = new Color(.85f, .256f, .16f, 0f);
-		static readonly Color green = new Color(.2f, .9f, .2f, 0f);
-		static readonly Color blue = new Color(.26f, .56f, .85f, 0f);
+        static readonly Color Red = new Color(.85f, .256f, .16f, 0f);
+		static readonly Color Green = new Color(.2f, .9f, .2f, 0f);
+		static readonly Color Blue = new Color(.26f, .56f, .85f, 0f);
 
 		/**
 		 * Create the line mesh for position and scale gizmos.
@@ -62,30 +62,30 @@ namespace MapEditor
 				});
 
 			c.AddRange( new Color[] {
-				red,
-				red,
-				blue,
-				blue,
-				blue,
-				blue,
-				blue,
-				blue,
-				green,
-				green,
-				green,
-				green,
-				green,
-				green,
-				blue,
-				blue,
-				red,
-				red,
-				red,
-				red,
-				red,
-				red,
-				red,
-				red
+				Red,
+				Red,
+				Blue,
+				Blue,
+				Blue,
+				Blue,
+				Blue,
+				Blue,
+				Green,
+				Green,
+				Green,
+				Green,
+				Green,
+				Green,
+				Blue,
+				Blue,
+				Red,
+				Red,
+				Red,
+				Red,
+				Red,
+				Red,
+				Red,
+				Red
 				});
 
 			for(int i = 0; i < v.Count; i++)
@@ -154,17 +154,17 @@ namespace MapEditor
 				c = i + segments + segments;
 
 				ver[a] = verts[0][i];
-				col[a] = green;
+				col[a] = Green;
 				nrm[a].x = ver[a].x;
 				nrm[a].z = ver[a].z;
 
 				ver[b] = verts[1][i];
-				col[b] = blue;
+				col[b] = Blue;
 				nrm[b].x = ver[b].x;
 				nrm[b].y = ver[b].y;
 
 				ver[c] = verts[2][i];
-				col[c] = red;
+				col[c] = Red;
 				nrm[c].z = ver[c].z;
 				nrm[c].y = ver[c].y;
 
@@ -259,7 +259,7 @@ namespace MapEditor
 				Vector3.up
 			};
 
-			Color plane_red = red, plane_blue = blue, plane_green = green;
+			Color plane_red = Red, plane_blue = Blue, plane_green = Green;
 			plane_red.a = .25f;
 			plane_green.a = .25f;
 			plane_blue.a = .25f;
@@ -312,21 +312,21 @@ namespace MapEditor
 
 			List<int> t2 = new List<int>();
 
-			TransformMesh(cap, _coneRightMatrix, out cv, out cn, out cu, out cc, out ct, v.Count, red);
+			TransformMesh(cap, _coneRightMatrix, out cv, out cn, out cu, out cc, out ct, v.Count, Red);
 			v.AddRange(cv);
 			c.AddRange(cc);
 			nrm.AddRange(cn);
 			u.AddRange(cu);
 			t2.AddRange(ct);
 
-			TransformMesh(cap, _coneUpMatrix, out cv, out cn, out cu, out cc, out ct, v.Count,green);
+			TransformMesh(cap, _coneUpMatrix, out cv, out cn, out cu, out cc, out ct, v.Count,Green);
 			v.AddRange(cv);
 			c.AddRange(cc);
 			nrm.AddRange(cn);
 			u.AddRange(cu);
 			t2.AddRange(ct);
 
-			TransformMesh(cap, _coneForwardMatrix, out cv, out cn, out cu, out cc, out ct, v.Count,blue);
+			TransformMesh(cap, _coneForwardMatrix, out cv, out cn, out cu, out cc, out ct, v.Count,Blue);
 			v.AddRange(cv);
 			c.AddRange(cc);
 			nrm.AddRange(cn);
