@@ -24,8 +24,8 @@ namespace MapEditor
         [SerializeField] private GameObject smallMapBounds;
         [SerializeField] private GameObject largeMapBounds;
 
-        //The minimum in-game frame rate while loading or exporting
-        [SerializeField] private float loadingFPS = 60f;
+        //The maximum in-game frame rate while loading or exporting
+        [SerializeField] private float maxLoadingFPS = 60f;
         //The maximum amount of time a coroutine can run before returning. Calculated from minimum loading frame rate
         private float loadingDelay;
 
@@ -77,7 +77,7 @@ namespace MapEditor
             //Instantiate the script table
             ObjectScriptTable = new Dictionary<GameObject, MapObject>();
             //Calculate the delay between each frame while loading in milliseconds
-            loadingDelay = 1f / loadingFPS * 1000;
+            loadingDelay = 1f / maxLoadingFPS * 1000;
         }
         #endregion
 

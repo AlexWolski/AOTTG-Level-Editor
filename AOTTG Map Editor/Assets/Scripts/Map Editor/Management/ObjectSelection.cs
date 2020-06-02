@@ -273,7 +273,7 @@ namespace MapEditor
             EditCommand selectionCommand = null;
 
             //If the left control key is held, check for shortcuts
-            if (Input.GetKey(KeyCode.LeftControl))
+            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
             {
                 //If 'control + A' is pressed, either select or deselect all based on if anything is currently selected
                 if (Input.GetKeyDown(KeyCode.A))

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System.Collections;
+using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 namespace MapEditor
@@ -15,9 +17,30 @@ namespace MapEditor
     {
         //A self-reference to the singleton instance of this script
         public static EditHistory Instance { get; private set; }
+
         //Stores the commands that were executed and reverted
         private Stack<EditCommand> executedCommands;
         private Stack<EditCommand> revertedCommands;
+
+        //Lists the shortcuts that can be held down
+        private enum ShortcutCommand
+        {
+            None, Undo, Redo
+        }
+
+        //The duration in milliseconds that a command has to be held down until it is repeated
+        [SerializeField] private float commandRepeatDelay = 500f;
+        //The number of times the command is repeated per second
+        [SerializeField] private float commandRepeatRate = 5f;
+
+        //The shortcut currently held down
+        private ShortcutCommand heldCommand;
+        //Used to determine how long the command has been held
+        private Stopwatch stopWatch = new Stopwatch();
+        //Determines if the held command it repeating or not
+        private bool commandRepeating = false;
+        //The delay in seconds between each execution of the command
+        private float commandExecutionDelay;
 
         void Awake()
         {
@@ -25,30 +48,110 @@ namespace MapEditor
             if (Instance == null)
                 Instance = this;
 
-            //Initialize the stacks
+            //Initialize the command stacks
             executedCommands = new Stack<EditCommand>();
             revertedCommands = new Stack<EditCommand>();
+
+            //Calculate he delay in seconds between repeated commands
+            commandExecutionDelay = 1f / commandRepeatRate;
         }
 
         private void Update()
         {
-            //Check for undo & redo shortcuts
+            CheckShortcutPressed();
+            CheckShortcutReleased();
+            CheckRepeatCommand();
+        }
+
+        #region Shortcut Methods
+        //Check if a command shortcut was pressed
+        private void CheckShortcutPressed()
+        {
             if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
             {
-                if (Input.GetKeyDown(KeyCode.Z))
+                //If ctrl + z is pressed without the shift key, undo
+                if (Input.GetKeyDown(KeyCode.Z) && !Input.GetKey(KeyCode.LeftShift))
                 {
-                    //If ctrl + z is pressed without the shift key, undo
-                    if (!Input.GetKey(KeyCode.LeftShift))
-                        Instance.Undo();
-                    //If the shift key is also held, redo
-                    else
-                        Instance.Redo();
+                    heldCommand = ShortcutCommand.Undo;
+                    stopWatch.Restart();
+                    Instance.Undo();
                 }
-                else if (Input.GetKeyDown(KeyCode.Y))
+                //If ctrl + shift + z or ctrl + y is pressed, redo
+                else if (Input.GetKeyDown(KeyCode.Y) || Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftShift))
+                {
+                    heldCommand = ShortcutCommand.Redo;
+                    stopWatch.Restart();
                     Instance.Redo();
+                }
             }
         }
 
+        //Check when a command shortcut is released
+        private void CheckShortcutReleased()
+        {
+            //If no command was pressed, do nothing
+            if (heldCommand == ShortcutCommand.None)
+                return;
+
+            //If the pressed shortcut is still held, do nothing
+            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
+            {
+                if (heldCommand == ShortcutCommand.Undo &&
+                   (Input.GetKey(KeyCode.Z) && !Input.GetKey(KeyCode.LeftShift)))
+                    return;
+
+                if (heldCommand == ShortcutCommand.Redo &&
+                   (Input.GetKey(KeyCode.Y) || Input.GetKey(KeyCode.Z) && Input.GetKey(KeyCode.LeftShift)))
+                    return;
+            }
+
+            //If the held shortcut was released, reset the timer and stop repeating the command
+            heldCommand = ShortcutCommand.None;
+            commandRepeating = false;
+            stopWatch.Reset();
+        }
+
+        //Check if the held command should be repeated
+        private void CheckRepeatCommand()
+        {
+            //If the command is not repeating and a shortcut is held, check if the command should repeat
+            if (!commandRepeating && heldCommand != ShortcutCommand.None)
+            {
+                //Stop the stopwatch so that the elapsed time can be read
+                stopWatch.Stop();
+
+                //If the shortcut has been held for longer than the repeat delay, start repeating the command
+                if (stopWatch.ElapsedMilliseconds >= commandRepeatDelay)
+                {
+                    stopWatch.Reset();
+                    commandRepeating = true;
+                    StartCoroutine(RepeatCommand());
+                }
+                //Otherwise, continue the stopwatch
+                else
+                    stopWatch.Start();
+            }
+        }
+
+        //Continue to repeat the held command until repeating is disabled
+        private IEnumerator RepeatCommand()
+        {
+            //Execute the held command
+            if (heldCommand == ShortcutCommand.Undo)
+                Instance.Undo();
+            else if (heldCommand == ShortcutCommand.Redo)
+                Instance.Redo();
+
+            //Wait for a delay before executing the next command
+            yield return new WaitForSeconds(commandExecutionDelay);
+
+            //If the shortcut is still held, execute the command again
+            if (commandRepeating)
+                StartCoroutine(RepeatCommand());
+        }
+        #endregion
+
+        #region Command Methods
         //Add a command to the history
         public void AddCommand(EditCommand newCommand)
         {
@@ -86,5 +189,6 @@ namespace MapEditor
             lastReverted.ExecuteEdit();
             executedCommands.Push(lastReverted);
         }
+        #endregion
     }
 }
