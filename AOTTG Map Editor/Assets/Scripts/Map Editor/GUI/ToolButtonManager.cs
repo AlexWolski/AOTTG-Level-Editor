@@ -114,7 +114,7 @@ namespace MapEditor
         //Set the current tool and select the appropriate button from an external script
         public static void SetTool(Tool newTool)
         {
-            //Unselect the currently active button and select the button for the new tool
+            //Deselect the currently active button and select the button for the new tool
             SelectedButton.unselect();
             ToolTable[newTool].select();
         }

@@ -13,6 +13,10 @@ namespace MapEditor
         public static ObjectSelection Instance { get; private set; }
         private Camera mainCamera;
 
+        //Shortcut classes to set the shortcut combination and check when its pressed
+        [SerializeField] private Shortcut selectAllShortcut;
+        [SerializeField] private Shortcut invertSelectionShortcut;
+
         //A hash set containing the objects that can be selected
         private HashSet<GameObject> selectableObjects = new HashSet<GameObject>();
         //A hash set containing the objects currently selected
@@ -22,7 +26,7 @@ namespace MapEditor
         //The sum of the points of all the selected objects for calculating the average
         private Vector3 positionSum;
         #endregion
-
+          
         #region Instantiation
         void Awake()
         {
@@ -272,25 +276,22 @@ namespace MapEditor
             //Stores the command that needs to be executed
             EditCommand selectionCommand = null;
 
-            //If the left control key is held, check for shortcuts
-            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
+            //If escape is pressed, deselect all
+            if (Input.GetKeyDown(KeyCode.Escape))
+                selectionCommand = new DeselectAllCommand();
+            //If escape was not pressed, check for shortcut commands
+            else
             {
-                //If 'control + A' is pressed, either select or deselect all based on if anything is currently selected
-                if (Input.GetKeyDown(KeyCode.A))
+                if (selectAllShortcut.Pressed())
                 {
                     if (selectedObjects.Count > 0)
                         selectionCommand = new DeselectAllCommand();
                     else
                         selectionCommand = new SelectAllCommand();
                 }
-                //If 'control + I' is pressed, invert the current selection
-                if (Input.GetKeyDown(KeyCode.I))
+
+                if (invertSelectionShortcut.Pressed())
                     selectionCommand = new InvertSelectionCommand();
-            }
-            //If control is not held and escape is pressed, deselect all
-            else if(Input.GetKeyDown(KeyCode.Escape))
-            {
-                selectionCommand = new DeselectAllCommand();
             }
 
             //If the mouse was clicked and the cursor is not over the UI, check if any objects were selected

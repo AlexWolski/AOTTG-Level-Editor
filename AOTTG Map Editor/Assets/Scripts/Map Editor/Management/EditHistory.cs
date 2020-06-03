@@ -15,12 +15,17 @@ namespace MapEditor
     //Keeps a history of the executed commands and enables undo/redo
     public class EditHistory : MonoBehaviour
     {
+        #region Data Members
         //A self-reference to the singleton instance of this script
         public static EditHistory Instance { get; private set; }
 
         //Stores the commands that were executed and reverted
         private Stack<EditCommand> executedCommands;
         private Stack<EditCommand> revertedCommands;
+
+        //Shortcut classes to set the shortcut combination and check when its pressed
+        [SerializeField] private Shortcut undoShortcut;
+        [SerializeField] private MultiShortcut redoShortcut;
 
         //Lists the shortcuts that can be held down
         private enum ShortcutCommand
@@ -41,7 +46,9 @@ namespace MapEditor
         private bool commandRepeating = false;
         //The delay in seconds between each execution of the command
         private float commandExecutionDelay;
+        #endregion
 
+        #region MonoBehaviour Methods
         void Awake()
         {
             //Set this script as the only instance of the EditorManger script
@@ -62,27 +69,23 @@ namespace MapEditor
             CheckShortcutReleased();
             CheckRepeatCommand();
         }
+        #endregion
 
         #region Shortcut Methods
         //Check if a command shortcut was pressed
         private void CheckShortcutPressed()
         {
-            if (Input.GetKey(KeyCode.LeftControl) || Input.GetKey(KeyCode.LeftCommand))
+            if (undoShortcut.Pressed())
             {
-                //If ctrl + z is pressed without the shift key, undo
-                if (Input.GetKeyDown(KeyCode.Z) && !Input.GetKey(KeyCode.LeftShift))
-                {
-                    heldCommand = ShortcutCommand.Undo;
-                    stopWatch.Restart();
-                    Instance.Undo();
-                }
-                //If ctrl + shift + z or ctrl + y is pressed, redo
-                else if (Input.GetKeyDown(KeyCode.Y) || Input.GetKeyDown(KeyCode.Z) && Input.GetKey(KeyCode.LeftShift))
-                {
-                    heldCommand = ShortcutCommand.Redo;
-                    stopWatch.Restart();
-                    Instance.Redo();
-                }
+                heldCommand = ShortcutCommand.Undo;
+                stopWatch.Restart();
+                Instance.Undo();
+            }
+            else if (redoShortcut.Pressed())
+            {
+                heldCommand = ShortcutCommand.Redo;
+                stopWatch.Restart();
+                Instance.Redo();
             }
         }
 
