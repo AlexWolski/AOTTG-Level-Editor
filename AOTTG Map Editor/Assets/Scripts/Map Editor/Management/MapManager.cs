@@ -85,11 +85,13 @@ namespace MapEditor
         //Delete and undelete the pasted objects
         private class PasteSelectionCommand : EditCommand
         {
+            private GameObject[] previousSelection;
             private GameObject[] pastedObjects;
 
-            //Store the pasted objects (must be called after the objects are pasted)
-            public PasteSelectionCommand()
+            //Store the previously selected and pasted objects (must be called after the objects are pasted)
+            public PasteSelectionCommand(GameObject[] previousSelection)
             {
+                this.previousSelection = previousSelection;
                 this.pastedObjects = ObjectSelection.Instance.GetSelection().ToArray();
             }
 
@@ -103,6 +105,10 @@ namespace MapEditor
             public override void RevertEdit()
             {
                 Instance.DeleteSelection();
+
+                //Reselect the objects that were previously selected
+                foreach (GameObject mapObject in previousSelection)
+                    ObjectSelection.Instance.SelectObject(mapObject);
             }
         }
 
@@ -160,8 +166,9 @@ namespace MapEditor
                         //Only paste if there are any copied objects
                         if (selectionCopied)
                         {
+                            GameObject[] previousSelection = ObjectSelection.Instance.GetSelection().ToArray();
                             PasteSelection();
-                            editCommand = new PasteSelectionCommand();
+                            editCommand = new PasteSelectionCommand(previousSelection);
                         }
                     }
                 }
