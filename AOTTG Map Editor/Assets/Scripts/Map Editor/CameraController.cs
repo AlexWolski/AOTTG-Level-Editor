@@ -13,7 +13,7 @@ namespace MapEditor
         private AdjustableSpeed movementSpeed;
 
         //The speed the camera rotates at
-        [SerializeField] private float rotateSpeed = 100f;
+        [SerializeField] private float rotateSpeed = 1000f;
         #endregion
 
         #region Instantiation
