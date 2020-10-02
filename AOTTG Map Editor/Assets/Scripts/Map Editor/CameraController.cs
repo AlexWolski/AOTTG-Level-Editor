@@ -5,15 +5,15 @@ namespace MapEditor
     public class CameraController : MonoBehaviour
     {
         #region Fields
-        //The default speed the camera moves at
+        //The default speed the camera moves at (assuming the movement axes are both 1)
         [SerializeField] private float defaultMovementSpeed = 100f;
         //The factor with which the movement speeds up or slows down when a speed modifier key is held
-        [SerializeField] private float speedMultiplier = 3f;
+        [SerializeField] private float speedMultiplier = 5f;
         //Stores the three different speeds the camera can move at
         private AdjustableSpeed movementSpeed;
 
         //The speed the camera rotates at
-        [SerializeField] private float rotateSpeed = 1000f;
+        [SerializeField] private float rotateSpeed = 5f;
         #endregion
 
         #region Instantiation
@@ -44,19 +44,22 @@ namespace MapEditor
 
         private void TranslateCamera()
         {
+            //Get the current movement speed
+            float movementSpeed = this.movementSpeed.GetSpeed() * Time.deltaTime;
+
             //Get the amount to translate on the x and z axis
-            float xDisplacement = Input.GetAxisRaw("Horizontal") * movementSpeed.GetSpeed() * Time.deltaTime;
-            float zDisplacement = Input.GetAxisRaw("Vertical") * movementSpeed.GetSpeed() * Time.deltaTime;
+            float xDisplacement = Input.GetAxisRaw("Horizontal") * movementSpeed;
+            float zDisplacement = Input.GetAxisRaw("Vertical") * movementSpeed;
 
             //Get the amount to translate on the y axis
             float yDisplacement = 0;
 
             //If only the left mouse button is pressed, move the camera down
             if (Input.GetButton("Fire1") && !Input.GetButton("Fire2"))
-                yDisplacement = -movementSpeed.GetSpeed() * Time.deltaTime;
+                yDisplacement = -movementSpeed;
             //If only the right mouse button is pressed, move the camera up
             else if (Input.GetButton("Fire2") && !Input.GetButton("Fire1"))
-                yDisplacement = movementSpeed.GetSpeed() * Time.deltaTime;
+                yDisplacement = movementSpeed;
 
             //Translate the camera on the x and z axes in self space
             transform.Translate(xDisplacement, 0, zDisplacement, Space.Self);
@@ -67,8 +70,8 @@ namespace MapEditor
         private void RotateCamera()
         {
             //Find how much the camera should be rotated on the x and y axes, then add the current rotations to them
-            float xRotation = (Input.GetAxis("Mouse Y") * -rotateSpeed * Time.deltaTime) + transform.rotation.eulerAngles.x;
-            float yRotation = (Input.GetAxis("Mouse X") * rotateSpeed * Time.deltaTime) + transform.rotation.eulerAngles.y;
+            float xRotation = (Input.GetAxis("Mouse Y") * -rotateSpeed) + transform.rotation.eulerAngles.x;
+            float yRotation = (Input.GetAxis("Mouse X") * rotateSpeed) + transform.rotation.eulerAngles.y;
 
             //Restrict the camera angle so it doesn't flip
             if (xRotation > 90 && xRotation < 180)
