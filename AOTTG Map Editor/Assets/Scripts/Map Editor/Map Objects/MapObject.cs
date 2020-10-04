@@ -84,10 +84,10 @@ namespace MapEditor
             throw new Exception("The type '" + typeString + "' does not exist");
         }
 
-        //Create a Color object with the three given color values and opacity
-        protected static Color ParseColor(string r, string g, string b, string a)
+        //Create a Color object with the three given color values. The opacity is always 1f.
+        protected static Color ParseColorRGB(string r, string g, string b)
         {
-            return new Color(Convert.ToSingle(r), Convert.ToSingle(g), Convert.ToSingle(b), Convert.ToSingle(a));
+            return new Color(Convert.ToSingle(r), Convert.ToSingle(g), Convert.ToSingle(b), 1f);
         }
 
         //Create a vector with the two given strings

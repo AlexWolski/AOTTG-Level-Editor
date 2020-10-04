@@ -10,11 +10,14 @@ namespace MapEditor
         private string[] defaultMatNames;
         private string materialValue;
         private Vector2 tilingValue;
-        public bool ColorEnabled { get; set; }
         private Color colorValue;
+        private bool transparant = false;
+        private float colorAlphaValue = 1f;
         #endregion
 
         #region Properties
+        public bool ColorEnabled { get; set; }
+
         //The name of the material applied to the object
         public string Material
         {
@@ -29,11 +32,18 @@ namespace MapEditor
             set { tilingValue = value; SetTiling(value); }
         }
 
-        //The color of the object, including opacity
+        //The color of the object. Does not include the opacity.
         public Color Color
         {
             get { return colorValue; }
-            set { colorValue = value; SetColor(colorValue); }
+            set { colorValue = value; SetColor(value); }
+        }
+
+        //The opacity of the object
+        public float ColorAlpa
+        {
+            get { return colorAlphaValue; }
+            set { colorAlphaValue = value; SetColor(colorValue); }
         }
         #endregion
 
@@ -60,10 +70,10 @@ namespace MapEditor
 
         #region Setters
         //Apply the given material as the new material of the object
-        private void SetMaterial(string newMaterial)
+        private void SetMaterial(string materialName)
         {
             //Check if the new material is the default materials applied to the prefab
-            if (newMaterial == "default")
+            if (materialName == "default")
             {
                 //If the default materials haven't been set yet, the currently applied materials are the defaults
                 if (defaultMatNames == null)
@@ -91,11 +101,14 @@ namespace MapEditor
             //Otherwise Apply the material to all of the children of the object
             else
             {
+                //Set the transparent flag based on the material name
+                transparant = (materialName == "transparent");
+
                 foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
                 {
                     //Don't apply the default material and don't apply the material to the particle system of supply stations
                     if (!(renderer.name.Contains("Particle System") && ObjectName.StartsWith("aot_supply")))
-                        renderer.material = AssetManager.LoadRcMaterial(newMaterial);
+                        renderer.material = AssetManager.LoadRcMaterial(materialName);
                 }
             }
         }
@@ -115,19 +128,31 @@ namespace MapEditor
         //Change the color of the material on the object
         private void SetColor(Color newColor)
         {
-            //Iterate through all of the filters in the object
-            foreach (MeshFilter filter in gameObject.GetComponentsInChildren<MeshFilter>())
+            //If the object is transparent, set the color of the material
+            if (transparant)
             {
-                Mesh mesh = filter.mesh;
+                newColor.a = colorAlphaValue;
 
-                //Create an array filled with the new color to apply to the mesh
-                Color[] colorArray = new Color[mesh.vertexCount];
+                foreach (Renderer renderer in gameObject.GetComponentsInChildren<Renderer>())
+                    renderer.material.color = newColor;
+            }
+            //If the object is not transparent, set the color of the mesh vertices
+            else
+            {
+                //Iterate through all of the filters in the object
+                foreach (MeshFilter filter in gameObject.GetComponentsInChildren<MeshFilter>())
+                {
+                    Mesh mesh = filter.mesh;
 
-                for (int colorIndex = 0; colorIndex < colorArray.Length; colorIndex++)
-                    colorArray[colorIndex] = (Color)newColor;
+                    //Create an array filled with the new color to apply to the mesh
+                    Color[] colorArray = new Color[mesh.vertexCount];
 
-                //Apply the colors
-                mesh.colors = colorArray;
+                    for (int colorIndex = 0; colorIndex < colorArray.Length; colorIndex++)
+                        colorArray[colorIndex] = newColor;
+
+                    //Apply the colors
+                    mesh.colors = colorArray;
+                }
             }
         }
         #endregion
@@ -187,19 +212,29 @@ namespace MapEditor
         //Load all of the object properties from the object script
         private void LoadPropertiesFull(string[] properties)
         {
-            Material = properties[2];
+            //If the material is the transparent material, parse the alpha value
+            if (properties[2].StartsWith("transparent"))
+            {
+                transparant = true;
+                Material = "transparent";
+
+                //Try to parse the substring after 'transparent' as a float and use it as the alpha
+                if (float.TryParse(properties[2].Substring(11), out float parsedFloat))
+                    colorAlphaValue = parsedFloat;
+                //If the parse fails, make the object opaque
+                else
+                    colorAlphaValue = 1f;
+            }
+            //Otherwise use the material name as is
+            else
+                Material = properties[2];
+
             Scale = ParseVector3(properties[3], properties[4], properties[5]);
             ColorEnabled = (Convert.ToInt32(properties[6]) != 0);
 
             //If the color is enabled, parse the color and set it
             if (ColorEnabled)
-            {
-                //If the transparent material is applied, parse the opacity and use it. Otherwise default to fully opaque
-                if (Material.StartsWith("transparent"))
-                    Color = ParseColor(properties[7], properties[8], properties[9], Material.Substring(11));
-                else
-                    Color = ParseColor(properties[7], properties[8], properties[9], "1");
-            }
+                Color = ParseColorRGB(properties[7], properties[8], properties[9]);
             //Otherwise, use white as a default color
             else
                 Color = Color.white;
@@ -216,10 +251,17 @@ namespace MapEditor
             //Initialize with a starting buffer with enough room to fit a long object script
             StringBuilder scriptBuilder = new StringBuilder(100);
 
+            //The extended name of the material
+            string fullMaterialName = Material;
+
+            //If this object has the transparent material, add the opacity value to the end
+            if (transparant)
+                fullMaterialName += colorAlphaValue;
+
             //Append the object type and name to the script
             scriptBuilder.Append(FullTypeName + "," + ObjectName);
             //Append the material and scale values
-            scriptBuilder.Append("," + Material + "," + Vector3ToString(Scale) + "," + BoolToString(ColorEnabled) + "," + ColorToString(Color) + "," + Vector2ToString(Tiling));
+            scriptBuilder.Append("," + fullMaterialName + "," + Vector3ToString(Scale) + "," + BoolToString(ColorEnabled) + "," + ColorToString(Color) + "," + Vector2ToString(Tiling));
             //Append the transform values
             scriptBuilder.Append("," + Vector3ToString(Position) + "," + QuaternionToString(Rotation) + ";");
 
