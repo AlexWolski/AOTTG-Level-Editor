@@ -39,16 +39,22 @@ namespace MapEditor
 
         #region Initialization
         //Copy the values from the given object
-        public void CopyValues(TexturedObject originalObject)
+        public override void CopyValues(MapObject originalObject)
         {
             //Copy the generic map object values
             base.CopyValues(originalObject);
 
-            //Copy the texture related values
-            materialValue = originalObject.Material;
-            tilingValue = originalObject.Tiling;
-            ColorEnabled = originalObject.ColorEnabled;
-            colorValue = originalObject.Color;
+            //Try to cast the MapObject to a Textured Object
+            TexturedObject texturedObject = originalObject as TexturedObject;
+
+            //If the cast succeeded, copy the texture related values
+            if (texturedObject != null)
+            {
+                materialValue = texturedObject.Material;
+                tilingValue = texturedObject.Tiling;
+                ColorEnabled = texturedObject.ColorEnabled;
+                colorValue = texturedObject.Color;
+            }
         }
         #endregion
 

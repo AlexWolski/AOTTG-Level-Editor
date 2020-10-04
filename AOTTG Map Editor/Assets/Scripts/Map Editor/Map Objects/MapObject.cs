@@ -42,7 +42,7 @@ namespace MapEditor
 
         #region Initialization
         //Copy the values from the given object
-        public void CopyValues(MapObject originalObject)
+        public virtual void CopyValues(MapObject originalObject)
         {
             //Hidden data members
             defaultScale = originalObject.defaultScale;
