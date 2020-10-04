@@ -27,9 +27,8 @@ namespace MapEditor
 
         //A reference to the main camera in the scene
         private Camera mainCamera;
-        //Cached transformation matrices for the camera
-        Matrix4x4 worldToViewMatrix;
-        Matrix4x4 projectionMatrix;
+        //Converts world space coordinates to viewport space
+        Matrix4x4 worldToViewportMatrix;
 
         //Variables for managing the drag selection box
         private bool mouseDown = false;
@@ -91,10 +90,9 @@ namespace MapEditor
             EditorManager.Instance.OnResize += OnResize;
             SelectionHandle.Instance.OnHandleFinish += SaveSelectedBBs;
 
-            //Store the camera transformation matrices
-            worldToViewMatrix = mainCamera.worldToCameraMatrix;
-            projectionMatrix = mainCamera.projectionMatrix;
-            //Save the bounding box of all selectable objects
+            //Store the matrix that transforms world space coordinates to viewport space
+            worldToViewportMatrix = mainCamera.projectionMatrix * mainCamera.worldToCameraMatrix;
+            //Save the bounding box of all on-screen selectable objects
             SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
         }
         #endregion
@@ -123,11 +121,10 @@ namespace MapEditor
             //When the mode changes from fly to edit mode, save the bounding boxes of on-screen objects
             if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
             {
-                //Store the camera transformation matrices
-                worldToViewMatrix = mainCamera.worldToCameraMatrix;
-                projectionMatrix = mainCamera.projectionMatrix;
+                //Store the matrix that transforms world space coordinates to viewport space
+                worldToViewportMatrix = mainCamera.projectionMatrix * mainCamera.worldToCameraMatrix;
 
-                //Save the bounding box of all selectable objects
+                //Save the bounding box of all on-screen selectable objects
                 SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
             }
             //If the new mode is fly mode, then clear the vertices
@@ -628,7 +625,7 @@ namespace MapEditor
             Matrix4x4 viewToScreenMatrix = Matrix4x4.TRS(new Vector3(screenWidth, screenHeight, 0f), Quaternion.identity, new Vector3(screenWidth, screenHeight, 1f));
             
             //Calculate and return the matrix that converts total points to screen space
-            return viewToScreenMatrix * projectionMatrix * worldToViewMatrix * localToWorldMatrix;
+            return viewToScreenMatrix * worldToViewportMatrix * localToWorldMatrix;
         }
         #endregion
 
