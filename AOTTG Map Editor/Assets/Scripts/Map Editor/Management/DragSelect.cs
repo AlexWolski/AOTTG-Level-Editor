@@ -90,6 +90,12 @@ namespace MapEditor
             EditorManager.Instance.OnChangeMode += OnModeChange;
             EditorManager.Instance.OnResize += OnResize;
             SelectionHandle.Instance.OnHandleFinish += SaveSelectedBBs;
+
+            //Store the camera transformation matrices
+            worldToViewMatrix = mainCamera.worldToCameraMatrix;
+            projectionMatrix = mainCamera.projectionMatrix;
+            //Save the bounding box of all selectable objects
+            SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
         }
         #endregion
 
