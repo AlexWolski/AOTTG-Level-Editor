@@ -265,15 +265,12 @@ namespace MapEditor
         //Add the given objects back into the game
         private void UndeleteObjects(GameObject[] deletedObjects)
         {
-            //Make all the deleted objects selectable
-            foreach(GameObject gameObject in deletedObjects)
-                ObjectSelection.Instance.AddSelectable(gameObject);
-
             //Activate the object, move it back into the level, and select it
             foreach (GameObject mapObject in deletedObjects)
             {
                 mapObject.SetActive(true);
                 mapObject.transform.parent = Instance.mapRoot.transform;
+                ObjectSelection.Instance.AddSelectable(mapObject);
                 ObjectSelection.Instance.SelectObject(mapObject);
             }
 
