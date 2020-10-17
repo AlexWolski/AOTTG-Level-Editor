@@ -26,6 +26,13 @@ namespace MapEditor
 
         private void OnModeChange(EditorMode prevMode, EditorMode newMode)
         {
+            //If the new mode is UI mode, hide the current mode info.
+            if (newMode == EditorMode.UI)
+                flyEditMode.SetActive(false);
+            //If the previous mode was UI mode, show the current mode info again.
+            else if (prevMode == EditorMode.UI)
+                flyEditMode.SetActive(true);
+
             //Set the mode text to display the current mode
             currentModeText.text = newMode.ToString();
         }
