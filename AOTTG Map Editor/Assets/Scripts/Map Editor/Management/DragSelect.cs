@@ -33,7 +33,7 @@ namespace MapEditor
         //Variables for managing the drag selection box
         private bool mouseDown = false;
         private bool dragging = false;
-        private Vector2 mousePosition;
+        private Vector2 mousePosition = Vector2.zero;
         private Vector2 dragStartPosition;
         //The mode that the drag selection box is currently in
         DragSelectMode selectMode;
@@ -90,8 +90,6 @@ namespace MapEditor
             EditorManager.Instance.OnResize += OnResize;
             SelectionHandle.Instance.OnHandleFinish += SaveSelectedBBs;
 
-            //Store the matrix that transforms world space coordinates to viewport space
-            worldToViewportMatrix = mainCamera.projectionMatrix * mainCamera.worldToCameraMatrix;
             //Save the bounding box of all on-screen selectable objects
             SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
         }
@@ -111,7 +109,7 @@ namespace MapEditor
         //Clear the current bounding boxes and create new ones for the imported objects
         private void OnImport(HashSet<GameObject> mapObjects)
         {
-            ClearObjectVerticies();
+            ClearBoundingBoxes();
             SaveBoundingBoxes(mapObjects);
         }
 
@@ -122,14 +120,14 @@ namespace MapEditor
             if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
             {
                 //Store the matrix that transforms world space coordinates to viewport space
-                worldToViewportMatrix = mainCamera.projectionMatrix * mainCamera.worldToCameraMatrix;
+                CalculateWorldToViewportMatrix();
 
                 //Save the bounding box of all on-screen selectable objects
                 SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
             }
-            //If the new mode is fly mode, then clear the vertices
+            //If the new mode is fly mode, then clear the bounding boxes
             else if (newMode == EditorMode.Fly)
-                ClearObjectVerticies();
+                ClearBoundingBoxes();
         }
 
         //When the screen is resized, calculate the new screen-to-canvas ratio and bounding boxes
@@ -249,6 +247,7 @@ namespace MapEditor
                 if (Input.GetMouseButtonDown(0) && !EventSystem.current.IsPointerOverGameObject(-1))
                 {
                     dragStartPosition = Input.mousePosition;
+                    mousePosition = Input.mousePosition;
                     mouseDown = true;
                 }
                 //Disable the drag selection box when the mouse is released
@@ -297,7 +296,7 @@ namespace MapEditor
         //Change how the drag box selects objects based on what keys are held
         private void UpdateSelectMode()
         {
-            //Get which selection modifier keys are held down
+            //Get which selection modifier keys are held down``
             bool shiftHeld = Input.GetKey(KeyCode.LeftShift);
             bool controlHeld = Input.GetKey(KeyCode.LeftControl);
 
@@ -306,11 +305,8 @@ namespace MapEditor
                 selectMode = DragSelectMode.replace;
             else if (shiftHeld)
                 selectMode = DragSelectMode.additive;
-            else if (controlHeld && selectMode != DragSelectMode.subtractive)
-            {
-
+            else if (controlHeld)
                 selectMode = DragSelectMode.subtractive;
-            }
         }
 
         //Check for any objects that were deselected or selected
@@ -487,38 +483,27 @@ namespace MapEditor
         //Save the screen space bounding of the given map object
         private void SaveBoundingBox(GameObject mapObject)
         {
-            bool isVisible = false;
-
             //Loop through all renderers attached to the object and check if they are visible
             foreach (Renderer renderer in mapObject.GetComponentsInChildren<Renderer>())
-            {
-                if (renderer.isVisible)
-                {
-                    isVisible = true;
-                    break;
-                }
-            }
-
-            //Check if the object is visible to the camera
-            if (isVisible)
-            {
-                //Get the vertices of the object in screen space
-                Tuple<Vector2, Vector2> boundingBox = Get2DBoundingBox(mapObject);
-
-                //If the bounding box is off-screen, skip the object
-                if (boundingBox == null)
+                if (!renderer.isVisible)
                     return;
 
-                //If the table contains this item, update the value
-                if (boundingBoxTable.ContainsKey(mapObject))
-                    boundingBoxTable[mapObject] = boundingBox;
-                //Otherwise create a new entry
-                else
-                    boundingBoxTable.Add(mapObject, boundingBox);
-            }
+            //Get the vertices of the object in screen space
+            Tuple<Vector2, Vector2> boundingBox = Get2DBoundingBox(mapObject);
+
+            //If the bounding box is off-screen, skip the object
+            if (boundingBox == null)
+                return;
+
+            //If the table contains this item, update the value
+            if (boundingBoxTable.ContainsKey(mapObject))
+                boundingBoxTable[mapObject] = boundingBox;
+            //Otherwise create a new entry
+            else
+                boundingBoxTable.Add(mapObject, boundingBox);
         }
 
-        //Removes the bounding boxes for the given list of map objects 
+        //Removes the bounding boxes from the given list of map objects 
         private void RemoveBoundingBoxes(HashSet<GameObject> deletedObjects)
         {
             //Remove all of the bounding boxes for the objects that were deleted
@@ -614,6 +599,12 @@ namespace MapEditor
             return new Tuple<Vector2, Vector2>(new Vector2(minX, maxY), new Vector2(maxX, minY));
         }
 
+        //Calculate and store the matrix that transforms world space coordinates to viewport space
+        private void CalculateWorldToViewportMatrix()
+        {
+            worldToViewportMatrix = mainCamera.projectionMatrix * mainCamera.worldToCameraMatrix;
+        }
+
         //Create a transformation from the local space of the given game object to screen space
         private Matrix4x4 CalculateLocalToScreenMatrix(GameObject mapObject)
         {
@@ -633,7 +624,7 @@ namespace MapEditor
         #endregion
 
         #region Public Methods
-        private void ClearObjectVerticies()
+        private void ClearBoundingBoxes()
         {
             boundingBoxTable = new Dictionary<GameObject, Tuple<Vector2, Vector2>>();
         }
