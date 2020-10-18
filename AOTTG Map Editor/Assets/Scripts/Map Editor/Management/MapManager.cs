@@ -538,10 +538,18 @@ namespace MapEditor
             //Set the type of the mapObject
             mapObjectScript.Type = type;
 
-            //Use the parsedObject array to set the reset of the properties of the object
+            //Use the parsedObject array to set the rest of the properties of the object
             mapObjectScript.LoadProperties(parsedScript);
             //Add the object to the hierarchy and store its script
             AddObjectToMap(newObject, mapObjectScript);
+
+            //Attempt to cast the map object to a textured object
+            TexturedObject texturedObject = mapObjectScript as TexturedObject;
+
+            //If the object is a textured object with the default texture, outline only the texture instead of the entire mesh
+            if (texturedObject != null && texturedObject.Material == "default")
+                foreach (OutlineEffect.Outline outlineScript in newObject.GetComponentsInChildren<OutlineEffect.Outline>())
+                    outlineScript.alphaIsTransparency = true;
 
             //Return the new object 
             return newObject;
