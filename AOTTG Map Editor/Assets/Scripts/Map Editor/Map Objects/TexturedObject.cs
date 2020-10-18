@@ -229,8 +229,11 @@ namespace MapEditor
             else
                 Material = properties[2];
 
+            //Parse the length, width, and hight
             Scale = ParseVector3(properties[3], properties[4], properties[5]);
-            ColorEnabled = (Convert.ToInt32(properties[6]) != 0);
+            //The 'color enabled' field must be the exact string '0' for the color to be disabled
+            //Any other value, numeric or otherwise, will be interpreted as the color is enabled
+            ColorEnabled = (properties[3] != "0");
 
             //If the color is enabled, parse the color and set it
             if (ColorEnabled)
