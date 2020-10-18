@@ -306,8 +306,11 @@ namespace MapEditor
                 selectMode = DragSelectMode.replace;
             else if (shiftHeld)
                 selectMode = DragSelectMode.additive;
-            else if (controlHeld)
+            else if (controlHeld && selectMode != DragSelectMode.subtractive)
+            {
+
                 selectMode = DragSelectMode.subtractive;
+            }
         }
 
         //Check for any objects that were deselected or selected
@@ -393,8 +396,8 @@ namespace MapEditor
                         break;
 
                     case DragSelectMode.subtractive:
-                        //Deselect the object if it is a part of the original selection and is in the selection box
-                        if (originalSeleciton.Contains(mapObject) && inDragBox)
+                        //Deselect the object if it's in the selection box
+                        if (inDragBox)
                             ObjectSelection.Instance.DeselectObject(mapObject);
 
                         break;
