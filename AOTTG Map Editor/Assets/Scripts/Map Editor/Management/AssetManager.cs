@@ -42,14 +42,8 @@ namespace MapEditor
 
             //Go through the children of the object and add the outline script if it has a mesh
             foreach (Transform child in newObject.transform)
-            {
-                //Only select objects with a renderer that aren't particle systems
-                if (child.GetComponent<ParticleSystem>() == null && child.GetComponent<Renderer>() != null)
-                {
-                    child.gameObject.AddComponent<Outline>();
-                    child.gameObject.tag = "Selectable";
-                }
-            }
+                if (child.GetComponent<ParticleSystem>() == null)
+                    AddObjectToMap(child.gameObject);
         }
 
         //Load the given vanilla material

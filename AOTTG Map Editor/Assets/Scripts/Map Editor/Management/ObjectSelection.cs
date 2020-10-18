@@ -691,30 +691,25 @@ namespace MapEditor
         //Add a green outline around a GameObject
         private void AddOutline(GameObject objectToAddOutline)
         {
-            //If parent has an outline script, enable it
+            //If object has an outline script, enable it
             if (objectToAddOutline.tag == "Selectable")
                 objectToAddOutline.GetComponent<Outline>().enabled = true;
 
             //Go through the children of the object and enable the outline if it is a selectable object
             foreach (Transform child in objectToAddOutline.transform)
-                if (child.gameObject.tag == "Selectable")
-                    child.GetComponent<Outline>().enabled = true;
+                AddOutline(child.gameObject);
         }
 
         //Remove the green outline shader
         private void RemoveOutline(GameObject objectToRemoveOutline)
         {
-            //Get the outline script of the parent object
-            Outline outlineScript = objectToRemoveOutline.GetComponent<Outline>();
-
-            //If parent has an outline script, disable it
-            if (outlineScript != null)
-                outlineScript.enabled = false;
+            //If object has an outline script, disable it
+            if (objectToRemoveOutline.tag == "Selectable")
+                objectToRemoveOutline.GetComponent<Outline>().enabled = false;
 
             //Go through the children of the object and disable the outline if it is a selectable object
             foreach (Transform child in objectToRemoveOutline.transform)
-                if (child.gameObject.tag == "Selectable")
-                    child.GetComponent<Outline>().enabled = false;
+                RemoveOutline(child.gameObject);
         }
         #endregion
     }
