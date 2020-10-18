@@ -21,10 +21,14 @@ namespace MapEditor
         private HashSet<GameObject> selectableObjects = new HashSet<GameObject>();
         //A hash set containing the objects currently selected
         private HashSet<GameObject> selectedObjects = new HashSet<GameObject>();
+
         //The average point of all the selected objects
-        private Vector3 selectionAverage;
+        private Vector3 selectionAverage = Vector3.zero;
         //The sum of the points of all the selected objects for calculating the average
-        private Vector3 positionSum;
+        private Vector3 positionSum = Vector3.zero;
+
+        //The radius of the sphere encompassing the bounding boxes of all selected objects
+        float selectionBoundingRadius = 0.0f;
         #endregion
           
         #region Instantiation
@@ -97,7 +101,7 @@ namespace MapEditor
 
             public SelectAllCommand()
             {
-                //Find the unselected objects by excluding the selected objects from a set of all objects
+                //Find the unselected objects by excluding the selected objects from the set of all objects
                 unselectedObjects = Instance.selectableObjects.ExcludeToArray(Instance.selectedObjects);
             }
 
@@ -251,11 +255,17 @@ namespace MapEditor
             public override void ExecuteEdit()
             {
                 TransformTools.ScaleSelection(Instance.selectedObjects, Instance.selectionAverage, scaleUpFactor, false);
+
+                //Recalculate the bounding sphere
+                Instance.UpdateBoundingSphereAll();
             }
 
             public override void RevertEdit()
             {
                 TransformTools.ScaleSelection(Instance.selectedObjects, Instance.selectionAverage, scaleDownFactor, false);
+
+                //Recalculate the bounding sphere
+                Instance.UpdateBoundingSphereAll();
             }
         }
         #endregion
@@ -496,6 +506,50 @@ namespace MapEditor
         }
         #endregion
 
+        #region Bounding Sphere Methods
+        //Update the bounding sphere based on the given object
+        private void UpdateBoundingSphere(GameObject mapObject)
+        {
+            //Attempt to get the renderer of the target object
+            Renderer renderer = mapObject.GetComponent<Renderer>();
+
+            //Check if the object has a renderer
+            if (renderer != null)
+            {
+                //Find the distance from the object to the selection average
+                float dist = Vector3.Distance(mapObject.transform.position, selectionAverage);
+                //Add the object's bounding box to find the radius of the
+                //bounding sphere with the selection average in the center
+                float objectBoundingRadius = dist + renderer.bounds.extents.magnitude;
+
+                //Update the selection bounding radius if the object bounding radius is larger
+                if (objectBoundingRadius > selectionBoundingRadius)
+                    selectionBoundingRadius = objectBoundingRadius;
+            }
+
+            //Go through the children of the object and check their bounding radii
+            foreach (Transform child in mapObject.transform)
+                UpdateBoundingSphere(child.gameObject);
+        }
+
+        //Calculate the bounding sphere of all selected objects
+        private void UpdateBoundingSphereAll()
+        {
+            //Reset the selection bounding radius
+            ResetBoundingSphere();
+
+            //Check the bounding spheres of each object in the selection
+            foreach (GameObject mapObject in selectedObjects)
+                UpdateBoundingSphere(mapObject);
+        }
+
+        //Reset the bounding sphere
+        private void ResetBoundingSphere()
+        {
+            selectionBoundingRadius = 0.0f;
+        }
+        #endregion
+
         #region Select Objects Methods
         //Return the parent of the given object. If there is no parent, return the given object
         private GameObject GetParent(GameObject childObject)
@@ -541,6 +595,8 @@ namespace MapEditor
 
             //Reset the selection average
             RemoveAverageAll();
+            //Reset the selection bounding sphere
+            ResetBoundingSphere();
 
             //Return a reference to the selected objects list
             return originalSelection;
@@ -612,7 +668,7 @@ namespace MapEditor
             //Deselect all objects by deleting the selected objects list
             selectedObjects.Clear();
 
-            //Update the position of the tool handle
+            //Reset the position of the tool handle
             RemoveAverageAll();
             //Reset the rotation on the tool handle
             ResetToolHandleRotation();
