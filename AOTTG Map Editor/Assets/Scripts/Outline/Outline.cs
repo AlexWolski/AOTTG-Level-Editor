@@ -33,8 +33,9 @@ namespace OutlineEffect
         public SkinnedMeshRenderer SkinnedMeshRenderer { get; private set; }
         public MeshFilter MeshFilter { get; private set; }
 
-        public int color;
-        public bool eraseRenderer;
+        [SerializeField] public int color = 0;
+        [SerializeField] public bool alphaIsTransparency = false;
+        [SerializeField] public bool eraseRenderer = false;
 
         private void Awake()
         {

@@ -6,7 +6,7 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  to use, copy, modify, merge, publish, distribute, sub license, and/or sell
 //  copies of the Software, and to permit persons to whom the Software is
 //  furnished to do so, subject to the following conditions:
 //  
@@ -28,6 +28,7 @@ Shader "Hidden/OutlineBufferEffect" {
 		[PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
 		_Color ("Tint", Color) = (1,1,1,1)
 		[MaterialToggle] PixelSnap ("Pixel snap", Float) = 0
+		_Alpha ("Alpha Enabled", Float) = 0
 	}
 
 	SubShader
@@ -55,6 +56,7 @@ Shader "Hidden/OutlineBufferEffect" {
 		sampler2D _MainTex;
 		fixed4 _Color;
 		float _OutlineAlphaCutoff;
+		float _Alpha;
 
 		struct Input
 		{
@@ -75,16 +77,27 @@ Shader "Hidden/OutlineBufferEffect" {
 		void surf(Input IN, inout SurfaceOutput o)
 		{
 			fixed4 c = tex2D(_MainTex, IN.uv_MainTex);// * IN.color;
-			if (c.a < _OutlineAlphaCutoff) discard;
+			
+			if (_Alpha == 1)
+			{
+				if (c.a < _OutlineAlphaCutoff)
+					discard;
 
-			float alpha = c.a * 99999999;
+				float alpha = c.a * 99999999;
 
-			o.Albedo = _Color * alpha;
-			o.Alpha = alpha;
+				o.Albedo = _Color * alpha;
+				o.Alpha = alpha;
+			}
+			else if (_Alpha == 0)
+			{
+				o.Albedo = _Color;
+				o.Alpha = 1.0f;
+			}
+
 			o.Emission = o.Albedo;
 		}
 
-		ENDCG		
+		ENDCG
 	}
 
 	Fallback "Transparent/VertexLit"

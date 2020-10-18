@@ -6,7 +6,7 @@
 //  Permission is hereby granted, free of charge, to any person obtaining a copy
 //  of this software and associated documentation files (the "Software"), to deal
 //  in the Software without restriction, including without limitation the rights
-//  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+//  to use, copy, modify, merge, publish, distribute, sub license, and/or sell
 //  copies of the Software, and to permit persons to whom the Software is
 //  furnished to do so, subject to the following conditions:
 //
@@ -68,9 +68,13 @@ namespace OutlineEffect
         [HideInInspector]
         public Camera outlineCamera;
         Material outline1Material;
+        Material outline1MaterialAlpha;
         Material outline2Material;
+        Material outline2MaterialAlpha;
         Material outline3Material;
+        Material outline3MaterialAlpha;
         Material outline4Material;
+        Material outline4MaterialAlpha;
         Material outlineEraseMaterial;
 
         [SerializeField] Shader outlineShader;
@@ -81,24 +85,47 @@ namespace OutlineEffect
 
         CommandBuffer commandBuffer;
 
-        Material GetMaterialFromID(int ID)
+        Material GetMaterialFromID(Outline outline)
         {
-            if (ID == 0)
-                return outline1Material;
-            else if (ID == 1)
-                return outline2Material;
-            else if (ID == 2)
-                return outline3Material;
-            else if (ID == 3)
-                return outline4Material;
+            if (outline.color == 0)
+            {
+                if (outline.alphaIsTransparency)
+                    return outline1MaterialAlpha;
+                else
+                    return outline1Material;
+            }
+            else if (outline.color == 1)
+            {
+                if (outline.alphaIsTransparency)
+                    return outline2MaterialAlpha;
+                else
+                    return outline2Material;
+            }
+            else if (outline.color == 2)
+            {
+                if (outline.alphaIsTransparency)
+                    return outline3MaterialAlpha;
+                else
+                    return outline3Material;
+            }
+            else if (outline.color == 3)
+            {
+                if (outline.alphaIsTransparency)
+                    return outline4MaterialAlpha;
+                else
+                    return outline4Material;
+            }
             else
                 return outline1Material;
         }
         List<Material> materialBuffer = new List<Material>();
-        Material CreateMaterial(Color emissionColor)
+        Material CreateMaterial(Color emissionColor, bool alpha)
         {
             Material m = new Material(outlineBufferShader);
             m.SetColor("_Color", emissionColor);
+
+            float alphaf = (alpha) ? 1.0f : 0.0f;
+            m.SetFloat("_Alpha", alphaf);
             m.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
             m.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
             m.SetInt("_ZWrite", 0);
@@ -216,7 +243,7 @@ namespace OutlineEffect
                                 {
                                     if (outline.eraseRenderer && g.color == outlineEraseMaterial.color)
                                         m = g;
-                                    else if (g.color == GetMaterialFromID(outline.color).color)
+                                    else if (g.color == GetMaterialFromID(outline).color)
                                         m = g;
                                 }
                             }
@@ -226,7 +253,7 @@ namespace OutlineEffect
                                 if (outline.eraseRenderer)
                                     m = new Material(outlineEraseMaterial);
                                 else
-                                    m = new Material(GetMaterialFromID(outline.color));
+                                    m = new Material(GetMaterialFromID(outline));
                                 m.mainTexture = outline.SharedMaterials[v].mainTexture;
                                 materialBuffer.Add(m);
                             }
@@ -236,7 +263,7 @@ namespace OutlineEffect
                             if (outline.eraseRenderer)
                                 m = outlineEraseMaterial;
                             else
-                                m = GetMaterialFromID(outline.color);
+                                m = GetMaterialFromID(outline);
                         }
 
                         if (backfaceCulling)
@@ -317,15 +344,23 @@ namespace OutlineEffect
                 UpdateMaterialsPublicProperties();
             }
             if (outlineEraseMaterial == null)
-                outlineEraseMaterial = CreateMaterial(new Color(0, 0, 0, 0));
+                outlineEraseMaterial = CreateMaterial(new Color(0, 0, 0, 0), false);
             if (outline1Material == null)
-                outline1Material = CreateMaterial(new Color(1, 0, 0, 0));
+                outline1Material = CreateMaterial(new Color(1, 0, 0, 0), false);
+            if (outline1MaterialAlpha == null)
+                outline1MaterialAlpha = CreateMaterial(new Color(1, 0, 0, 0), true);
             if (outline2Material == null)
-                outline2Material = CreateMaterial(new Color(0, 1, 0, 0));
+                outline2Material = CreateMaterial(new Color(0, 1, 0, 0), false);
+            if (outline2MaterialAlpha == null)
+                outline2MaterialAlpha = CreateMaterial(new Color(0, 1, 0, 0), true);
             if (outline3Material == null)
-                outline3Material = CreateMaterial(new Color(0, 0, 1, 0));
+                outline3Material = CreateMaterial(new Color(0, 0, 1, 0), false);
+            if (outline3MaterialAlpha == null)
+                outline3MaterialAlpha = CreateMaterial(new Color(0, 0, 1, 0), true);
             if (outline4Material == null)
-                outline4Material = CreateMaterial(new Color(0, 0, 0, 1));
+                outline4Material = CreateMaterial(new Color(0, 0, 0, 1), false);
+            if (outline4MaterialAlpha == null)
+                outline4MaterialAlpha = CreateMaterial(new Color(0, 0, 0, 1), true);
         }
 
         private void DestroyMaterials()
