@@ -7,21 +7,28 @@ namespace MapEditor
     {
         //The different groups that are displayed based on the current mode
         [SerializeField] private GameObject flyEditMode;
-        [SerializeField] private GameObject commandMode;
-        [SerializeField] private GameObject dragMode;
 
-        //The game object containing the text for the current mode
+        //The game object and text component displaying the current mode
         [SerializeField] private GameObject currentMode;
-        //The text object for the current mode
         private Text currentModeText;
+        //The game object and text component displaying the object count
+        [SerializeField] private GameObject objectCount;
+        private Text objectCountText;
 
         private void Start()
         {
             //Find and store the needed component references
             currentModeText = currentMode.GetComponent<Text>();
+            objectCountText = objectCount.GetComponent<Text>();
 
             //Listen for when the editor mode is changed
             EditorManager.Instance.OnChangeMode += OnModeChange;
+        }
+
+        private void Update()
+        {
+            //Update the object count
+            objectCountText.text = "Objects: " + ObjectSelection.Instance.GetSelectionCount() + "/" + ObjectSelection.Instance.GetSelectableCount();
         }
 
         private void OnModeChange(EditorMode prevMode, EditorMode newMode)

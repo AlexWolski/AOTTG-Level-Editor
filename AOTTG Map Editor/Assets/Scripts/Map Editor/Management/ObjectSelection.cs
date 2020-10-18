@@ -661,6 +661,11 @@ namespace MapEditor
         {
             return Instance.selectableObjects;
         }
+
+        public int GetSelectableCount()
+        {
+            return Instance.selectableObjects.Count;
+        }
         #endregion
 
         #region Tool Methods
