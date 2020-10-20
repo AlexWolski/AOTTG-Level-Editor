@@ -1,7 +1,7 @@
-﻿using UnityEngine;
-using UnityEngine.EventSystems;
+﻿using OutlineEffect;
 using System.Collections.Generic;
-using OutlineEffect;
+using UnityEngine;
+using UnityEngine.EventSystems;
 
 namespace MapEditor
 {
@@ -27,10 +27,17 @@ namespace MapEditor
         //The sum of the points of all the selected objects for calculating the average
         private Vector3 positionSum = Vector3.zero;
 
-        //The radius of the sphere encompassing the bounding boxes of all selected objects
-        float selectionBoundingRadius = 0.0f;
+        //The bounding box encapsulating all of the selected objects
+        Bounds selectionBounds;
         #endregion
-          
+
+        #region Properties
+        public Bounds SelectionBounds
+        {
+            get { return selectionBounds; }
+        }
+        #endregion
+
         #region Instantiation
         void Awake()
         {
@@ -65,13 +72,13 @@ namespace MapEditor
             public override void ExecuteEdit()
             {
                 Instance.SelectObject(selectedObject);
-                Instance.UpdateBoundingSphere(selectedObject);
+                Instance.EncapsulateSelectionBounds(selectedObject);
             }
 
             public override void RevertEdit()
             {
                 Instance.DeselectObject(selectedObject);
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
         }
 
@@ -92,7 +99,7 @@ namespace MapEditor
             {
                 Instance.DeselectAll();
                 Instance.SelectObject(selectedObject);
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
 
             //Deselect the new object and re-select the objects that were previously selected
@@ -103,7 +110,7 @@ namespace MapEditor
                 foreach (GameObject mapObject in previousSelection)
                     Instance.SelectObject(mapObject);
 
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
         }
 
@@ -124,7 +131,7 @@ namespace MapEditor
                 foreach (GameObject mapObject in unselectedObjects)
                     Instance.SelectObject(mapObject);
 
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
 
             //Deselect the objects that weren't previously selected
@@ -133,7 +140,7 @@ namespace MapEditor
                 foreach (GameObject mapObject in unselectedObjects)
                     Instance.DeselectObject(mapObject);
 
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
         }
 
@@ -149,13 +156,13 @@ namespace MapEditor
             public override void ExecuteEdit()
             {
                 Instance.DeselectObject(deselectedObject);
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
 
             public override void RevertEdit()
             {
                 Instance.SelectObject(deselectedObject);
-                Instance.UpdateBoundingSphere(deselectedObject);
+                Instance.EncapsulateSelectionBounds(deselectedObject);
             }
         }
 
@@ -173,7 +180,7 @@ namespace MapEditor
             public override void ExecuteEdit()
             {
                 Instance.DeselectAll();
-                Instance.ResetBoundingSphere();
+                Instance.ResetSelecitonBounds();
             }
 
             //Select all of the previously selected objects
@@ -182,7 +189,7 @@ namespace MapEditor
                 foreach (GameObject mapObject in previousSelection)
                     Instance.SelectObject(mapObject);
 
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
         }
 
@@ -191,13 +198,13 @@ namespace MapEditor
             public override void ExecuteEdit()
             {
                 Instance.InvertSelection();
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
 
             public override void RevertEdit()
             {
                 Instance.InvertSelection();
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
         }
         #endregion
@@ -295,7 +302,7 @@ namespace MapEditor
                 TransformTools.ScaleSelection(Instance.selectedObjects, Instance.selectionAverage, scaleUpFactor, false);
 
                 //Recalculate the bounding sphere
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
 
             public override void RevertEdit()
@@ -303,7 +310,7 @@ namespace MapEditor
                 TransformTools.ScaleSelection(Instance.selectedObjects, Instance.selectionAverage, scaleDownFactor, false);
 
                 //Recalculate the bounding sphere
-                Instance.UpdateBoundingSphereAll();
+                Instance.UpdateSelectionBounds();
             }
         }
         #endregion
@@ -311,6 +318,8 @@ namespace MapEditor
         #region Update Selection Methods
         private void Update()
         {
+            Debug.Log(selectionBounds.center + "\t" + selectionBounds.size.magnitude);
+
             //Check for an object selection if in edit mode and nothing is being dragged
             if (EditorManager.Instance.CurrentMode == EditorMode.Edit &&
                 EditorManager.Instance.ShortcutsEnabled &&
@@ -443,7 +452,7 @@ namespace MapEditor
             if (transformCommand != null)
                 EditHistory.Instance.AddCommand(transformCommand);
 
-            Instance.UpdateBoundingSphereAll();
+            Instance.UpdateSelectionBounds();
         }
 
         //Update the position, rotation, or scale of the object selections based on the tool handle
@@ -481,7 +490,7 @@ namespace MapEditor
         //Update the bounding sphere when the drag select is released
         private void EndDrag()
         {
-            UpdateBoundingSphereAll();
+            UpdateSelectionBounds();
         }
         #endregion
 
@@ -553,46 +562,41 @@ namespace MapEditor
         #endregion
 
         #region Bounding Sphere Methods
-        //Update the bounding sphere based on the given object
-        private void UpdateBoundingSphere(GameObject mapObject)
+        //Encapsulate the bounds of the given object into the selection bounds
+        private void EncapsulateSelectionBounds(GameObject mapObject)
         {
             //Attempt to get the renderer of the target object
             Renderer renderer = mapObject.GetComponent<Renderer>();
 
-            //Check if the object has a renderer
+            //If the object has a renderer, update the selection bounds
             if (renderer != null)
             {
-                //Find the distance from the object to the selection average
-                float dist = Vector3.Distance(mapObject.transform.position, selectionAverage);
-                //Add the object's bounding box to find the radius of the
-                //bounding sphere with the selection average in the center
-                float objectBoundingRadius = dist + renderer.bounds.extents.magnitude;
-
-                //Update the selection bounding radius if the object bounding radius is larger
-                if (objectBoundingRadius > selectionBoundingRadius)
-                    selectionBoundingRadius = objectBoundingRadius;
+                if (selectionBounds.extents == Vector3.zero)
+                    selectionBounds = renderer.bounds;
+                else
+                    selectionBounds.Encapsulate(renderer.bounds);
             }
 
             //Go through the children of the object and check their bounding radii
             foreach (Transform child in mapObject.transform)
-                UpdateBoundingSphere(child.gameObject);
+                EncapsulateSelectionBounds(child.gameObject);
         }
 
         //Calculate the bounding sphere of all selected objects
-        private void UpdateBoundingSphereAll()
+        private void UpdateSelectionBounds()
         {
             //Reset the selection bounding radius
-            ResetBoundingSphere();
+            ResetSelecitonBounds();
 
             //Check the bounding spheres of each object in the selection
             foreach (GameObject mapObject in selectedObjects)
-                UpdateBoundingSphere(mapObject);
+                EncapsulateSelectionBounds(mapObject);
         }
 
-        //Reset the bounding sphere
-        private void ResetBoundingSphere()
+        //Reset the selection bounds
+        private void ResetSelecitonBounds()
         {
-            selectionBoundingRadius = 0.0f;
+            selectionBounds.SetMinMax(Vector3.zero, Vector3.zero);
         }
         #endregion
 
@@ -642,7 +646,7 @@ namespace MapEditor
             //Reset the selection average
             RemoveAverageAll();
             //Reset the selection bounding sphere
-            ResetBoundingSphere();
+            ResetSelecitonBounds();
 
             //Return a reference to the selected objects list
             return originalSelection;
