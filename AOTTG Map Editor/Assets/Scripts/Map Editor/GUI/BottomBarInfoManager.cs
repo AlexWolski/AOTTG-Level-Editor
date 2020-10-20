@@ -5,11 +5,10 @@ namespace MapEditor
 {
     public class BottomBarInfoManager : MonoBehaviour
     {
-        //The info displayed when in fly or edit mode
-        [SerializeField] private GameObject flyEditMode;
-
         //Groups that show info for the current state
+        [SerializeField] private GameObject flyEditMode;
         [SerializeField] private GameObject movementKeys;
+        [SerializeField] private GameObject editorKeys;
 
         //The game object and text component displaying the current mode
         [SerializeField] private GameObject currentMode;
@@ -36,15 +35,34 @@ namespace MapEditor
 
         private void OnModeChange(EditorMode prevMode, EditorMode newMode)
         {
-            //If the new mode is UI mode, hide the current mode info.
-            if (newMode == EditorMode.UI)
-                flyEditMode.SetActive(false);
-            //If new mode is Fly or Edit, show the current mode info again.
-            else if (prevMode == EditorMode.UI)
-                flyEditMode.SetActive(true);
-
-            //Toggle the movement keys based on if the current mode is fly mode
+            //Hide the fly/edit mode info when in UI mode
+            flyEditMode.SetActive(newMode != EditorMode.UI);
+            //Show the movement keys when in fly mode
             movementKeys.SetActive(newMode == EditorMode.Fly);
+
+            if (newMode == EditorMode.Edit)
+            {
+                //If a drag selection is in progress, show the drag select modifiers
+                if (DragSelect.Instance.GetDragging())
+                {
+
+                }
+                //If control is held and nothing is being dragged, show the commands list
+                else if(Input.GetKey(KeyCode.LeftControl))
+                {
+
+                }
+                //Otherwise show the general editor keys
+                else
+                {
+                    editorKeys.SetActive(true);
+                }
+            }
+            //If the editor is not in edit mode, hide the editor info
+            else
+            {
+                editorKeys.SetActive(false);
+            }
 
             //Set the mode text to display the current mode
             currentModeText.text = newMode.ToString();
