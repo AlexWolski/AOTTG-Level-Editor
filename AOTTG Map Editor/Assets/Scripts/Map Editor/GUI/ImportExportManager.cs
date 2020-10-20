@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 namespace MapEditor
 {
@@ -25,11 +25,11 @@ namespace MapEditor
         //Displays how many map objects have been imported
         [SerializeField] private GameObject progressText;
         //The text component attached to the progress text object
-        private Text progressTextComponent;
+        private TextMeshProUGUI progressTextComponent;
         //Displays how many map objects are in the script
         [SerializeField] private GameObject totalText;
         //The text component attached to the total text object
-        private Text totalTextComponent;
+        private TextMeshProUGUI totalTextComponent;
 
         //The export pop-up
         [SerializeField] private GameObject exportPopup;
@@ -44,8 +44,8 @@ namespace MapEditor
             canvasGroup = canvas.GetComponent<CanvasGroup>();
             importTextAreaComponent = importTextArea.GetComponent<TextArea>();
             exportTextAreaComponent = exportTextArea.GetComponent<TextArea>();
-            progressTextComponent = progressText.GetComponent<Text>();
-            totalTextComponent = totalText.GetComponent<Text>();
+            progressTextComponent = progressText.GetComponent<TextMeshProUGUI>();
+            totalTextComponent = totalText.GetComponent<TextMeshProUGUI>();
         }
 
         //Hide or show the import pop-up screen

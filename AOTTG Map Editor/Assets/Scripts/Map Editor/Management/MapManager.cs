@@ -3,7 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 namespace MapEditor
 {
@@ -330,7 +330,7 @@ namespace MapEditor
 
         //Parse the given map script and load the map
         //Accepts additional parameters for outputting loading progress, total amount of map objects, and a callback function
-        public IEnumerator LoadMap(string mapScript, Text progressText = null, Text totalText = null, Action callback = null)
+        public IEnumerator LoadMap(string mapScript, TextMeshProUGUI progressText = null, TextMeshProUGUI totalText = null, Action callback = null)
         {
             //Used to keep track of how much time has elapsed between frames
             System.Diagnostics.Stopwatch stopWatch = new System.Diagnostics.Stopwatch();

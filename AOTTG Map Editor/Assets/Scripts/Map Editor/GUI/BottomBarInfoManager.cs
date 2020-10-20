@@ -1,5 +1,5 @@
 ﻿using UnityEngine;
-using UnityEngine.UI;
+using TMPro;
 
 namespace MapEditor
 {
@@ -13,16 +13,16 @@ namespace MapEditor
 
         //The game object and text component displaying the current mode
         [SerializeField] private GameObject currentMode;
-        private Text currentModeText;
+        private TextMeshProUGUI currentModeText;
         //The game object and text component displaying the object count
         [SerializeField] private GameObject objectCount;
-        private Text objectCountText;
+        private TextMeshProUGUI objectCountText;
 
         private void Start()
         {
             //Find and store the needed component references
-            currentModeText = currentMode.GetComponent<Text>();
-            objectCountText = objectCount.GetComponent<Text>();
+            currentModeText = currentMode.GetComponent<TextMeshProUGUI>();
+            objectCountText = objectCount.GetComponent<TextMeshProUGUI>();
 
             //Listen for when the editor mode is changed
             EditorManager.Instance.OnChangeMode += OnModeChange;
