@@ -36,7 +36,8 @@ namespace MapEditor
         private void Update()
         {
             //If the 'F' key was pressed, translate the camera to show the current selection
-            if (Input.GetKeyDown(KeyCode.F))
+            if (Input.GetKeyDown(KeyCode.F) &&
+                ObjectSelection.Instance.GetSelectionCount() != 0)
             {
                 FocusCamera();
             }
