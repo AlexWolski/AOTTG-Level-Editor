@@ -11,9 +11,10 @@ namespace MapEditor
         [SerializeField] private float speedMultiplier = 5f;
         //Stores the three different speeds the camera can move at
         private AdjustableSpeed movementSpeed;
-
         //The speed the camera rotates at
         [SerializeField] private float rotateSpeed = 5f;
+        //The multiplier for the distance of the camera from the selection bounds radius when focusing
+        [SerializeField] private float focusDistMultiplier = 2f;
         #endregion
 
         #region Instantiation
@@ -31,11 +32,16 @@ namespace MapEditor
         #endregion
 
         #region Update
-        //If the editor is in fly mode, translate and rotate the camera
         //Running in Update instead of LateUpdate so that the camera updates before the selection handle
         private void Update()
         {
-            if (EditorManager.Instance.CurrentMode == EditorMode.Fly)
+            //If the 'F' key was pressed, translate the camera to show the current selection
+            if (Input.GetKeyDown(KeyCode.F))
+            {
+                FocusCamera();
+            }
+            //Otherwise if the editor is in fly mode, update the camera position and rotation
+            else if (EditorManager.Instance.CurrentMode == EditorMode.Fly)
             {
                 TranslateCamera();
                 RotateCamera();
@@ -81,6 +87,23 @@ namespace MapEditor
 
             //Set the new rotation of the camera
             transform.rotation = Quaternion.Euler(xRotation, yRotation, 0);
+        }
+
+        private void FocusCamera()
+        {
+            //Get the center and radius of the selection bounding sphere
+            Bounds selectionBounds = ObjectSelection.Instance.SelectionBounds;
+            Vector3 boundsCenter = selectionBounds.center;
+            float boundsRadius = selectionBounds.extents.magnitude;
+
+            //Expand the radius to keep the camera further away from the selection
+            boundsRadius *= focusDistMultiplier;
+
+            //The normalized vector pointing towards the camera along the camera's line of sight
+            Vector3 lookVector = (-transform.forward).normalized;
+
+            //Translate the camera to the intersection point between the look vector and the expanded bounding sphere
+            transform.position = boundsCenter + (lookVector * boundsRadius);
         }
         #endregion
     }

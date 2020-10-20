@@ -318,8 +318,6 @@ namespace MapEditor
         #region Update Selection Methods
         private void Update()
         {
-            Debug.Log(selectionBounds.center + "\t" + selectionBounds.size.magnitude);
-
             //Check for an object selection if in edit mode and nothing is being dragged
             if (EditorManager.Instance.CurrentMode == EditorMode.Edit &&
                 EditorManager.Instance.ShortcutsEnabled &&
