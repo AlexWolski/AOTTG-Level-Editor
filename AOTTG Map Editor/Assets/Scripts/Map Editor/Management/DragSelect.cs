@@ -99,7 +99,7 @@ namespace MapEditor
         //If the game loses focus, end the selection
         private void OnApplicationFocus(bool focus)
         {
-            if (!focus)
+            if (!focus && dragging)
             {
                 EndDrag();
                 StartCoroutine(InvokeOnDragEndEvent());
@@ -253,8 +253,12 @@ namespace MapEditor
                 //Disable the drag selection box when the mouse is released
                 else if (Input.GetMouseButtonUp(0))
                 {
-                    EndDrag();
-                    StartCoroutine(InvokeOnDragEndEvent());
+                    if (dragging)
+                    {
+                        EndDrag();
+                        StartCoroutine(InvokeOnDragEndEvent());
+                    }
+
                     mouseDown = false;
                 }
                 //Update the drag selection box while the mouse is held down

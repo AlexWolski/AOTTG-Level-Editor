@@ -44,9 +44,10 @@ namespace MapEditor
             //Find and store the main camera in the scene
             mainCamera = Camera.main;
 
-            //Add listeners to events in the SelectionHandle class
+            //Add listeners to events in the SelectionHandle and DragSelect classes
             SelectionHandle.Instance.OnHandleFinish += EndSelection;
             SelectionHandle.Instance.OnHandleMove += EditSelection;
+            DragSelect.Instance.OnDragEnd += EndDrag;
         }
         #endregion
 
@@ -61,8 +62,17 @@ namespace MapEditor
                 this.selectedObject = selectedObject;
             }
 
-            public override void ExecuteEdit() { Instance.SelectObject(selectedObject); }
-            public override void RevertEdit() { Instance.DeselectObject(selectedObject); }
+            public override void ExecuteEdit()
+            {
+                Instance.SelectObject(selectedObject);
+                Instance.UpdateBoundingSphere(selectedObject);
+            }
+
+            public override void RevertEdit()
+            {
+                Instance.DeselectObject(selectedObject);
+                Instance.UpdateBoundingSphereAll();
+            }
         }
 
         //Deselect the current selection and select a single object
@@ -82,6 +92,7 @@ namespace MapEditor
             {
                 Instance.DeselectAll();
                 Instance.SelectObject(selectedObject);
+                Instance.UpdateBoundingSphereAll();
             }
 
             //Deselect the new object and re-select the objects that were previously selected
@@ -91,6 +102,8 @@ namespace MapEditor
 
                 foreach (GameObject mapObject in previousSelection)
                     Instance.SelectObject(mapObject);
+
+                Instance.UpdateBoundingSphereAll();
             }
         }
 
@@ -110,6 +123,8 @@ namespace MapEditor
             {
                 foreach (GameObject mapObject in unselectedObjects)
                     Instance.SelectObject(mapObject);
+
+                Instance.UpdateBoundingSphereAll();
             }
 
             //Deselect the objects that weren't previously selected
@@ -117,6 +132,8 @@ namespace MapEditor
             {
                 foreach (GameObject mapObject in unselectedObjects)
                     Instance.DeselectObject(mapObject);
+
+                Instance.UpdateBoundingSphereAll();
             }
         }
 
@@ -129,8 +146,17 @@ namespace MapEditor
                 this.deselectedObject = deselectedObject;
             }
 
-            public override void ExecuteEdit() { Instance.DeselectObject(deselectedObject); }
-            public override void RevertEdit() { Instance.SelectObject(deselectedObject); }
+            public override void ExecuteEdit()
+            {
+                Instance.DeselectObject(deselectedObject);
+                Instance.UpdateBoundingSphereAll();
+            }
+
+            public override void RevertEdit()
+            {
+                Instance.SelectObject(deselectedObject);
+                Instance.UpdateBoundingSphere(deselectedObject);
+            }
         }
 
         private class DeselectAllCommand : EditCommand
@@ -147,6 +173,7 @@ namespace MapEditor
             public override void ExecuteEdit()
             {
                 Instance.DeselectAll();
+                Instance.ResetBoundingSphere();
             }
 
             //Select all of the previously selected objects
@@ -154,13 +181,24 @@ namespace MapEditor
             {
                 foreach (GameObject mapObject in previousSelection)
                     Instance.SelectObject(mapObject);
+
+                Instance.UpdateBoundingSphereAll();
             }
         }
 
         private class InvertSelectionCommand : EditCommand
         {
-            public override void ExecuteEdit() { Instance.InvertSelection(); }
-            public override void RevertEdit() { Instance.InvertSelection(); }
+            public override void ExecuteEdit()
+            {
+                Instance.InvertSelection();
+                Instance.UpdateBoundingSphereAll();
+            }
+
+            public override void RevertEdit()
+            {
+                Instance.InvertSelection();
+                Instance.UpdateBoundingSphereAll();
+            }
         }
         #endregion
 
@@ -404,6 +442,8 @@ namespace MapEditor
 
             if (transformCommand != null)
                 EditHistory.Instance.AddCommand(transformCommand);
+
+            Instance.UpdateBoundingSphereAll();
         }
 
         //Update the position, rotation, or scale of the object selections based on the tool handle
@@ -436,6 +476,12 @@ namespace MapEditor
                     TransformTools.ScaleSelection(Instance.selectedObjects, selectionAverage, scaleDisplacement, false);
                     break;
             }
+        }
+
+        //Update the bounding sphere when the drag select is released
+        private void EndDrag()
+        {
+            UpdateBoundingSphereAll();
         }
         #endregion
 
