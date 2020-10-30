@@ -363,7 +363,7 @@ namespace MapEditor
                 catch (Exception e)
                 {
                     //If there was an issue parsing the object, log the error and skip it
-                    Debug.Log("Skipping object on line " + scriptIndex + "\t(" + parsedMap[scriptIndex] + ")");
+                    Debug.Log("Skipping object on line " + (scriptIndex + 1) + "\t(" + parsedMap[scriptIndex] + ")");
                     Debug.Log(e + ":\t" + e.Message);
                 }
 
@@ -418,8 +418,6 @@ namespace MapEditor
         {
             //Separate the object script by comma
             string[] parsedScript = objectScript.Split(',');
-            //The GameObject loaded from RCAssets corresponding to the object name
-            GameObject newObject = null;
 
             try
             {
@@ -428,7 +426,6 @@ namespace MapEditor
                 {
                     BoundsDisabled = true;
                     EnableLargeMapBounds(true);
-
                     return;
                 }
 
@@ -439,16 +436,9 @@ namespace MapEditor
                 //Use the object script to create the map object
                 CreateMapObject(parsedScript);
             }
-            //If there was an error converting an element to a float, destroy the object and pass a new exception to the caller
-            catch (FormatException)
-            {
-                DestroyObject(newObject);
-                throw new Exception("Error converting data");
-            }
-            //If there are any other errors, destroy the object and pass them back up to the caller
+            //If there are any other errors, destroy the created object
             catch (Exception e)
             {
-                DestroyObject(newObject);
                 throw e;
             }
         }
@@ -518,41 +508,56 @@ namespace MapEditor
             if (!newObject)
                 throw new Exception("The object '" + objectName + "' does not exist");
 
-            //Attach the MapObject script to the new object
-            MapObject mapObjectScript;
+            try
+            {
+                //Attach the MapObject script to the new object
+                MapObject mapObjectScript;
 
-            //Attach the appropriate Map Object script based on the object type and name
-            if (type == ObjectType.spawnpoint)
-                mapObjectScript = newObject.AddComponent<SpawnPointObject>();
-            else if(type == ObjectType.photon && objectName.StartsWith("spawn"))
-                mapObjectScript = newObject.AddComponent<SpawnerObject>();
-            else if(type == ObjectType.racing)
-                mapObjectScript = newObject.AddComponent<RacingObject>();
-            else if(objectName.StartsWith("region"))
-                mapObjectScript = newObject.AddComponent<RegionObject>();
-            else if (objectName.StartsWith("barrier"))
-                mapObjectScript = newObject.AddComponent<BarrierObject>();
-            else
-                mapObjectScript = newObject.AddComponent<TexturedObject>();
+                //Attach the appropriate Map Object script based on the object type and name
+                if (type == ObjectType.spawnpoint)
+                    mapObjectScript = newObject.AddComponent<SpawnPointObject>();
+                else if (type == ObjectType.photon && objectName.StartsWith("spawn"))
+                    mapObjectScript = newObject.AddComponent<SpawnerObject>();
+                else if (type == ObjectType.racing)
+                    mapObjectScript = newObject.AddComponent<RacingObject>();
+                else if (objectName.StartsWith("region"))
+                    mapObjectScript = newObject.AddComponent<RegionObject>();
+                else if (objectName.StartsWith("barrier"))
+                    mapObjectScript = newObject.AddComponent<BarrierObject>();
+                else
+                    mapObjectScript = newObject.AddComponent<TexturedObject>();
 
-            //Set the type of the mapObject
-            mapObjectScript.Type = type;
+                //Set the type of the mapObject
+                mapObjectScript.Type = type;
 
-            //Use the parsedObject array to set the rest of the properties of the object
-            mapObjectScript.LoadProperties(parsedScript);
-            //Add the object to the hierarchy and store its script
-            AddObjectToMap(newObject, mapObjectScript);
+                //Use the parsedObject array to set the rest of the properties of the object
+                mapObjectScript.LoadProperties(parsedScript);
+                //Add the object to the hierarchy and store its script
+                AddObjectToMap(newObject, mapObjectScript);
 
-            //Attempt to cast the map object to a textured object
-            TexturedObject texturedObject = mapObjectScript as TexturedObject;
+                //Attempt to cast the map object to a textured object
+                TexturedObject texturedObject = mapObjectScript as TexturedObject;
 
-            //If the object is a textured object with the default texture, outline only the texture instead of the entire mesh
-            if (texturedObject != null && texturedObject.Material == "default")
-                foreach (OutlineEffect.Outline outlineScript in newObject.GetComponentsInChildren<OutlineEffect.Outline>())
-                    outlineScript.alphaIsTransparency = true;
+                //If the object is a textured object with the default texture, outline only the texture instead of the entire mesh
+                if (texturedObject != null && texturedObject.Material == "default")
+                    foreach (OutlineEffect.Outline outlineScript in newObject.GetComponentsInChildren<OutlineEffect.Outline>())
+                        outlineScript.alphaIsTransparency = true;
 
-            //Return the new object 
-            return newObject;
+                //Return the new object 
+                return newObject;
+            }
+            //If there was an error converting an element to a float, destroy the object and pass a new exception to the caller
+            catch (FormatException)
+            {
+                DestroyObject(newObject);
+                throw new Exception("Error converting data");
+            }
+            //If there are any other errors, destroy the object and pass them back up to the caller
+            catch (Exception e)
+            {
+                DestroyObject(newObject);
+                throw e;
+            }
         }
         #endregion
     }
