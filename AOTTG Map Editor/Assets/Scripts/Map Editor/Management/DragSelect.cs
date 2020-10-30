@@ -89,6 +89,7 @@ namespace MapEditor
             EditorManager.Instance.OnChangeMode += OnModeChange;
             EditorManager.Instance.OnResize += OnResize;
             SelectionHandle.Instance.OnHandleFinish += SaveSelectedBBs;
+            CameraController.Instance.OnFocus += SaveAllBBs;
 
             //Save the bounding box of all on-screen selectable objects
             SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
@@ -118,13 +119,7 @@ namespace MapEditor
         {
             //When the mode changes from fly to edit mode, save the bounding boxes of on-screen objects
             if (prevMode == EditorMode.Fly && newMode == EditorMode.Edit)
-            {
-                //Store the matrix that transforms world space coordinates to viewport space
-                CalculateWorldToViewportMatrix();
-
-                //Save the bounding box of all on-screen selectable objects
-                SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
-            }
+                SaveAllBBs();
             //If the new mode is fly mode, then clear the bounding boxes
             else if (newMode == EditorMode.Fly)
                 ClearBoundingBoxes();
@@ -134,6 +129,14 @@ namespace MapEditor
         private void OnResize(Vector2 prevResolution)
         {
             ScaleBoundingBoxes(prevResolution);
+        }
+
+        private void SaveAllBBs()
+        {
+            //Store the matrix that transforms world space coordinates to viewport space
+            CalculateWorldToViewportMatrix();
+            //Save the bounding box of all on-screen selectable objects
+            SaveBoundingBoxes(ObjectSelection.Instance.GetSelectable());
         }
 
         //Saves the bounding boxes of the currently updated objects

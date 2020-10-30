@@ -5,6 +5,9 @@ namespace MapEditor
     public class CameraController : MonoBehaviour
     {
         #region Fields
+        //A self-reference to the singleton instance of this script
+        public static CameraController Instance { get; private set; }
+
         //The default speed the camera moves at (assuming the movement axes are both 1)
         [SerializeField] private float defaultMovementSpeed = 100f;
         //The factor with which the movement speeds up or slows down when a speed modifier key is held
@@ -17,6 +20,11 @@ namespace MapEditor
         [SerializeField] private float focusDistMultiplier = 2f;
         #endregion
 
+        #region Delegates
+        public delegate void OnFocusEvent();
+        public event OnFocusEvent OnFocus;
+        #endregion
+
         #region Instantiation
         //Disable the fog on distant objects
         void OnPreRender()
@@ -27,6 +35,10 @@ namespace MapEditor
         //Instantiate the adjustable speed class
         private void Awake()
         {
+            //Set this script as the only instance of the SelectionHandle script
+            if (Instance == null)
+                Instance = this;
+
             movementSpeed = new AdjustableSpeed(defaultMovementSpeed, speedMultiplier);
         }
         #endregion
@@ -105,6 +117,9 @@ namespace MapEditor
 
             //Translate the camera to the intersection point between the look vector and the expanded bounding sphere
             transform.position = boundsCenter + (lookVector * boundsRadius);
+
+            //Notify all listeners that the camera was focused
+            OnFocus?.Invoke();
         }
         #endregion
     }
