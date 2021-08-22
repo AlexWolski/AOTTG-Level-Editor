@@ -40,7 +40,7 @@ namespace MapEditor
         {
             base.LoadProperties(properties);
 
-            SpawnTimer = Convert.ToSingle(properties[2]);
+            SpawnTimer = ToSingleInvariant(properties[2]);
             EndlessSpawn = (Convert.ToInt32(properties[3]) != 0);
             Position = ParseVector3(properties[4], properties[5], properties[6]);
             Rotation = Quaternion.identity;

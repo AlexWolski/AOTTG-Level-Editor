@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System;
 using System.Text;
+using System.Globalization;
 
 namespace MapEditor
 {
@@ -66,6 +67,12 @@ namespace MapEditor
         #endregion
 
         #region Parsing Utility Methods
+        //An invariant version of ToSingle that always uses '.' as the decimal separator
+        public static float ToSingleInvariant(string value)
+        {
+            return Convert.ToSingle(value, CultureInfo.InvariantCulture);
+        }
+
         //Return the objectType associated with the given string
         public static ObjectType ParseType(string typeString)
         {
@@ -87,25 +94,25 @@ namespace MapEditor
         //Create a Color object with the three given color values. The opacity is always 1f.
         protected static Color ParseColorRGB(string r, string g, string b)
         {
-            return new Color(Convert.ToSingle(r), Convert.ToSingle(g), Convert.ToSingle(b), 1f);
+            return new Color(ToSingleInvariant(r), ToSingleInvariant(g), ToSingleInvariant(b), 1f);
         }
 
         //Create a vector with the two given strings
         protected static Vector2 ParseVector2(string x, string y)
         {
-            return new Vector2(Convert.ToSingle(x), Convert.ToSingle(y));
+            return new Vector2(ToSingleInvariant(x), ToSingleInvariant(y));
         }
 
         //Create a vector with the three given strings
         protected static Vector3 ParseVector3(string x, string y, string z)
         {
-            return new Vector3(Convert.ToSingle(x), Convert.ToSingle(y), Convert.ToSingle(z));
+            return new Vector3(ToSingleInvariant(x), ToSingleInvariant(y), ToSingleInvariant(z));
         }
 
         //Create a quaternion with the three given strings
         protected static Quaternion ParseQuaternion(string x, string y, string z, string w)
         {
-            return new Quaternion(Convert.ToSingle(x), Convert.ToSingle(y), Convert.ToSingle(z), Convert.ToSingle(w));
+            return new Quaternion(ToSingleInvariant(x), ToSingleInvariant(y), ToSingleInvariant(z), ToSingleInvariant(w));
         }
         #endregion
 
