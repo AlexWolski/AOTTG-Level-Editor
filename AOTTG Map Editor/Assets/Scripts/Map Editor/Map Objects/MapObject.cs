@@ -73,6 +73,12 @@ namespace MapEditor
             return Convert.ToSingle(value, CultureInfo.InvariantCulture);
         }
 
+        //An invariant version of ToSTring that always uses the '.' as the decimal separator
+        public static String ToStringInvariant(float value)
+        {
+            return value.ToString(CultureInfo.InvariantCulture);
+        }
+
         //Return the objectType associated with the given string
         public static ObjectType ParseType(string typeString)
         {
@@ -129,32 +135,32 @@ namespace MapEditor
         //Convert a color to a script friendly string
         protected string ColorToString(Color colorToStrinfigy)
         {
-            return colorToStrinfigy.r.ToString() + "," +
-                   colorToStrinfigy.g.ToString() + "," +
-                   colorToStrinfigy.b.ToString();
+            return ToStringInvariant(colorToStrinfigy.r) + "," +
+                   ToStringInvariant(colorToStrinfigy.g) + "," +
+                   ToStringInvariant(colorToStrinfigy.b);
         }
 
         //Convert a vector2 to a script friendly string
         protected string Vector2ToString(Vector2 vectorToStringify)
         {
-            return vectorToStringify.x.ToString() + "," +
-                   vectorToStringify.y.ToString();
+            return ToStringInvariant(vectorToStringify.x) + "," +
+                   ToStringInvariant(vectorToStringify.y);
         }
         //Convert a vector2 to a script friendly string
         protected string Vector3ToString(Vector3 vectorToStringify)
         {
-            return vectorToStringify.x.ToString() + "," +
-                   vectorToStringify.y.ToString() + "," +
-                   vectorToStringify.z.ToString();
+            return ToStringInvariant(vectorToStringify.x) + "," +
+                   ToStringInvariant(vectorToStringify.y) + "," +
+                   ToStringInvariant(vectorToStringify.z);
         }
 
         //Convert a vector2 to a script friendly string
         protected string QuaternionToString(Quaternion quatToStringify)
         {
-            return quatToStringify.x.ToString() + "," +
-                   quatToStringify.y.ToString() + "," +
-                   quatToStringify.z.ToString() + "," +
-                   quatToStringify.w.ToString();
+            return ToStringInvariant(quatToStringify.x) + "," +
+                   ToStringInvariant(quatToStringify.y) + "," +
+                   ToStringInvariant(quatToStringify.z) + "," +
+                   ToStringInvariant(quatToStringify.w);
         }
         #endregion
 
